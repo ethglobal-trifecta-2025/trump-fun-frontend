@@ -134,6 +134,7 @@ export default function BettingPlatform() {
 							{/* Betting Posts */}
 							<div className="space-y-4 flex-1">
 								<BettingPost
+									id="1"
 									avatar="/placeholder.svg?height=40&width=40"
 									username="RichardFer47658"
 									time="1 minute ago"
@@ -148,9 +149,12 @@ export default function BettingPlatform() {
 											color: "text-red-500",
 										},
 									]}
+									commentCount={5}
+									volume="$700"
 								/>
 
 								<BettingPost
+									id="2"
 									avatar="/placeholder.svg?height=40&width=40"
 									username="Mark_M007"
 									time="1 minute ago"
@@ -159,37 +163,50 @@ export default function BettingPlatform() {
 										{ text: "Yes", color: "text-blue-400" },
 										{ text: "No", color: "text-red-500" },
 									]}
-								/>
-								<BettingPost
-									avatar="/placeholder.svg?height=40&width=40"
-									username="Mark_M007"
-									time="1 minute ago"
-									question="Will the CanIBetOn AI agent successfully launch a new betting pool during the live demo on March 20, 2025?"
-									options={[
-										{ text: "Yes", color: "text-blue-400" },
-										{ text: "No", color: "text-red-500" },
-									]}
-								/>
-								<BettingPost
-									avatar="/placeholder.svg?height=40&width=40"
-									username="Mark_M007"
-									time="1 minute ago"
-									question="Will the CanIBetOn AI agent successfully launch a new betting pool during the live demo on March 20, 2025?"
-									options={[
-										{ text: "Yes", color: "text-blue-400" },
-										{ text: "No", color: "text-red-500" },
-									]}
+									commentCount={2}
+									volume="$500"
 								/>
 
 								<BettingPost
+									id="3"
+									avatar="/placeholder.svg?height=40&width=40"
+									username="crypto_whale"
+									time="5 minutes ago"
+									question="Will Trump announce a new major policy position on crypto regulations before April 15, 2025?"
+									options={[
+										{ text: "Yes", color: "text-blue-400" },
+										{ text: "No", color: "text-red-500" },
+									]}
+									commentCount={12}
+									volume="$1,200"
+								/>
+
+								<BettingPost
+									id="4"
+									avatar="/placeholder.svg?height=40&width=40"
+									username="TruthSeeker2024"
+									time="15 minutes ago"
+									question="Will Trump post more than 10 times on Truth Social on Election Day 2024?"
+									options={[
+										{ text: "Yes, more than 10 posts", color: "text-blue-400" },
+										{ text: "No, 10 or fewer posts", color: "text-red-500" },
+									]}
+									commentCount={8}
+									volume="$850"
+								/>
+
+								<BettingPost
+									id="5"
 									avatar="/placeholder.svg?height=40&width=40"
 									username="alphabridgez"
-									time="2 minutes ago"
-									question="Will the CanIBetOn team successfully complete their live demo during the interview on March 20, 2025?"
+									time="30 minutes ago"
+									question="Will Trump mention AI or artificial intelligence in his next rally speech?"
 									options={[
 										{ text: "Yes", color: "text-blue-400" },
 										{ text: "No", color: "text-red-500" },
 									]}
+									commentCount={3}
+									volume="$300"
 								/>
 							</div>
 						</div>
