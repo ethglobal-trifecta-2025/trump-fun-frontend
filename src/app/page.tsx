@@ -1,6 +1,7 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthButton } from "@/components/auth-button";
 import { PoolList } from "@/components/pools/pool-list";
+import { TrumpUserPill } from '@/components/user-pill'
 
 export default function Home() {
   return (
@@ -10,7 +11,7 @@ export default function Home() {
           <div className="text-2xl font-bold text-orange-600">Trump.fun</div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <AuthButton />
+            <TrumpUserPill />
           </div>
         </div>
       </header>
