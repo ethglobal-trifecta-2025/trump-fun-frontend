@@ -15,7 +15,7 @@ import {
 export default function Nav() {
 	return (
 		<>
-			<header className="container mx-auto px-4 py-2 md:py-0 h-full md:h-16 flex items-center justify-between">
+			<header className="px-4 py-2 md:py-0 h-full md:h-16 flex items-center justify-between">
 				<div className="text-2xl font-bold text-orange-500">
 					Trump.fun
 				</div>

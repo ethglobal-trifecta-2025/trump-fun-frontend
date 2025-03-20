@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Plus, User } from "lucide-react";
+import { Home, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,11 +18,6 @@ const NavLinks: {
 		label: "My Bets",
 		href: "/users/self",
 		icon: User,
-	},
-	{
-		label: "Create Bet",
-		href: "/create-bet",
-		icon: Plus,
 	},
 ];
 
