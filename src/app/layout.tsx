@@ -4,8 +4,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { PrivyAuthProvider } from "@/components/providers/privy-provider";
 import "./globals.css";
 import Nav from "@/components/common/nav";
-import Footer from "@/components/common/footer";
-
+import { MobileNav } from "@/components/common/mobile-nav";
 const geistSans = Geist({
 	variable: "--font-geist-sans",
 	subsets: ["latin"],
@@ -42,7 +41,7 @@ export default function RootLayout({
 						<div className="container mx-auto">
 							<Nav />
 							{children}
-							<Footer />
+							<MobileNav />
 						</div>
 					</ThemeProvider>
 				</PrivyAuthProvider>
