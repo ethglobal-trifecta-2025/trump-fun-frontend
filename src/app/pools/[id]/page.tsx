@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 
 export default function PoolDetailPage() {
   const { id } = useParams();
@@ -57,6 +57,18 @@ export default function PoolDetailPage() {
     variables: { poolId: id },
     notifyOnNetworkStatusChange: true,
   });
+
+  const [poolFacts, setPoolFacts] = useState(Math.floor(Math.random() * 50) + 5);
+  const [hasFactsed, setHasFactsed] = useState(false);
+
+  const handleFacts = () => {
+    if (hasFactsed) {
+      setPoolFacts(prev => prev - 1);
+    } else {
+      setPoolFacts(prev => prev + 1);
+    }
+    setHasFactsed(!hasFactsed);
+  };
 
   if (isPoolLoading) {
     return (
@@ -236,6 +248,22 @@ export default function PoolDetailPage() {
                 </div>
                 <Button className='bg-orange-500 hover:bg-orange-600'>
                   Confirm Bet
+                </Button>
+              </div>
+              
+              {/* FACTS Button */}
+              <div className='mt-4 flex justify-between items-center border-t pt-4 border-gray-200 dark:border-gray-700'>
+                <div className='text-sm text-muted-foreground'>
+                  Share your support for this prediction
+                </div>
+                <Button 
+                  variant='outline' 
+                  size='sm'
+                  className="gap-1 font-bold text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
+                  onClick={handleFacts}
+                >
+                  {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
+                  <span className='ml-1.5'>{poolFacts}</span>
                 </Button>
               </div>
             </div>

@@ -5,7 +5,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, MessageCircle, ThumbsUp } from 'lucide-react';
+import { X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface BettingPostProps {
@@ -32,6 +32,8 @@ export function BettingPost({
   const [betAmount, setBetAmount] = useState('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showBetForm, setShowBetForm] = useState(false);
+  const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
+  const [hasFactsed, setHasFactsed] = useState(false);
   const { authenticated, login } = usePrivy();
 
   const handleBetClick = () => {
@@ -40,6 +42,20 @@ export function BettingPost({
       return;
     }
     setShowBetForm(!showBetForm);
+  };
+
+  const handleFacts = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    
+    if (hasFactsed) {
+      setFactsCount(prev => prev - 1);
+    } else {
+      setFactsCount(prev => prev + 1);
+    }
+    setHasFactsed(!hasFactsed);
   };
 
   const placeBet = () => {
@@ -129,15 +145,26 @@ export function BettingPost({
             </Link>
           </Button>
 
-          <Button
-            variant='ghost'
-            size='sm'
-            className='text-gray-400 hover:text-orange-500'
-            onClick={handleBetClick}
-          >
-            <ThumbsUp size={18} className='mr-1' />
-            Bet
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant='outline'
+              size='sm'
+              className="gap-1 font-bold text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
+              onClick={handleFacts}
+            >
+              {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
+              <span className="ml-1.5">{factsCount}</span>
+            </Button>
+
+            <Button
+              variant='ghost'
+              size='sm'
+              className='text-gray-400 hover:text-orange-500'
+              onClick={handleBetClick}
+            >
+              Bet
+            </Button>
+          </div>
         </div>
 
         {showBetForm && (
