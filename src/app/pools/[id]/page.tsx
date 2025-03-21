@@ -1,8 +1,37 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useQuery as useQueryA } from '@apollo/client';
+import { useQuery } from '@tanstack/react-query';
+import {
+  useAccount,
+  usePublicClient,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from 'wagmi';
+import {
+  ArrowLeft,
+  Clock,
+  MessageCircle,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+
+// Import ABIs and types
 import betAbi from '@/abi/bet.json';
 import erc20ABI from '@/abi/erc20.json';
 import { GET_POOL } from '@/app/queries';
+import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
+import { Comment } from '@/types';
+
+// Import hooks
+import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { useWalletAddress } from '@/hooks/useWalletAddress';
+
+// Import components
 import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
 import { Progress } from '@/components/Progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,81 +47,62 @@ import {
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { useWalletAddress } from '@/hooks/useWalletAddress';
-import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
+
+// Import utils
 import { cn } from '@/lib/utils';
-import { Comment } from '@/types';
-import { useQuery as useQueryA } from '@apollo/client';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  Clock,
-  MessageCircle,
-  TrendingUp,
-  Users,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import {
-  useAccount,
-  usePublicClient,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from 'wagmi';
+
+// Contract constants
+const TOKEN_ADDRESS = '0xA373482b473E33B96412a6c0cA8B847E6BBB4D0d';
+const APP_ADDRESS = '0x3646Eb6C4459833E3A6791c832b2897051fF17B0';
+const TOKEN_DECIMALS = 6; // USDC has 6 decimals
 
 export default function PoolDetailPage() {
+  // Router and authentication
   const { id } = useParams();
   const { isConnected, authenticated } = useWalletAddress();
   const publicClient = usePublicClient();
   const account = useAccount();
+  const { ready } = usePrivy();
+  const { wallets } = useWallets();
 
+  // Component state
   const [betAmount, setBetAmount] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [sliderValue, setSliderValue] = useState([0]);
   const [poolFacts, setPoolFacts] = useState(
-    Math.floor(Math.random() * 50) + 5
+    () => Math.floor(Math.random() * 50) + 5
   );
   const [hasFactsed, setHasFactsed] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('0');
 
-  // Use our custom hook for token balance
-  const { balance, formattedBalance, symbol, tokenTextLogo } =
-    useTokenBalance();
-
-  // Update bet amount when slider changes
-  useEffect(() => {
-    if (sliderValue[0] > 0 && balance) {
-      const percentage = sliderValue[0] / 100;
-      const maxAmount = parseFloat(balance.formatted);
-      const amount = parseFloat((maxAmount * percentage).toFixed(6));
-      setBetAmount(amount);
-    } else if (sliderValue[0] === 0) {
-      setBetAmount(0);
-    }
-  }, [sliderValue, balance]);
-
-  // Handle percentage button clicks
-  const handlePercentageClick = (percentage: number) => {
-    if (balance) {
-      const maxAmount = parseFloat(balance.formatted);
-      const amount = parseFloat((maxAmount * (percentage / 100)).toFixed(6));
-      setBetAmount(amount);
-      setSliderValue([percentage]);
-    }
-  };
-
+  // Contract interaction
   const { data: hash, isPending, writeContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
       hash,
     });
-  const tokenType = 1;
-  const { wallets } = useWallets();
-  const { ready } = usePrivy();
+  const tokenType = {
+    USDC: 0,
+    POINTS: 1,
+  };
 
+  console.log('isConfirming', isConfirming);
+
+  // Use our custom hook for token balance
+  const { balance, formattedBalance, symbol, tokenTextLogo } =
+    useTokenBalance();
+
+  // Pool data fetching
+  const {
+    data,
+    loading: isPoolLoading,
+    error: poolError,
+  } = useQueryA<{ pool: Pool }>(GET_POOL, {
+    variables: { poolId: id },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  // Comments data fetching
   const {
     data: commentsData,
     isLoading: isCommentsLoading,
@@ -114,17 +124,20 @@ export default function PoolDetailPage() {
 
   const comments = commentsData?.comments as Comment[];
 
-  const {
-    data,
-    loading: isPoolLoading,
-    error: poolError,
-  } = useQueryA<{ pool: Pool }>(GET_POOL, {
-    variables: { poolId: id },
-    notifyOnNetworkStatusChange: true,
-  });
+  // Update bet amount when slider changes
+  useEffect(() => {
+    if (!balance) return;
 
-  const tokenAddress = '0xA373482b473E33B96412a6c0cA8B847E6BBB4D0d';
-  const appAddress = '0x3646Eb6C4459833E3A6791c832b2897051fF17B0';
+    const maxAmount = parseFloat(balance.formatted);
+
+    if (sliderValue[0] > 0) {
+      const percentage = sliderValue[0] / 100;
+      const amount = parseFloat((maxAmount * percentage).toFixed(6));
+      setBetAmount(amount);
+    } else {
+      setBetAmount(0);
+    }
+  }, [sliderValue, balance]);
 
   // Fetch approved amount when component mounts or account changes
   useEffect(() => {
@@ -134,13 +147,13 @@ export default function PoolDetailPage() {
       try {
         const allowance = await publicClient.readContract({
           abi: erc20ABI,
-          address: tokenAddress as `0x${string}`,
+          address: TOKEN_ADDRESS as `0x${string}`,
           functionName: 'allowance',
-          args: [account.address, appAddress],
+          args: [account.address, APP_ADDRESS],
         });
 
-        // Format the allowance (divide by 10^6 for USDC)
-        const formattedAllowance = Number(allowance) / 10 ** 6;
+        // Format the allowance (divide by 10^TOKEN_DECIMALS for USDC)
+        const formattedAllowance = Number(allowance) / 10 ** TOKEN_DECIMALS;
         setApprovedAmount(formattedAllowance.toString());
       } catch (error) {
         console.error('Error fetching allowance:', error);
@@ -151,6 +164,16 @@ export default function PoolDetailPage() {
     fetchApprovedAmount();
   }, [account.address, publicClient, hash]);
 
+  // Handle percentage button clicks
+  const handlePercentageClick = (percentage: number) => {
+    if (!balance) return;
+
+    const maxAmount = parseFloat(balance.formatted);
+    const amount = parseFloat((maxAmount * (percentage / 100)).toFixed(6));
+    setBetAmount(amount);
+    setSliderValue([percentage]);
+  };
+
   const handleFacts = () => {
     if (hasFactsed) return;
 
@@ -158,105 +181,124 @@ export default function PoolDetailPage() {
     setPoolFacts((prevCount) => prevCount + 1);
     setHasFactsed(true);
 
-    // If the user is logged in, add a "FACTS" comment
+    // If the user is logged in, refetch comments to show the new FACTS comment
     if (isConnected && authenticated) {
-      // Attempt to refetch comments after a delay to show the new FACTS comment
-      setTimeout(() => {
-        refetchComments();
-      }, 2000);
+      setTimeout(() => refetchComments(), 2000);
     }
   };
 
   const handleBet = async () => {
-    if (!writeContract) return;
+    // Validation checks
+    if (!writeContract || !ready || !publicClient || !wallets?.length) {
+      console.error('Wallet or contract not ready');
+      return;
+    }
 
-    console.log(wallets);
+    if (!betAmount || betAmount <= 0 || selectedOption === null) {
+      console.error('Invalid bet parameters');
+      return;
+    }
 
     try {
-      if (!ready || !publicClient) {
-        console.error('Privy is not ready');
-        return;
-      }
+      // Convert amount to token units with proper decimals
+      const tokenAmount = BigInt(Math.floor(betAmount * 10 ** TOKEN_DECIMALS));
 
-      if (!wallets?.length) {
-        console.error('No wallet connected');
-        return;
-      }
+      // Log for debugging
+      console.log({
+        tokenAddress: TOKEN_ADDRESS,
+        appAddress: APP_ADDRESS,
+        tokenAmount: tokenAmount.toString(),
+        betAmount,
+        currentBalance: formattedBalance,
+        approvedAmount,
+        symbol,
+      });
 
-      if (!betAmount || betAmount <= 0) {
-        console.error('Invalid amount');
-        return;
-      }
-
-      const tokenAmount = BigInt(betAmount) * BigInt(10 ** 6);
-
-      console.log('tokenAddress', tokenAddress);
-      console.log('appAddress', appAddress);
-      console.log('tokenAmount', tokenAmount);
-      console.log('betAmount', betAmount);
-      console.log('Current token balance:', formattedBalance, symbol);
-      console.log('Current approved amount:', approvedAmount, symbol);
-
+      // First approve tokens to be spent
       const { request: approveRequest } = await publicClient.simulateContract({
         abi: erc20ABI,
-        address: tokenAddress as `0x${string}`,
+        address: TOKEN_ADDRESS as `0x${string}`,
         functionName: 'approve',
         account: account.address as `0x${string}`,
-        args: [appAddress, tokenAmount * BigInt(5000)],
+        args: [APP_ADDRESS, tokenAmount * BigInt(5000)],
       });
 
       writeContract(approveRequest);
-      // while (!isConfirmed) {
-      //   await new Promise((resolve) => {
-      //     console.log('Waiting for approve transaction to be confirmed...');
-      //     setTimeout(resolve, 1000);
-      //   });
-      // }
 
-      console.log('Approve transaction finalized:', hash);
+      // Wait for the transaction to be confirmed before proceeding
+      if (isConfirmed) {
+        console.log('Approve transaction finalized:', hash);
 
-      const { request } = await publicClient.simulateContract({
-        abi: betAbi,
-        address: appAddress,
-        functionName: 'placeBet',
-        account: account.address as `0x${string}`,
-        args: [
-          pool.id,
-          selectedOption,
-          tokenAmount,
-          account.address,
-          tokenType,
-        ],
-      });
-
-      writeContract(request);
-      while (isPending) {
-        await new Promise((resolve) => {
-          console.log('Waiting for bet transaction to be confirmed...');
-          setTimeout(resolve, 1000);
+        // Now place the bet
+        const { request } = await publicClient.simulateContract({
+          abi: betAbi,
+          address: APP_ADDRESS,
+          functionName: 'placeBet',
+          account: account.address as `0x${string}`,
+          args: [
+            data?.pool.id,
+            selectedOption,
+            tokenAmount,
+            account.address,
+            tokenType.USDC,
+          ],
         });
-      }
 
-      console.log('Transaction finalized:', hash);
-      console.log('Transaction hash:', hash);
-      // Handle transaction success (e.g., show a success message)
+        writeContract(request);
+      }
     } catch (error) {
       console.error('Error placing bet:', error);
-      // Handle transaction error (e.g., show an error message)
     }
-
-    if (!betAmount || selectedOption === null) return;
-
-    // Here you would connect to the smart contract
-    alert(`Placing ${betAmount} USDC bet on option: ${pool.options[selectedOption]}`);
   };
 
+  // Helper functions for formatting and calculations
+  const formatTimeLeft = (betsCloseAt: string | null) => {
+    if (!betsCloseAt) return 'Time not specified';
+
+    const end = new Date(betsCloseAt).getTime();
+    const now = new Date().getTime();
+    const diff = end - now;
+
+    if (diff <= 0) return 'Ended';
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    return `${days}d ${hours}h remaining`;
+  };
+
+  const calculatePercentages = (usdcBetTotals: string[]) => {
+    if (!Array.isArray(usdcBetTotals) || usdcBetTotals.length < 2) {
+      return { yesPercentage: 50, noPercentage: 50 };
+    }
+
+    const yesAmount = Number(usdcBetTotals[0]) || 0;
+    const noAmount = Number(usdcBetTotals[1]) || 0;
+    const total = yesAmount + noAmount;
+
+    if (total === 0) return { yesPercentage: 50, noPercentage: 50 };
+
+    const yesPercentage = Math.round((yesAmount / total) * 100);
+    const noPercentage = 100 - yesPercentage;
+
+    return { yesPercentage, noPercentage };
+  };
+
+  const calculateTotalVolume = (usdcBetTotals: string[]) => {
+    if (!Array.isArray(usdcBetTotals)) return '$0';
+
+    const total = usdcBetTotals.reduce((sum, bet) => sum + Number(bet), 0);
+    return `$${total.toLocaleString()}`;
+  };
+
+  // Loading state
   if (isPoolLoading) {
     return (
       <div className='container mx-auto max-w-4xl px-4 py-8'>Loading...</div>
     );
   }
 
+  // Error state
   if (poolError || !data?.pool) {
     return (
       <div className='container mx-auto max-w-4xl px-4 py-8'>
@@ -286,54 +328,12 @@ export default function PoolDetailPage() {
   }
 
   const { pool } = data;
-
   const isActive =
     pool.status === PoolStatus.Pending || pool.status === PoolStatus.None;
-
-  // Format the time left - assuming endTime exists (added fallback)
-  const formatTimeLeft = () => {
-    if (!pool.betsCloseAt) return 'Time not specified'; // Fallback for missing endTime
-
-    const end = new Date(pool.betsCloseAt).getTime();
-    const now = new Date().getTime();
-    const diff = end - now;
-
-    if (diff <= 0) return 'Ended';
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-    return `${days}d ${hours}h remaining`;
-  };
-
-  // Calculate YES/NO percentages - assuming usdcBetTotals has at least 2 elements
-  const calculatePercentages = () => {
-    // If usdcBetTotals doesn't exist or is not properly formatted, return default values
-    if (!Array.isArray(pool.usdcBetTotals) || pool.usdcBetTotals.length < 2) {
-      return { yesPercentage: 50, noPercentage: 50 };
-    }
-
-    const yesAmount = Number(pool.usdcBetTotals[0]) || 0;
-    const noAmount = Number(pool.usdcBetTotals[1]) || 0;
-    const total = yesAmount + noAmount;
-
-    if (total === 0) return { yesPercentage: 50, noPercentage: 50 };
-
-    const yesPercentage = Math.round((yesAmount / total) * 100);
-    const noPercentage = 100 - yesPercentage;
-
-    return { yesPercentage, noPercentage };
-  };
-
-  const { yesPercentage, noPercentage } = calculatePercentages();
-
-  // Format total volume
-  const formatTotalVolume = () => {
-    if (!Array.isArray(pool.usdcBetTotals)) return '$0';
-
-    const total = pool.usdcBetTotals.reduce((sum, bet) => sum + Number(bet), 0);
-    return `$${total.toLocaleString()}`;
-  };
+  const { yesPercentage, noPercentage } = calculatePercentages(
+    pool.usdcBetTotals
+  );
+  const totalVolume = calculateTotalVolume(pool.usdcBetTotals);
 
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
@@ -393,12 +393,12 @@ export default function PoolDetailPage() {
             <div className='bg-muted rounded-lg p-4 text-center'>
               <TrendingUp className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Total Volume</p>
-              <p className='font-bold'>{formatTotalVolume()}</p>
+              <p className='font-bold'>{totalVolume}</p>
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Clock className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Time Left</p>
-              <p className='font-bold'>{formatTimeLeft()}</p>
+              <p className='font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
@@ -472,8 +472,8 @@ export default function PoolDetailPage() {
                   className='mb-2'
                 />
               </div>
-              
-              <div className='mb-4 flex flex-col sm:flex-row gap-2'>
+
+              <div className='mb-4 flex flex-col gap-2 sm:flex-row'>
                 <div className='relative flex-1'>
                   <Input
                     type='number'
@@ -481,13 +481,20 @@ export default function PoolDetailPage() {
                     value={betAmount}
                     onChange={(e) => {
                       const value = parseFloat(e.target.value);
-                      setBetAmount(isNaN(value) ? 0 : value);
-                      // Update slider if there's a balance
+                      if (isNaN(value)) {
+                        setBetAmount(0);
+                        setSliderValue([0]);
+                        return;
+                      }
+
+                      setBetAmount(value);
+
+                      // Update slider based on value
                       if (balance && value > 0) {
                         const maxAmount = parseFloat(balance.formatted);
                         const percentage = Math.min(
                           100,
-                          (parseFloat(value.toString()) / maxAmount) * 100
+                          (value / maxAmount) * 100
                         );
                         setSliderValue([percentage]);
                       } else {
@@ -503,11 +510,14 @@ export default function PoolDetailPage() {
                 <Button
                   onClick={handleBet}
                   disabled={
-                    !betAmount || selectedOption === null || !authenticated
+                    !betAmount ||
+                    selectedOption === null ||
+                    !authenticated ||
+                    isPending
                   }
                   className='w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
                 >
-                  Confirm Bet
+                  {isPending ? 'Processing...' : 'Confirm Bet'}
                 </Button>
               </div>
 
@@ -518,22 +528,24 @@ export default function PoolDetailPage() {
                   &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
-              
+
               <Button
                 variant='outline'
                 size='sm'
                 className={cn(
-                  "gap-1 font-bold",
-                  hasFactsed 
-                    ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                  'gap-1 font-bold',
+                  hasFactsed
+                    ? 'border-orange-500 bg-orange-500/10 text-orange-500'
                     : 'text-orange-500 hover:text-orange-500'
                 )}
                 onClick={handleFacts}
               >
                 {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
-                <span className="ml-1.5">{poolFacts}</span>
+                <span className='ml-1.5'>{poolFacts}</span>
               </Button>
-              <p className="mt-2 text-xs text-gray-400">Share your support for this prediction.</p>
+              <p className='mt-2 text-xs text-gray-400'>
+                Share your support for this prediction.
+              </p>
             </div>
           )}
 
