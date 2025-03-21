@@ -18,19 +18,65 @@ import {
   PoolStatus,
 } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
+import { useMemo, useState } from 'react';
 
 export default function BettingPlatform() {
+  const [activeFilter, setActiveFilter] = useState<string>('newest');
+
+  const filterConfigs = useMemo(
+    () => ({
+      newest: {
+        orderBy: Pool_OrderBy.CreatedAt,
+        orderDirection: OrderDirection.Desc,
+        filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+      },
+      highest: {
+        orderBy: Pool_OrderBy.Bets,
+        orderDirection: OrderDirection.Desc,
+        filter: { status_in: [PoolStatus.Pending] },
+      },
+      ending_soon: {
+        orderBy: Pool_OrderBy.BetsCloseAt,
+        orderDirection: OrderDirection.Asc,
+        filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+      },
+      recently_closed: {
+        orderBy: Pool_OrderBy.BetsCloseAt,
+        orderDirection: OrderDirection.Desc,
+        filter: { status_in: [PoolStatus.Graded, PoolStatus.Regraded] },
+      },
+    }),
+    []
+  );
+
+  const { orderBy, orderDirection, filter } = useMemo(
+    () => filterConfigs[activeFilter as keyof typeof filterConfigs],
+    [activeFilter, filterConfigs]
+  );
+
   const { data: pools } = useQuery(GET_POOLS, {
     variables: {
-      filter: {
-        status_in: [PoolStatus.Pending, PoolStatus.None],
-      },
-      orderBy: Pool_OrderBy.CreatedAt,
-      orderDirection: OrderDirection.Desc,
+      filter,
+      orderBy,
+      orderDirection,
     },
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,
   });
+
+  const handleFilterChange = (value: string) => {
+    setActiveFilter(value);
+  };
+
+  const renderFilterButton = (value: string, label: string) => (
+    <Button
+      variant={activeFilter === value ? 'default' : 'ghost'}
+      className='w-full justify-start font-medium'
+      onClick={() => handleFilterChange(value)}
+    >
+      {label}
+    </Button>
+  );
 
   return (
     <div className='flex h-[calc(100vh-4rem)] flex-col'>
@@ -69,30 +115,10 @@ export default function BettingPlatform() {
           <Separator className='my-4' />
 
           <nav className='space-y-1'>
-            <Button
-              variant='ghost'
-              className='w-full justify-start font-medium'
-            >
-              Newest
-            </Button>
-            <Button
-              variant='ghost'
-              className='w-full justify-start font-medium'
-            >
-              Highest Vol.
-            </Button>
-            <Button
-              variant='ghost'
-              className='w-full justify-start font-medium'
-            >
-              Ending Soon
-            </Button>
-            <Button
-              variant='ghost'
-              className='w-full justify-start font-medium'
-            >
-              Recently Closed
-            </Button>
+            {renderFilterButton('newest', 'Newest')}
+            {renderFilterButton('highest', 'Highest Vol.')}
+            {renderFilterButton('ending_soon', 'Ending Soon')}
+            {renderFilterButton('recently_closed', 'Recently Closed')}
             <Separator className='my-2' />
           </nav>
         </div>
@@ -118,7 +144,12 @@ export default function BettingPlatform() {
 
               {/* Mobile Tabs */}
               <div className='scrollbar-hide scroll-hide mb-4 overflow-x-auto md:hidden'>
-                <Tabs defaultValue='newest' className='w-full'>
+                <Tabs
+                  defaultValue='newest'
+                  value={activeFilter}
+                  onValueChange={handleFilterChange}
+                  className='w-full'
+                >
                   <TabsList className='bg-gray-900'>
                     <TabsTrigger
                       value='newest'
@@ -133,13 +164,13 @@ export default function BettingPlatform() {
                       Highest Vol.
                     </TabsTrigger>
                     <TabsTrigger
-                      value='ending'
+                      value='ending_soon'
                       className='data-[state=active]:bg-gray-800'
                     >
                       Ending Soon
                     </TabsTrigger>
                     <TabsTrigger
-                      value='recent'
+                      value='recently_closed'
                       className='data-[state=active]:bg-gray-800'
                     >
                       Recent
@@ -159,7 +190,7 @@ export default function BettingPlatform() {
                     time={pool.createdAt}
                     question={pool.question}
                     options={pool.options}
-                    commentCount={5}
+                    commentCount={0}
                     volume='$700'
                   />
                 ))}

@@ -32,7 +32,9 @@ export function BettingPost({
   const [betAmount, setBetAmount] = useState('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showBetForm, setShowBetForm] = useState(false);
-  const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
+  const [factsCount, setFactsCount] = useState(
+    Math.floor(Math.random() * 50) + 5
+  );
   const [hasFactsed, setHasFactsed] = useState(false);
   const { authenticated, login } = usePrivy();
 
@@ -49,11 +51,11 @@ export function BettingPost({
       login();
       return;
     }
-    
+
     if (hasFactsed) {
-      setFactsCount(prev => prev - 1);
+      setFactsCount((prev) => prev - 1);
     } else {
-      setFactsCount(prev => prev + 1);
+      setFactsCount((prev) => prev + 1);
     }
     setHasFactsed(!hasFactsed);
   };
@@ -145,15 +147,15 @@ export function BettingPost({
             </Link>
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
               variant='outline'
               size='sm'
-              className="gap-1 font-bold text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
+              className='gap-1 font-bold text-orange-500 hover:text-orange-500 focus:text-orange-500 active:text-orange-500'
               onClick={handleFacts}
             >
               {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
-              <span className="ml-1.5">{factsCount}</span>
+              <span className='ml-1.5'>{factsCount}</span>
             </Button>
 
             <Button
