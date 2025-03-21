@@ -14,7 +14,7 @@ interface BettingPostProps {
   username: string;
   time: string;
   question: string;
-  options: { text: string; color: string }[];
+  options: string[];
   commentCount?: number;
   volume?: string;
 }
@@ -51,7 +51,7 @@ export function BettingPost({
     if (!betAmount || selectedOption === null) return;
 
     // Here you would connect to the smart contract
-    alert(`Placing ${betAmount} USDC bet on "${options[selectedOption].text}"`);
+    alert(`Placing ${betAmount} USDC bet on "${options[selectedOption]}"`);
 
     // Reset form
     setBetAmount('');
@@ -90,15 +90,23 @@ export function BettingPost({
         </div>
 
         <div className='mb-4 space-y-2'>
-          {options.map((option, index) => (
+          {options.map((option, i) => (
             <div
-              key={index}
+              key={i}
               className={`flex items-center justify-between rounded-md p-2 transition-colors ${
-                selectedOption === index ? 'bg-gray-800' : 'hover:bg-gray-900'
+                selectedOption === i ? 'bg-gray-800' : 'hover:bg-gray-900'
               } cursor-pointer`}
-              onClick={() => setSelectedOption(index)}
+              onClick={() => setSelectedOption(i)}
             >
-              <span className={option.color}>{option.text}</span>
+              <span
+                className={
+                  i === selectedOption
+                    ? 'font-medium text-white'
+                    : 'text-gray-400'
+                }
+              >
+                {option}
+              </span>
               <div className='flex items-center gap-1'>
                 <div className='flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs'>
                   0
@@ -154,7 +162,7 @@ export function BettingPost({
             {selectedOption !== null && (
               <p className='mt-2 text-xs text-gray-400'>
                 You are betting {betAmount || '0'} USDC on &quot;
-                {options[selectedOption].text}&quot;
+                {options[selectedOption]}&quot;
               </p>
             )}
           </div>

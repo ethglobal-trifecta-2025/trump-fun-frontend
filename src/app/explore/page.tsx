@@ -1,15 +1,37 @@
+'use client';
+
+import { BettingPost } from '@/components/betting-post';
+import { EndingSoonBet } from '@/components/ending-soon-bet';
+import { TrendingBet } from '@/components/trending-bet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Search, Clock, TrendingUp } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Clock, Search, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
-import { BettingPost } from '@/components/betting-post';
-import { TrendingBet } from '@/components/trending-bet';
-import { EndingSoonBet } from '@/components/ending-soon-bet';
+
+import { GET_POOLS } from '@/app/queries';
+import {
+  OrderDirection,
+  Pool_OrderBy,
+  PoolStatus,
+} from '@/lib/__generated__/graphql';
+import { useQuery } from '@apollo/client';
 
 export default function BettingPlatform() {
+  const { data: pools } = useQuery(GET_POOLS, {
+    variables: {
+      filter: {
+        status_in: [PoolStatus.Pending, PoolStatus.None],
+      },
+      orderBy: Pool_OrderBy.CreatedAt,
+      orderDirection: OrderDirection.Desc,
+    },
+    context: { name: 'mainSearch' },
+    notifyOnNetworkStatusChange: true,
+  });
+
   return (
     <div className='flex h-[calc(100vh-4rem)] flex-col'>
       <div className='flex flex-1 overflow-hidden'>
@@ -128,81 +150,19 @@ export default function BettingPlatform() {
 
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
-                <BettingPost
-                  id='1'
-                  avatar='/placeholder.svg?height=40&width=40'
-                  username='RichardFer47658'
-                  time='1 minute ago'
-                  question='Will the CanIBetOn team successfully complete a live demo without technical issues during the interview on March 20, 2025?'
-                  options={[
-                    {
-                      text: 'Yes, they will complete without issues',
-                      color: 'text-blue-400',
-                    },
-                    {
-                      text: 'No, there will be technical issues',
-                      color: 'text-red-500',
-                    },
-                  ]}
-                  commentCount={5}
-                  volume='$700'
-                />
-
-                <BettingPost
-                  id='2'
-                  avatar='/placeholder.svg?height=40&width=40'
-                  username='Mark_M007'
-                  time='1 minute ago'
-                  question='Will the CanIBetOn AI agent successfully launch a new betting pool during the live demo on March 20, 2025?'
-                  options={[
-                    { text: 'Yes', color: 'text-blue-400' },
-                    { text: 'No', color: 'text-red-500' },
-                  ]}
-                  commentCount={2}
-                  volume='$500'
-                />
-
-                <BettingPost
-                  id='3'
-                  avatar='/placeholder.svg?height=40&width=40'
-                  username='crypto_whale'
-                  time='5 minutes ago'
-                  question='Will Trump announce a new major policy position on crypto regulations before April 15, 2025?'
-                  options={[
-                    { text: 'Yes', color: 'text-blue-400' },
-                    { text: 'No', color: 'text-red-500' },
-                  ]}
-                  commentCount={12}
-                  volume='$1,200'
-                />
-
-                <BettingPost
-                  id='4'
-                  avatar='/placeholder.svg?height=40&width=40'
-                  username='TruthSeeker2024'
-                  time='15 minutes ago'
-                  question='Will Trump post more than 10 times on Truth Social on Election Day 2024?'
-                  options={[
-                    { text: 'Yes, more than 10 posts', color: 'text-blue-400' },
-                    { text: 'No, 10 or fewer posts', color: 'text-red-500' },
-                  ]}
-                  commentCount={8}
-                  volume='$850'
-                />
-
-                <BettingPost
-                  id='5'
-                  avatar='/placeholder.svg?height=40&width=40'
-                  username='alphabridgez'
-                  time='30 minutes ago'
-                  question='Will Trump mention AI or artificial intelligence in his next rally speech?'
-                  options={[
-                    { text: 'Yes', color: 'text-blue-400' },
-                    { text: 'No', color: 'text-red-500' },
-                  ]}
-                  commentCount={3}
-                  volume='$300'
-                />
+                {pools?.pools.map((pool) => (
+                  <BettingPost
+                    key={pool.id}
+                    id={pool.id}
+                    avatar='/trump.jpeg'
+                    username='realDonaldTrump'
+                    time={pool.createdAt}
+                    question={pool.question}
+                    options={pool.options}
+                    commentCount={5}
+                    volume='$700'
+                  />
+                ))}
               </div>
             </div>
           </div>

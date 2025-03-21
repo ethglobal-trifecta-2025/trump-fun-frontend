@@ -30,7 +30,7 @@ export function PoolList() {
   if (loading) {
     return (
       <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-        {[1, 2, 3].map((i) => (
+        {Array.from({ length: pools?.pools.length || 6 }).map((_, i) => (
           <div
             key={i}
             className='bg-muted h-[300px] animate-pulse rounded-lg p-4'
