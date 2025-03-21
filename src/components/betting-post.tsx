@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useWalletAddress } from '@/hooks/useWalletAddress';
+import { formatDistanceToNow } from 'date-fns';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 
 interface BettingPostProps {
   id: string;
   avatar: string;
   username: string;
-  time: string;
+  time: number; // Changed to number (unix timestamp)
   question: string;
   options: string[];
   commentCount?: number;
@@ -26,7 +26,7 @@ export function BettingPost({
   id,
   avatar,
   username,
-  time,
+  time, // Now expecting unix timestamp
   question,
   options,
   commentCount = 0,
@@ -41,15 +41,10 @@ export function BettingPost({
   const [hasFactsed, setHasFactsed] = useState(false);
   const [sliderValue, setSliderValue] = useState([0]);
   const { authenticated, login } = usePrivy();
-  const { isConnected } = useWalletAddress();
-  
+
   // Use our custom hook for token balance
-  const { 
-    balance, 
-    formattedBalance, 
-    symbol,
-    tokenTextLogo
-  } = useTokenBalance();
+  const { balance, formattedBalance, symbol, tokenTextLogo } =
+    useTokenBalance();
 
   // Update bet amount when slider changes
   useEffect(() => {
@@ -124,7 +119,9 @@ export function BettingPost({
             <div className='font-bold'>{username}</div>
           </div>
           <div className='flex items-center gap-2 text-sm text-gray-400'>
-            <span>{time}</span>
+            <span>
+              {formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}
+            </span>
             <X size={16} />
           </div>
         </div>
@@ -186,9 +183,11 @@ export function BettingPost({
             <Button
               variant='outline'
               size='sm'
-              className={`gap-1 font-bold ${hasFactsed 
-                ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
-                : 'text-orange-500 hover:text-orange-500'}`}
+              className={`gap-1 font-bold ${
+                hasFactsed
+                  ? 'border-orange-500 bg-orange-500/10 text-orange-500'
+                  : 'text-orange-500 hover:text-orange-500'
+              }`}
               onClick={handleFacts}
             >
               {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
@@ -209,29 +208,30 @@ export function BettingPost({
         {showBetForm && (
           <div className='mt-4 border-t border-gray-800 pt-4'>
             <h4 className='mb-2 text-sm font-medium'>Place your bet</h4>
-            
+
             {/* Display Token Balance */}
             {balance && (
-              <div className="mb-2 text-xs text-gray-400">
-                Balance: {formattedBalance} <span className="mx-1">{tokenTextLogo}</span> {symbol}
+              <div className='mb-2 text-xs text-gray-400'>
+                Balance: {formattedBalance}{' '}
+                <span className='mx-1'>{tokenTextLogo}</span> {symbol}
               </div>
             )}
-            
+
             {/* Percentage Buttons */}
-            <div className="flex gap-1 mb-2">
+            <div className='mb-2 flex gap-1'>
               {[25, 50, 75, 100].map((percent) => (
                 <Button
                   key={percent}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 text-xs"
+                  variant='outline'
+                  size='sm'
+                  className='flex-1 text-xs'
                   onClick={() => handlePercentageClick(percent)}
                 >
                   {percent}%
                 </Button>
               ))}
             </div>
-            
+
             {/* Slider */}
             <Slider
               defaultValue={[0]}
@@ -239,9 +239,9 @@ export function BettingPost({
               step={1}
               value={sliderValue}
               onValueChange={setSliderValue}
-              className="mb-4"
+              className='mb-4'
             />
-            
+
             <div className='flex gap-2'>
               <Input
                 type='number'
@@ -252,7 +252,10 @@ export function BettingPost({
                   setBetAmount(e.target.value);
                   if (balance && parseFloat(e.target.value) > 0) {
                     const maxAmount = parseFloat(balance.formatted);
-                    const percentage = Math.min(100, Math.round((parseFloat(e.target.value) / maxAmount) * 100));
+                    const percentage = Math.min(
+                      100,
+                      Math.round((parseFloat(e.target.value) / maxAmount) * 100)
+                    );
                     setSliderValue([percentage]);
                   }
                 }}
