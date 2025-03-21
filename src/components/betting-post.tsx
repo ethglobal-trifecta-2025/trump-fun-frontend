@@ -51,7 +51,7 @@ export function BettingPost({
     if (sliderValue[0] > 0 && balance) {
       const percentage = sliderValue[0] / 100;
       const maxAmount = parseFloat(balance.formatted);
-      const amount = (maxAmount * percentage).toFixed(6);
+      const amount = Math.floor(maxAmount * percentage).toString();
       setBetAmount(amount);
     } else if (sliderValue[0] === 0) {
       setBetAmount('');
@@ -84,7 +84,7 @@ export function BettingPost({
   const handlePercentageClick = (percentage: number) => {
     if (balance) {
       const maxAmount = parseFloat(balance.formatted);
-      const amount = (maxAmount * (percentage / 100)).toFixed(6);
+      const amount = Math.floor(maxAmount * (percentage / 100)).toString();
       setBetAmount(amount);
       setSliderValue([percentage]);
     }
@@ -245,18 +245,22 @@ export function BettingPost({
             <div className='flex gap-2'>
               <Input
                 type='number'
-                placeholder='Amount (USDC)'
+                placeholder='Amount (whole numbers only)'
                 className='flex-1'
                 value={betAmount}
                 onChange={(e) => {
-                  setBetAmount(e.target.value);
-                  if (balance && parseFloat(e.target.value) > 0) {
-                    const maxAmount = parseFloat(balance.formatted);
-                    const percentage = Math.min(
-                      100,
-                      Math.round((parseFloat(e.target.value) / maxAmount) * 100)
-                    );
-                    setSliderValue([percentage]);
+                  // Only allow whole numbers
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setBetAmount(value);
+                    if (balance && parseFloat(value) > 0) {
+                      const maxAmount = parseFloat(balance.formatted);
+                      const percentage = Math.min(
+                        100,
+                        Math.round((parseFloat(value) / maxAmount) * 100)
+                      );
+                      setSliderValue([percentage]);
+                    }
                   }
                 }}
               />

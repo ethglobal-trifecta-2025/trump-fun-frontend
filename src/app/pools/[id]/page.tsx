@@ -70,7 +70,7 @@ export default function PoolDetailPage() {
   const handlePercentageClick = (percentage: number) => {
     if (balance) {
       const maxAmount = parseFloat(balance.formatted);
-      const amount = (maxAmount * (percentage / 100)).toFixed(6);
+      const amount = Math.floor(maxAmount * (percentage / 100)).toString();
       setBetAmount(amount);
       setSliderValue([percentage]);
     }
@@ -132,7 +132,7 @@ export default function PoolDetailPage() {
     if (!betAmount || selectedOption === null) return;
 
     // Here you would connect to the smart contract
-    alert(`Placing ${betAmount} USDC bet on option: ${pool.options[selectedOption]}`);
+    alert(`Placing ${betAmount} ${symbol} bet on option: ${pool.options[selectedOption]}`);
   };
 
   if (isPoolLoading) {
@@ -345,22 +345,25 @@ export default function PoolDetailPage() {
                 />
               </div>
               
-              <div className='mb-4 flex flex-col sm:flex-row gap-2'>
+              <div className='mb-4 flex flex-row gap-2 items-center'>
                 <div className='relative flex-1'>
                   <Input
                     type='number'
-                    placeholder='0.00'
+                    placeholder='0'
                     value={betAmount}
                     onChange={(e) => {
+                      // Only allow whole numbers
                       const value = e.target.value;
-                      setBetAmount(value);
-                      // Update slider if there's a balance
-                      if (balance && parseFloat(value) > 0) {
-                        const maxAmount = parseFloat(balance.formatted);
-                        const percentage = Math.min(100, (parseFloat(value) / maxAmount) * 100);
-                        setSliderValue([percentage]);
-                      } else {
-                        setSliderValue([0]);
+                      if (value === '' || /^\d+$/.test(value)) {
+                        setBetAmount(value);
+                        // Update slider if there's a balance
+                        if (balance && parseFloat(value) > 0) {
+                          const maxAmount = parseFloat(balance.formatted);
+                          const percentage = Math.min(100, (parseFloat(value) / maxAmount) * 100);
+                          setSliderValue([percentage]);
+                        } else {
+                          setSliderValue([0]);
+                        }
                       }
                     }}
                     className='pr-16'
@@ -369,10 +372,26 @@ export default function PoolDetailPage() {
                     <span className="mr-1">{tokenTextLogo}</span> {symbol}
                   </div>
                 </div>
+
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={cn(
+                    "gap-1 font-bold",
+                    hasFactsed 
+                      ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                      : 'text-orange-500 hover:text-orange-500'
+                  )}
+                  onClick={handleFacts}
+                >
+                  {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
+                  <span className="ml-1.5">{poolFacts}</span>
+                </Button>
+
                 <Button 
                   onClick={placeBet} 
                   disabled={!betAmount || selectedOption === null || !authenticated}
-                  className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto"
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   Confirm Bet
                 </Button>
@@ -384,21 +403,7 @@ export default function PoolDetailPage() {
                 </p>
               )}
               
-              <Button
-                variant='outline'
-                size='sm'
-                className={cn(
-                  "gap-1 font-bold",
-                  hasFactsed 
-                    ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
-                    : 'text-orange-500 hover:text-orange-500'
-                )}
-                onClick={handleFacts}
-              >
-                {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
-                <span className="ml-1.5">{poolFacts}</span>
-              </Button>
-              <p className="mt-2 text-xs text-gray-400">Share your support for this prediction.</p>
+              <p className="text-xs text-gray-400">Share your support for this prediction.</p>
             </div>
           )}
 

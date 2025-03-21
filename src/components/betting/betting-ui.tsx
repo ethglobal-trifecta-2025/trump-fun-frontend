@@ -27,7 +27,7 @@ export default function BettingUI({
     null
   );
 
-  const [betAmount, setBetAmount] = useState('0.01');
+  const [betAmount, setBetAmount] = useState('1');
 
   const handleOptionSelect = (option: 'yes' | 'no') => {
     setSelectedOption(option);
@@ -66,7 +66,7 @@ export default function BettingUI({
 
     setSelectedOption(null);
 
-    setBetAmount('0.01');
+    setBetAmount('1');
   };
 
   return (
@@ -98,17 +98,27 @@ export default function BettingUI({
 
             <input
               type='number'
+              min='1'
+              step='1'
               value={betAmount}
-              onChange={(e) => setBetAmount(e.target.value)}
-              min='0.001'
-              step='0.001'
-              className='w-full rounded-md border px-3 py-2 dark:bg-gray-800'
+              onChange={(e) => {
+                // Only allow whole numbers
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  setBetAmount(value);
+                }
+              }}
+              className='w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800'
+              placeholder='Amount (whole numbers only)'
             />
           </div>
 
-          <Button onClick={handleBetSubmit} className='w-full sm:w-auto'>
-            Place Bet ({selectedOption === 'yes' ? yesBets : noBets} bets so
-            far)
+          <Button
+            onClick={handleBetSubmit}
+            disabled={!selectedOption || !betAmount}
+            className='mt-2 w-full sm:mt-0 sm:w-auto'
+          >
+            Place Bet
           </Button>
         </div>
       )}

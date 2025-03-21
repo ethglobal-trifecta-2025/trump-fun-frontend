@@ -12,10 +12,7 @@ interface UseTokenBalanceOptions {
 }
 
 /**
- * A custom hook to fetch token balances that works with both Privy and wagmi wallets.
- * 
- * @param tokenAddress Optional token address (uses the current selected token from context by default)
- * @param options Additional options for balance fetching
+ * A custom hook to fetch token balances using wagmi with Privy integration
  */
 export const useTokenBalance = (
   tokenAddress?: Address,
@@ -23,73 +20,100 @@ export const useTokenBalance = (
 ) => {
   const { address, isConnected, chainId } = useWalletAddress();
   const { tokenType, getTokenAddress, tokenSymbol, tokenLogo, tokenTextLogo } = useTokenContext();
-  const [lastSuccessfulBalance, setLastSuccessfulBalance] = useState<any>(null);
-  const [lastSuccessfulChainId, setLastSuccessfulChainId] = useState<number | null>(null);
   
-  // For POINTS, use ETH zero address (0x0000...) if on testnet/local, otherwise use the network specific address
-  let finalTokenAddress;
+  // Store separate balances for each token type to avoid mixing them up
+  const [usdcBalance, setUsdcBalance] = useState<any>(null);
+  const [nativeBalance, setNativeBalance] = useState<any>(null);
+  
+  // Track last token type to detect changes
+  const [lastTokenType, setLastTokenType] = useState<string | null>(null);
+  
+  // Get the correct token address based on token type
+  let finalTokenAddress: Address | undefined;
   if (tokenType === 'POINTS') {
-    finalTokenAddress = '0x0000000000000000000000000000000000000000' as Address;
+    // For POINTS (native token), use undefined to fetch native balance
+    finalTokenAddress = undefined;
   } else {
-    finalTokenAddress = tokenAddress || (chainId ? getTokenAddress(chainId) : null);
+    // For USDC, use provided address or look it up from the token context
+    finalTokenAddress = tokenAddress || (chainId ? getTokenAddress(chainId) || undefined : undefined);
   }
   
-  // Only fetch if we have both a wallet address and a token address
+  // Only fetch if wallet is connected
   const shouldFetch = Boolean(
     isConnected && 
     address && 
-    finalTokenAddress && 
     (options.enabled !== false)
   );
   
-  const { 
-    data: balance,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isSuccess
-  } = useBalance({
-    address: shouldFetch ? address : undefined,
-    token: shouldFetch && finalTokenAddress ? finalTokenAddress : undefined,
+  // Get USDC balance
+  const usdcBalanceResult = useBalance({
+    address: shouldFetch && tokenType === 'USDC' ? address : undefined,
+    token: shouldFetch && tokenType === 'USDC' ? finalTokenAddress : undefined,
+    chainId: shouldFetch ? chainId : undefined,
   });
-
-  // Store the last successful balance to avoid flashing zeros during network changes
+  
+  // Get native token balance (ETH/POINTS)
+  const nativeBalanceResult = useBalance({
+    address: shouldFetch && tokenType === 'POINTS' ? address : undefined,
+    chainId: shouldFetch ? chainId : undefined,
+  });
+  
+  // Reset on token type change
   useEffect(() => {
-    if (isSuccess && balance && parseFloat(balance.formatted) > 0) {
-      setLastSuccessfulBalance(balance);
-      setLastSuccessfulChainId(chainId);
+    if (lastTokenType !== null && lastTokenType !== tokenType) {
+      // Reset any token-specific state if needed
     }
-  }, [isSuccess, balance, chainId]);
+    setLastTokenType(tokenType);
+  }, [tokenType, lastTokenType]);
   
-  // Use the current balance if available and non-zero, otherwise use the cached balance
-  const finalBalance = 
-    (balance && parseFloat(balance.formatted) > 0) ? balance : 
-    (lastSuccessfulChainId === chainId && lastSuccessfulBalance) ? lastSuccessfulBalance : 
-    balance || null;
+  // Store successful balances
+  useEffect(() => {
+    if (usdcBalanceResult.isSuccess && usdcBalanceResult.data) {
+      setUsdcBalance(usdcBalanceResult.data);
+    }
+  }, [usdcBalanceResult.isSuccess, usdcBalanceResult.data]);
   
-  // Mock balances for demo purposes
-  // This is a temporary solution until real token balances are integrated
-  const mockBalance = {
-    USDC: '10.000000',
-    POINTS: '1.000000'
-  };
+  useEffect(() => {
+    if (nativeBalanceResult.isSuccess && nativeBalanceResult.data) {
+      setNativeBalance(nativeBalanceResult.data);
+    }
+  }, [nativeBalanceResult.isSuccess, nativeBalanceResult.data]);
   
-  // Helper for formatted display with fixed decimal places
-  const formattedBalance = tokenType === 'POINTS' 
-    ? mockBalance.POINTS 
-    : (finalBalance?.formatted ? parseFloat(finalBalance.formatted).toFixed(6) : mockBalance.USDC);
-    
+  // Get the appropriate balance object based on token type
+  const activeResult = tokenType === 'POINTS' ? nativeBalanceResult : usdcBalanceResult;
+  const cachedBalance = tokenType === 'POINTS' ? nativeBalance : usdcBalance;
+  
+  // Choose current balance or fallback to cached
+  const finalBalance = activeResult.data || cachedBalance;
+  
+  // Get token decimals (6 for USDC, 18 for native tokens but display only 4 decimals)
+  const tokenDecimals = tokenType === 'USDC' ? 6 : 18;
+  // Don't show any decimals in the display (no cents allowed)
+  
+  // Format balance with proper decimal precision - no decimals for display
+  const formattedBalance = finalBalance?.formatted 
+    ? parseFloat(finalBalance.formatted).toFixed(0)
+    : '0';
+  
+  // Determine loading and error states
+  const isLoading = activeResult.isLoading;
+  const isError = activeResult.isError;
+  const refetch = activeResult.refetch;
+  
   return {
+    // Balance data
     balance: finalBalance,
+    isError,
+    isLoading,
+    refetch,
+    
+    // Enhanced fields
     formattedBalance,
     symbol: tokenSymbol,
-    decimals: finalBalance?.decimals || 6,
+    decimals: finalBalance?.decimals || tokenDecimals,
     tokenLogo,
     tokenTextLogo,
-    isLoading,
-    isError,
-    error,
-    refetch
+    hasValidWallet: shouldFetch
   };
 }
+
