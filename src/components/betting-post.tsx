@@ -160,7 +160,11 @@ export function BettingPost({
                   ></div>
                 </div>
               </div>
-              <div className={`ml-2 ${tokenType === TokenType.POINTS ? 'text-orange-400' : 'text-blue-400'}`}>{volume} vol.</div>
+              <div
+                className={`ml-2 ${tokenType === TokenType.POINTS ? 'text-orange-400' : 'text-blue-400'}`}
+              >
+                {volume} vol.
+              </div>
             </div>
           )}
         </div>
@@ -184,7 +188,9 @@ export function BettingPost({
                 {option}
               </span>
               <div className='flex items-center gap-1'>
-                <div className={`flex items-center justify-center rounded-md ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'} px-1 py-0.5 text-xs`}>
+                <div
+                  className={`flex items-center justify-center rounded-md ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'} px-1 py-0.5 text-xs`}
+                >
                   {optionBets[i] || '0'}
                 </div>
               </div>

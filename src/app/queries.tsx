@@ -35,6 +35,8 @@ export const GET_POOLS = gql(`
         betsCloseAt
         usdcBetTotals
         pointsBetTotals
+        usdcVolume
+        pointsVolume
     }
   }
 `);

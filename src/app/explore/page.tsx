@@ -1,14 +1,14 @@
 'use client';
 
 import { BettingPost } from '@/components/betting-post';
-import { EndingSoonBet } from '@/components/ending-soon-bet';
-import { TrendingBet } from '@/components/trending-bet';
+import { EndingSoon } from '@/components/ending-soon';
+import { HighestVolume } from '@/components/highest-volume';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Search, TrendingUp } from 'lucide-react';
+import { Search } from 'lucide-react';
 import Link from 'next/link';
 
 import { GET_POOLS } from '@/app/queries';
@@ -27,13 +27,7 @@ export default function BettingPlatform() {
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
 
-  useEffect(() => {
-    // Only reset to newest if we're not already on newest
-    // This prevents unnecessary re-renders when tokenType changes
-    if (activeFilter !== 'newest') {
-      setActiveFilter('newest');
-    }
-  }, [tokenType, activeFilter]);
+  useEffect(() => {}, [tokenType]);
 
   const filterConfigs = useMemo(
     () => ({
@@ -79,16 +73,7 @@ export default function BettingPlatform() {
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: endingSoonPools } = useQuery(GET_POOLS, {
-    variables: {
-      filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
-      orderBy: Pool_OrderBy.BetsCloseAt,
-      orderDirection: OrderDirection.Asc,
-      first: 3,
-    },
-    context: { name: 'endingSoonSearch' },
-    notifyOnNetworkStatusChange: true,
-  });
+ 
 
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
@@ -108,11 +93,7 @@ export default function BettingPlatform() {
     );
   }, [pools?.pools, searchQuery]);
 
-  const filteredEndingSoonPools = useMemo(() => {
-    if (!endingSoonPools?.pools) return [];
-    return endingSoonPools.pools;
-  }, [endingSoonPools?.pools]);
-
+  
   const renderFilterButton = (value: string, label: string) => (
     <Button
       variant={activeFilter === value ? 'default' : 'ghost'}
@@ -240,7 +221,7 @@ export default function BettingPlatform() {
                     commentCount={0}
                     volume={calculateVolume(pool, tokenType)}
                     optionBets={pool.options.map((_, index) =>
-                      getBetTotals(pool, tokenType, index)
+                      getBetTotals(pool as any, tokenType, index)
                     )}
                   />
                 ))}
@@ -268,52 +249,10 @@ export default function BettingPlatform() {
           </div>
 
           {/* Highest Volume */}
-          <div className='bg-background mb-6 rounded-lg border border-gray-800 p-4 shadow-lg'>
-            <div className='mb-4 flex items-center gap-2'>
-              <TrendingUp size={20} className='text-orange-500' />
-              <h2 className='text-lg font-bold'>Highest Volume</h2>
-            </div>
-
-            <div className='space-y-6'>
-              <TrendingBet
-                question='Will Hollow Knight: Silksong be released before or on December 31, 2025?'
-                volume='$700 vol.'
-                progress={60}
-              />
-
-              <TrendingBet
-                question='Which streaming service will have the most subscribers by the end of 2025?'
-                volume='$200 vol.'
-                progress={90}
-              />
-
-              <TrendingBet
-                question='Will the Monster Hunter Wilds Mizutsune Title Update be released before or on April 30, 2025?'
-                volume='$100 vol.'
-                progress={80}
-              />
-            </div>
-          </div>
+          <HighestVolume />
 
           {/* Ending Soon */}
-          <div className='bg-background rounded-lg border border-gray-800 p-4 shadow-lg'>
-            <div className='mb-4 flex items-center gap-2'>
-              <Clock size={20} className='text-orange-500' />
-              <h2 className='text-lg font-bold'>Ending Soon</h2>
-            </div>
-
-            <div className='space-y-4'>
-              {filteredEndingSoonPools.map((pool) => (
-                <EndingSoonBet
-                  key={pool.id}
-                  avatar='/trump.jpeg'
-                  question={pool.question}
-                  volume={calculateVolume(pool, tokenType)}
-                  timeLeft={pool.betsCloseAt}
-                />
-              ))}
-            </div>
-          </div>
+          <EndingSoon />
         </div>
       </div>
     </div>
