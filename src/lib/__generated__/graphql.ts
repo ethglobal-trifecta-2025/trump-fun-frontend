@@ -44,7 +44,6 @@ export type Bet = {
   chainName: Scalars['String']['output'];
   createdAt: Scalars['BigInt']['output'];
   id: Scalars['String']['output'];
-  isPayedOut: Scalars['Boolean']['output'];
   isWithdrawn: Scalars['Boolean']['output'];
   option: Scalars['BigInt']['output'];
   pool: Pool;
@@ -65,7 +64,6 @@ export type BetPlaced = {
   chainName: Scalars['String']['output'];
   id: Scalars['Bytes']['output'];
   optionIndex: Scalars['BigInt']['output'];
-  poolCreated: PoolCreated;
   poolId: Scalars['BigInt']['output'];
   tokenType: Scalars['Int']['output'];
   transactionHash: Scalars['Bytes']['output'];
@@ -155,27 +153,6 @@ export type BetPlaced_Filter = {
   optionIndex_not?: InputMaybe<Scalars['BigInt']['input']>;
   optionIndex_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   or?: InputMaybe<Array<InputMaybe<BetPlaced_Filter>>>;
-  poolCreated?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_?: InputMaybe<PoolCreated_Filter>;
-  poolCreated_contains?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_ends_with?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_gt?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_gte?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  poolCreated_lt?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_lte?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not_contains?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  poolCreated_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_starts_with?: InputMaybe<Scalars['String']['input']>;
-  poolCreated_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
   poolId?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_gt?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_gte?: InputMaybe<Scalars['BigInt']['input']>;
@@ -223,19 +200,6 @@ export enum BetPlaced_OrderBy {
   ChainName = 'chainName',
   Id = 'id',
   OptionIndex = 'optionIndex',
-  PoolCreated = 'poolCreated',
-  PoolCreatedBlockNumber = 'poolCreated__blockNumber',
-  PoolCreatedBlockTimestamp = 'poolCreated__blockTimestamp',
-  PoolCreatedChainId = 'poolCreated__chainId',
-  PoolCreatedChainName = 'poolCreated__chainName',
-  PoolCreatedId = 'poolCreated__id',
-  PoolCreatedParamsBetsCloseAt = 'poolCreated__params_betsCloseAt',
-  PoolCreatedParamsClosureCriteria = 'poolCreated__params_closureCriteria',
-  PoolCreatedParamsClosureInstructions = 'poolCreated__params_closureInstructions',
-  PoolCreatedParamsOriginalTruthSocialPostId = 'poolCreated__params_originalTruthSocialPostId',
-  PoolCreatedParamsQuestion = 'poolCreated__params_question',
-  PoolCreatedPoolId = 'poolCreated__poolId',
-  PoolCreatedTransactionHash = 'poolCreated__transactionHash',
   PoolId = 'poolId',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
@@ -466,10 +430,6 @@ export type Bet_Filter = {
   id_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
   id_starts_with?: InputMaybe<Scalars['String']['input']>;
   id_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  isPayedOut?: InputMaybe<Scalars['Boolean']['input']>;
-  isPayedOut_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
-  isPayedOut_not?: InputMaybe<Scalars['Boolean']['input']>;
-  isPayedOut_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   isWithdrawn?: InputMaybe<Scalars['Boolean']['input']>;
   isWithdrawn_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   isWithdrawn_not?: InputMaybe<Scalars['Boolean']['input']>;
@@ -555,7 +515,6 @@ export enum Bet_OrderBy {
   ChainName = 'chainName',
   CreatedAt = 'createdAt',
   Id = 'id',
-  IsPayedOut = 'isPayedOut',
   IsWithdrawn = 'isWithdrawn',
   Option = 'option',
   Pool = 'pool',
@@ -578,9 +537,11 @@ export enum Bet_OrderBy {
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
   PoolLastUpdatedTransactionHash = 'pool__lastUpdatedTransactionHash',
   PoolOriginalTruthSocialPostId = 'pool__originalTruthSocialPostId',
+  PoolPointsVolume = 'pool__pointsVolume',
   PoolPoolId = 'pool__poolId',
   PoolQuestion = 'pool__question',
   PoolStatus = 'pool__status',
+  PoolUsdcVolume = 'pool__usdcVolume',
   PoolWinningOption = 'pool__winningOption',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
@@ -902,7 +863,6 @@ export enum PayoutClaimed_OrderBy {
   BetChainName = 'bet__chainName',
   BetCreatedAt = 'bet__createdAt',
   BetId = 'bet__id',
-  BetIsPayedOut = 'bet__isPayedOut',
   BetIsWithdrawn = 'bet__isWithdrawn',
   BetOption = 'bet__option',
   BetPoolId = 'bet__poolId',
@@ -935,9 +895,11 @@ export enum PayoutClaimed_OrderBy {
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
   PoolLastUpdatedTransactionHash = 'pool__lastUpdatedTransactionHash',
   PoolOriginalTruthSocialPostId = 'pool__originalTruthSocialPostId',
+  PoolPointsVolume = 'pool__pointsVolume',
   PoolPoolId = 'pool__poolId',
   PoolQuestion = 'pool__question',
   PoolStatus = 'pool__status',
+  PoolUsdcVolume = 'pool__usdcVolume',
   PoolWinningOption = 'pool__winningOption',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
@@ -967,10 +929,12 @@ export type Pool = {
   options: Array<Scalars['String']['output']>;
   originalTruthSocialPostId: Scalars['String']['output'];
   pointsBetTotals: Array<Scalars['BigInt']['output']>;
+  pointsVolume: Scalars['BigInt']['output'];
   poolId: Scalars['BigInt']['output'];
   question: Scalars['String']['output'];
   status: PoolStatus;
   usdcBetTotals: Array<Scalars['BigInt']['output']>;
+  usdcVolume: Scalars['BigInt']['output'];
   winningOption: Scalars['BigInt']['output'];
 };
 
@@ -1530,6 +1494,14 @@ export type Pool_Filter = {
   pointsBetTotals_not?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   pointsBetTotals_not_contains?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   pointsBetTotals_not_contains_nocase?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  pointsVolume?: InputMaybe<Scalars['BigInt']['input']>;
+  pointsVolume_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  pointsVolume_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  pointsVolume_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  pointsVolume_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  pointsVolume_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  pointsVolume_not?: InputMaybe<Scalars['BigInt']['input']>;
+  pointsVolume_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   poolId?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_gt?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_gte?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1568,6 +1540,14 @@ export type Pool_Filter = {
   usdcBetTotals_not?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   usdcBetTotals_not_contains?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   usdcBetTotals_not_contains_nocase?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  usdcVolume?: InputMaybe<Scalars['BigInt']['input']>;
+  usdcVolume_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  usdcVolume_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  usdcVolume_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  usdcVolume_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  usdcVolume_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  usdcVolume_not?: InputMaybe<Scalars['BigInt']['input']>;
+  usdcVolume_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   winningOption?: InputMaybe<Scalars['BigInt']['input']>;
   winningOption_gt?: InputMaybe<Scalars['BigInt']['input']>;
   winningOption_gte?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1600,10 +1580,12 @@ export enum Pool_OrderBy {
   Options = 'options',
   OriginalTruthSocialPostId = 'originalTruthSocialPostId',
   PointsBetTotals = 'pointsBetTotals',
+  PointsVolume = 'pointsVolume',
   PoolId = 'poolId',
   Question = 'question',
   Status = 'status',
   UsdcBetTotals = 'usdcBetTotals',
+  UsdcVolume = 'usdcVolume',
   WinningOption = 'winningOption'
 }
 
