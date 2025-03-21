@@ -18,10 +18,22 @@ import {
   PoolStatus,
 } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
+  const [searchQuery, setSearchQuery] = useState('');
+  const { tokenType } = useTokenContext();
+
+  useEffect(() => {
+    // Only reset to newest if we're not already on newest
+    // This prevents unnecessary re-renders when tokenType changes
+    if (activeFilter !== 'newest') {
+      setActiveFilter('newest');
+    }
+  }, [tokenType, activeFilter]);
 
   const filterConfigs = useMemo(
     () => ({
@@ -43,7 +55,10 @@ export default function BettingPlatform() {
       recently_closed: {
         orderBy: Pool_OrderBy.BetsCloseAt,
         orderDirection: OrderDirection.Desc,
-        filter: { status_in: [PoolStatus.Graded, PoolStatus.Regraded] },
+        filter: {
+          status_in: [PoolStatus.Graded, PoolStatus.Regraded],
+          betsCloseAt_lt: Date.now().toString(),
+        },
       },
     }),
     []
@@ -69,6 +84,7 @@ export default function BettingPlatform() {
       filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
       orderBy: Pool_OrderBy.BetsCloseAt,
       orderDirection: OrderDirection.Asc,
+      first: 3,
     },
     context: { name: 'endingSoonSearch' },
     notifyOnNetworkStatusChange: true,
@@ -77,6 +93,25 @@ export default function BettingPlatform() {
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
   };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredPools = useMemo(() => {
+    if (!pools?.pools) return [];
+    if (!searchQuery.trim()) return pools.pools;
+
+    const query = searchQuery.toLowerCase().trim();
+    return pools.pools.filter((pool) =>
+      pool.question.toLowerCase().includes(query)
+    );
+  }, [pools?.pools, searchQuery]);
+
+  const filteredEndingSoonPools = useMemo(() => {
+    if (!endingSoonPools?.pools) return [];
+    return endingSoonPools.pools;
+  }, [endingSoonPools?.pools]);
 
   const renderFilterButton = (value: string, label: string) => (
     <Button
@@ -148,6 +183,8 @@ export default function BettingPlatform() {
                   <Input
                     placeholder='Search pools...'
                     className='border-gray-700 bg-gray-900 pl-10 text-white'
+                    value={searchQuery}
+                    onChange={handleSearch}
                   />
                 </div>
               </div>
@@ -191,7 +228,7 @@ export default function BettingPlatform() {
 
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
-                {pools?.pools.map((pool) => (
+                {filteredPools.map((pool) => (
                   <BettingPost
                     key={pool.id}
                     id={pool.id}
@@ -201,7 +238,10 @@ export default function BettingPlatform() {
                     question={pool.question}
                     options={pool.options}
                     commentCount={0}
-                    volume='$700'
+                    volume={calculateVolume(pool, tokenType)}
+                    optionBets={pool.options.map((_, index) =>
+                      getBetTotals(pool, tokenType, index)
+                    )}
                   />
                 ))}
               </div>
@@ -221,6 +261,8 @@ export default function BettingPlatform() {
               <Input
                 placeholder='Search pools...'
                 className='bg-background border-gray-700 pl-10 text-white'
+                value={searchQuery}
+                onChange={handleSearch}
               />
             </div>
           </div>
@@ -261,17 +303,15 @@ export default function BettingPlatform() {
             </div>
 
             <div className='space-y-4'>
-              {endingSoonPools?.pools
-                .slice(0, 3)
-                .map((pool) => (
-                  <EndingSoonBet
-                    key={pool.id}
-                    avatar='/trump.jpeg'
-                    question={pool.question}
-                    volume='$0 vol.'
-                    timeLeft={pool.betsCloseAt}
-                  />
-                ))}
+              {filteredEndingSoonPools.map((pool) => (
+                <EndingSoonBet
+                  key={pool.id}
+                  avatar='/trump.jpeg'
+                  question={pool.question}
+                  volume={calculateVolume(pool, tokenType)}
+                  timeLeft={pool.betsCloseAt}
+                />
+              ))}
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import { X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { useTokenContext, TokenType } from '@/hooks/useTokenContext';
 
 interface BettingPostProps {
   id: string;
@@ -20,6 +21,7 @@ interface BettingPostProps {
   options: string[];
   commentCount?: number;
   volume?: string;
+  optionBets?: string[];
 }
 
 export function BettingPost({
@@ -31,6 +33,7 @@ export function BettingPost({
   options,
   commentCount = 0,
   volume = '0',
+  optionBets = [],
 }: BettingPostProps) {
   const [betAmount, setBetAmount] = useState('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -41,10 +44,10 @@ export function BettingPost({
   const [hasFactsed, setHasFactsed] = useState(false);
   const [sliderValue, setSliderValue] = useState([0]);
   const { authenticated, login } = usePrivy();
+  const { tokenType } = useTokenContext();
 
   // Use our custom hook for token balance
-  const { balance, formattedBalance, symbol, tokenTextLogo } =
-    useTokenBalance();
+  const { balance, formattedBalance, symbol } = useTokenBalance();
 
   // Update bet amount when slider changes
   useEffect(() => {
@@ -99,7 +102,9 @@ export function BettingPost({
     if (!betAmount || selectedOption === null) return;
 
     // Here you would connect to the smart contract
-    alert(`Placing ${betAmount} USDC bet on "${options[selectedOption]}"`);
+    alert(
+      `Placing ${betAmount} ${tokenType} bet on "${options[selectedOption]}"`
+    );
 
     // Reset form
     setBetAmount('');
@@ -132,10 +137,31 @@ export function BettingPost({
           </p>
         </Link>
 
-        <div className='mb-3 flex items-center justify-between rounded-md bg-gray-800 p-2 text-center text-gray-400'>
-          <span>No bets</span>
-          {volume !== '0' && (
-            <span className='text-orange-400'>{volume} vol.</span>
+        <div className='mb-3 rounded-md'>
+          {volume === '0' ? (
+            <div className='p-2 text-center text-gray-400'>
+              <span>No bets</span>
+            </div>
+          ) : (
+            <div className='relative flex items-center justify-between'>
+              <div className='flex-1 rounded-full bg-gray-800'>
+                <div className='flex overflow-hidden rounded-full'>
+                  <div
+                    className={`h-2 rounded-l-full ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'}`}
+                    style={{
+                      width: `${Math.min(100, (parseFloat(optionBets[0]) / parseFloat(volume.replace('$', '').replace(' pts', ''))) * 100)}%`,
+                    }}
+                  ></div>
+                  <div
+                    className='h-2 rounded-r-full bg-gray-700'
+                    style={{
+                      width: `${Math.min(100, (parseFloat(optionBets[1]) / parseFloat(volume.replace('$', '').replace(' pts', ''))) * 100)}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className={`ml-2 ${tokenType === TokenType.POINTS ? 'text-orange-400' : 'text-blue-400'}`}>{volume} vol.</div>
+            </div>
           )}
         </div>
 
@@ -158,8 +184,8 @@ export function BettingPost({
                 {option}
               </span>
               <div className='flex items-center gap-1'>
-                <div className='flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs'>
-                  0
+                <div className={`flex items-center justify-center rounded-md ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'} px-1 py-0.5 text-xs`}>
+                  {optionBets[i] || '0'}
                 </div>
               </div>
             </div>
@@ -212,8 +238,7 @@ export function BettingPost({
             {/* Display Token Balance */}
             {balance && (
               <div className='mb-2 text-xs text-gray-400'>
-                Balance: {formattedBalance}{' '}
-                <span className='mx-1'>{tokenTextLogo}</span> {symbol}
+                Balance: {formattedBalance} {symbol}
               </div>
             )}
 
@@ -265,7 +290,7 @@ export function BettingPost({
                 }}
               />
               <Button
-                className='bg-orange-600 hover:bg-orange-700'
+                className={`${tokenType === TokenType.POINTS ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                 onClick={placeBet}
                 disabled={!betAmount || selectedOption === null}
               >
@@ -274,7 +299,7 @@ export function BettingPost({
             </div>
             {selectedOption !== null && (
               <p className='mt-2 text-xs text-gray-400'>
-                You are betting {betAmount || '0'} USDC on &quot;
+                You are betting {betAmount || '0'} {tokenType} on &quot;
                 {options[selectedOption]}&quot;
               </p>
             )}
