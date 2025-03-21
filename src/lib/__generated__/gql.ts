@@ -12,7 +12,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  *
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
- */
+*/
 type Documents = {
     "\n  query GetPools(\n    $filter: Pool_filter!\n    $orderBy: Pool_orderBy!\n    $orderDirection: OrderDirection!\n  ) {\n    pools(\n      where: $filter\n      orderBy: $orderBy\n      orderDirection: $orderDirection\n    ) {\n        id\n        poolId\n        question\n        options\n        status\n        chainId\n        chainName\n        createdAt\n        createdBlockNumber\n        createdBlockTimestamp\n        createdTransactionHash\n        lastUpdatedBlockNumber\n        lastUpdatedBlockTimestamp\n        lastUpdatedTransactionHash\n        gradedBlockNumber\n        gradedBlockTimestamp\n        gradedTransactionHash\n        betsCloseAt\n    }\n  }\n": typeof types.GetPoolsDocument,
     "\n  subscription GetPoolsSubscription(\n    $filter: Pool_filter!\n  ) {\n    pools(\n      where: $filter\n    ) {\n        id\n        poolId\n        question\n        options\n        status\n        chainId\n        chainName\n        createdAt\n        createdBlockNumber\n        createdBlockTimestamp\n        createdTransactionHash\n        lastUpdatedBlockNumber\n        lastUpdatedBlockTimestamp\n        lastUpdatedTransactionHash\n        gradedBlockNumber\n        gradedBlockTimestamp\n        gradedTransactionHash\n    }\n  }\n": typeof types.GetPoolsSubscriptionDocument,

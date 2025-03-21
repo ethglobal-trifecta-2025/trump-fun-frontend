@@ -1,6 +1,5 @@
 'use client';
 
-import { betABI } from '@/abi/bet';
 import { GET_POOL } from '@/app/queries';
 import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
 import { Progress } from '@/components/Progress';
@@ -35,14 +34,17 @@ import {
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useWriteContract } from 'wagmi';
+import { usePublicClient, useWriteContract, useAccount } from 'wagmi';
+import betAbi from '@/abi/bet.json';
+import erc20ABI from '@/abi/erc20.json';
 
 export default function PoolDetailPage() {
   const { id } = useParams();
-  const { login } = usePrivy();
   const { isConnected, authenticated } = useWalletAddress();
+  const publicClient = usePublicClient();
+  const account = useAccount();
 
-  const [betAmount, setBetAmount] = useState('');
+  const [betAmount, setBetAmount] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [sliderValue, setSliderValue] = useState([0]);
   const [poolFacts, setPoolFacts] = useState(
@@ -59,10 +61,10 @@ export default function PoolDetailPage() {
     if (sliderValue[0] > 0 && balance) {
       const percentage = sliderValue[0] / 100;
       const maxAmount = parseFloat(balance.formatted);
-      const amount = (maxAmount * percentage).toFixed(6);
+      const amount = parseFloat((maxAmount * percentage).toFixed(6));
       setBetAmount(amount);
     } else if (sliderValue[0] === 0) {
-      setBetAmount('');
+      setBetAmount(0);
     }
   }, [sliderValue, balance]);
 
@@ -70,16 +72,14 @@ export default function PoolDetailPage() {
   const handlePercentageClick = (percentage: number) => {
     if (balance) {
       const maxAmount = parseFloat(balance.formatted);
-      const amount = Math.floor(maxAmount * (percentage / 100)).toString();
+      const amount = parseFloat((maxAmount * (percentage / 100)).toFixed(6));
       setBetAmount(amount);
       setSliderValue([percentage]);
     }
   };
 
   const { data: hash, writeContract } = useWriteContract();
-  const [chosenOption, setChosenOption] = useState<number>(0);
-  const [amount, setAmount] = useState<number>(0);
-  const tokenType = 0;
+  const tokenType = 1;
   const { wallets } = useWallets();
   const { ready } = usePrivy();
 
@@ -129,11 +129,62 @@ export default function PoolDetailPage() {
     }
   };
 
-  // Place bet function
-  const placeBet = () => {
-    if (!authenticated) {
-      login();
-      return;
+  const handleBet = async () => {
+    if (!writeContract) return;
+
+    console.log(wallets);
+
+    try {
+      if (!ready || !publicClient) {
+        console.error('Privy is not ready');
+        return;
+      }
+
+      if (!wallets?.length) {
+        console.error('No wallet connected');
+        return;
+      }
+
+      if (!betAmount || betAmount <= 0) {
+        console.error('Invalid amount');
+        return;
+      }
+
+      const tokenAddress = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+      const tokenAmount = BigInt(betAmount * 1e6);
+      const tokenDecimals = 6;
+
+      const { request: approveRequest } = await publicClient.simulateContract({
+        abi: erc20ABI,
+        address: tokenAddress as `0x${string}`,
+        functionName: 'approve',
+        account: account.address as `0x${string}`,
+        args: [
+          '0x3646Eb6C4459833E3A6791c832b2897051fF17B0',
+          BigInt(tokenAmount) * BigInt(10 ** tokenDecimals),
+        ],
+      });
+
+      const approveTx = await writeContract(approveRequest);
+      console.log('Approve transaction finalized:', approveTx);
+
+      const { request } = await publicClient.simulateContract({
+        abi: betAbi,
+        address: '0x3646Eb6C4459833E3A6791c832b2897051fF17B0',
+        functionName: 'placeBet',
+        account: account.address as `0x${string}`,
+        args: [pool.id, selectedOption, betAmount, account.address, tokenType],
+        value: BigInt(betAmount),
+      });
+
+      const depositTx = writeContract(request);
+
+      console.log('Transaction finalized:', depositTx);
+      console.log('Transaction hash:', hash);
+      // Handle transaction success (e.g., show a success message)
+    } catch (error) {
+      console.error('Error placing bet:', error);
+      // Handle transaction error (e.g., show an error message)
     }
 
     if (!betAmount || selectedOption === null) return;
@@ -217,43 +268,6 @@ export default function PoolDetailPage() {
   };
 
   const { yesPercentage, noPercentage } = calculatePercentages();
-
-  const handleBet = async () => {
-    if (!writeContract) return;
-
-    console.log(wallets);
-
-    try {
-      if (!ready) {
-        console.error('Privy is not ready');
-        return;
-      }
-
-      if (!wallets?.length) {
-        console.error('No wallet connected');
-        return;
-      }
-
-      if (!amount || amount <= 0) {
-        console.error('Invalid amount');
-        return;
-      }
-
-      const tx = await writeContract({
-        args: [pool.id, chosenOption, amount, wallets[0].address, tokenType],
-        abi: betABI,
-        address: '0x20e975516Fae905839F61754778483ecEA7EB403',
-        functionName: 'placeBet',
-        value: BigInt(amount),
-      });
-      console.log('Transaction:', tx);
-      console.log('Transaction hash:', hash);
-      // Handle transaction success (e.g., show a success message)
-    } catch (error) {
-      console.error('Error placing bet:', error);
-      // Handle transaction error (e.g., show an error message)
-    }
-  };
 
   // Format total volume
   const formatTotalVolume = () => {
@@ -402,13 +416,15 @@ export default function PoolDetailPage() {
                     placeholder='0'
                     value={betAmount}
                     onChange={(e) => {
-                      // Only allow whole numbers
-                      const value = e.target.value;
-                      setBetAmount(value);
+                      const value = parseFloat(e.target.value);
+                      setBetAmount(isNaN(value) ? 0 : value);
                       // Update slider if there's a balance
-                      if (balance && parseFloat(value) > 0) {
+                      if (balance && value > 0) {
                         const maxAmount = parseFloat(balance.formatted);
-                        const percentage = Math.min(100, (parseFloat(value) / maxAmount) * 100);
+                        const percentage = Math.min(
+                          100,
+                          (parseFloat(value.toString()) / maxAmount) * 100
+                        );
                         setSliderValue([percentage]);
                       } else {
                         setSliderValue([0]);
@@ -420,10 +436,12 @@ export default function PoolDetailPage() {
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
                   </div>
                 </div>
-                <Button 
-                  onClick={placeBet} 
-                  disabled={!betAmount || selectedOption === null || !authenticated}
-                  className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto"
+                <Button
+                  onClick={handleBet}
+                  disabled={
+                    !betAmount || selectedOption === null || !authenticated
+                  }
+                  className='w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
                 >
                   Confirm Bet
                 </Button>
