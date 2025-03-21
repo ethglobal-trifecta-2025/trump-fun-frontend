@@ -1,36 +1,49 @@
 /* eslint-disable */
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
+    };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  BigDecimal: { input: any; output: any; }
-  BigInt: { input: any; output: any; }
-  Bytes: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  BigDecimal: { input: any; output: any };
+  BigInt: { input: any; output: any };
+  Bytes: { input: any; output: any };
   /**
    * 8 bytes signed integer
    *
    */
-  Int8: { input: any; output: any; }
+  Int8: { input: any; output: any };
   /**
    * A string representation of microseconds UNIX timestamp (16 digits)
    *
    */
-  Timestamp: { input: any; output: any; }
+  Timestamp: { input: any; output: any };
 };
 
 export enum Aggregation_Interval {
   Day = 'day',
-  Hour = 'hour'
+  Hour = 'hour',
 }
 
 export type Bet = {
@@ -238,7 +251,7 @@ export enum BetPlaced_OrderBy {
   PoolId = 'poolId',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
-  User = 'user'
+  User = 'user',
 }
 
 export type BetWithdrawal = {
@@ -370,7 +383,7 @@ export enum BetWithdrawal_OrderBy {
   Id = 'id',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
-  User = 'user'
+  User = 'user',
 }
 
 export type Bet_Filter = {
@@ -584,7 +597,7 @@ export enum Bet_OrderBy {
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
   UpdatedAt = 'updatedAt',
-  User = 'user'
+  User = 'user',
 }
 
 export type BlockChangedFilter = {
@@ -600,7 +613,7 @@ export type Block_Height = {
 /** Defines the order direction, either ascending or descending */
 export enum OrderDirection {
   Asc = 'asc',
-  Desc = 'desc'
+  Desc = 'desc',
 }
 
 export type OwnershipTransferred = {
@@ -714,7 +727,7 @@ export enum OwnershipTransferred_OrderBy {
   Id = 'id',
   NewOwner = 'newOwner',
   PreviousOwner = 'previousOwner',
-  TransactionHash = 'transactionHash'
+  TransactionHash = 'transactionHash',
 }
 
 export type PayoutClaimed = {
@@ -940,7 +953,7 @@ export enum PayoutClaimed_OrderBy {
   PoolWinningOption = 'pool__winningOption',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
-  User = 'user'
+  User = 'user',
 }
 
 export type Pool = {
@@ -972,7 +985,6 @@ export type Pool = {
   usdcBetTotals: Array<Scalars['BigInt']['output']>;
   winningOption: Scalars['BigInt']['output'];
 };
-
 
 export type PoolBetsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1089,7 +1101,7 @@ export enum PoolClosed_OrderBy {
   Id = 'id',
   PoolId = 'poolId',
   SelectedOption = 'selectedOption',
-  TransactionHash = 'transactionHash'
+  TransactionHash = 'transactionHash',
 }
 
 export type PoolCreated = {
@@ -1178,9 +1190,13 @@ export type PoolCreated_Filter = {
   params_betsCloseAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   params_closureCriteria?: InputMaybe<Scalars['String']['input']>;
   params_closureCriteria_contains?: InputMaybe<Scalars['String']['input']>;
-  params_closureCriteria_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureCriteria_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureCriteria_ends_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureCriteria_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureCriteria_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureCriteria_gt?: InputMaybe<Scalars['String']['input']>;
   params_closureCriteria_gte?: InputMaybe<Scalars['String']['input']>;
   params_closureCriteria_in?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1188,60 +1204,124 @@ export type PoolCreated_Filter = {
   params_closureCriteria_lte?: InputMaybe<Scalars['String']['input']>;
   params_closureCriteria_not?: InputMaybe<Scalars['String']['input']>;
   params_closureCriteria_not_contains?: InputMaybe<Scalars['String']['input']>;
-  params_closureCriteria_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureCriteria_not_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureCriteria_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureCriteria_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureCriteria_not_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureCriteria_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  params_closureCriteria_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureCriteria_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureCriteria_not_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureCriteria_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureCriteria_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureCriteria_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureCriteria_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureInstructions?: InputMaybe<Scalars['String']['input']>;
   params_closureInstructions_contains?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureInstructions_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureInstructions_ends_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureInstructions_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_closureInstructions_gt?: InputMaybe<Scalars['String']['input']>;
   params_closureInstructions_gte?: InputMaybe<Scalars['String']['input']>;
   params_closureInstructions_in?: InputMaybe<Array<Scalars['String']['input']>>;
   params_closureInstructions_lt?: InputMaybe<Scalars['String']['input']>;
   params_closureInstructions_lte?: InputMaybe<Scalars['String']['input']>;
   params_closureInstructions_not?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_not_contains?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  params_closureInstructions_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_closureInstructions_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_closureInstructions_not_contains?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_not_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_not_ends_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_not_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_not_in?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
+  params_closureInstructions_not_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_closureInstructions_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_options?: InputMaybe<Array<Scalars['String']['input']>>;
   params_options_contains?: InputMaybe<Array<Scalars['String']['input']>>;
-  params_options_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  params_options_contains_nocase?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
   params_options_not?: InputMaybe<Array<Scalars['String']['input']>>;
   params_options_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
-  params_options_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  params_options_not_contains_nocase?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
   params_originalTruthSocialPostId?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_contains?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_ends_with?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_originalTruthSocialPostId_contains?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_ends_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_originalTruthSocialPostId_gt?: InputMaybe<Scalars['String']['input']>;
   params_originalTruthSocialPostId_gte?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  params_originalTruthSocialPostId_in?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
   params_originalTruthSocialPostId_lt?: InputMaybe<Scalars['String']['input']>;
   params_originalTruthSocialPostId_lte?: InputMaybe<Scalars['String']['input']>;
   params_originalTruthSocialPostId_not?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_not_contains?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  params_originalTruthSocialPostId_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_originalTruthSocialPostId_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_originalTruthSocialPostId_not_contains?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_not_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_not_ends_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_not_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_not_in?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
+  params_originalTruthSocialPostId_not_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  params_originalTruthSocialPostId_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_question?: InputMaybe<Scalars['String']['input']>;
   params_question_contains?: InputMaybe<Scalars['String']['input']>;
   params_question_contains_nocase?: InputMaybe<Scalars['String']['input']>;
@@ -1259,7 +1339,9 @@ export type PoolCreated_Filter = {
   params_question_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   params_question_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
   params_question_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  params_question_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  params_question_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   params_question_starts_with?: InputMaybe<Scalars['String']['input']>;
   params_question_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
   poolId?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1295,14 +1377,14 @@ export enum PoolCreated_OrderBy {
   ParamsOriginalTruthSocialPostId = 'params_originalTruthSocialPostId',
   ParamsQuestion = 'params_question',
   PoolId = 'poolId',
-  TransactionHash = 'transactionHash'
+  TransactionHash = 'transactionHash',
 }
 
 export enum PoolStatus {
   Graded = 'GRADED',
   None = 'NONE',
   Pending = 'PENDING',
-  Regraded = 'REGRADED'
+  Regraded = 'REGRADED',
 }
 
 export type Pool_Filter = {
@@ -1363,7 +1445,9 @@ export type Pool_Filter = {
   closureCriteria_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   closureCriteria_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
   closureCriteria_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  closureCriteria_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  closureCriteria_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   closureCriteria_starts_with?: InputMaybe<Scalars['String']['input']>;
   closureCriteria_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
   closureInstructions?: InputMaybe<Scalars['String']['input']>;
@@ -1378,14 +1462,22 @@ export type Pool_Filter = {
   closureInstructions_lte?: InputMaybe<Scalars['String']['input']>;
   closureInstructions_not?: InputMaybe<Scalars['String']['input']>;
   closureInstructions_not_contains?: InputMaybe<Scalars['String']['input']>;
-  closureInstructions_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  closureInstructions_not_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   closureInstructions_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  closureInstructions_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  closureInstructions_not_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   closureInstructions_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
   closureInstructions_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  closureInstructions_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  closureInstructions_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   closureInstructions_starts_with?: InputMaybe<Scalars['String']['input']>;
-  closureInstructions_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  closureInstructions_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   createdAt?: InputMaybe<Scalars['BigInt']['input']>;
   createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
   createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1485,7 +1577,9 @@ export type Pool_Filter = {
   lastUpdatedBlockTimestamp_lt?: InputMaybe<Scalars['BigInt']['input']>;
   lastUpdatedBlockTimestamp_lte?: InputMaybe<Scalars['BigInt']['input']>;
   lastUpdatedBlockTimestamp_not?: InputMaybe<Scalars['BigInt']['input']>;
-  lastUpdatedBlockTimestamp_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  lastUpdatedBlockTimestamp_not_in?: InputMaybe<
+    Array<Scalars['BigInt']['input']>
+  >;
   lastUpdatedTransactionHash?: InputMaybe<Scalars['Bytes']['input']>;
   lastUpdatedTransactionHash_contains?: InputMaybe<Scalars['Bytes']['input']>;
   lastUpdatedTransactionHash_gt?: InputMaybe<Scalars['Bytes']['input']>;
@@ -1494,8 +1588,12 @@ export type Pool_Filter = {
   lastUpdatedTransactionHash_lt?: InputMaybe<Scalars['Bytes']['input']>;
   lastUpdatedTransactionHash_lte?: InputMaybe<Scalars['Bytes']['input']>;
   lastUpdatedTransactionHash_not?: InputMaybe<Scalars['Bytes']['input']>;
-  lastUpdatedTransactionHash_not_contains?: InputMaybe<Scalars['Bytes']['input']>;
-  lastUpdatedTransactionHash_not_in?: InputMaybe<Array<Scalars['Bytes']['input']>>;
+  lastUpdatedTransactionHash_not_contains?: InputMaybe<
+    Scalars['Bytes']['input']
+  >;
+  lastUpdatedTransactionHash_not_in?: InputMaybe<
+    Array<Scalars['Bytes']['input']>
+  >;
   options?: InputMaybe<Array<Scalars['String']['input']>>;
   options_contains?: InputMaybe<Array<Scalars['String']['input']>>;
   options_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1505,30 +1603,56 @@ export type Pool_Filter = {
   or?: InputMaybe<Array<InputMaybe<Pool_Filter>>>;
   originalTruthSocialPostId?: InputMaybe<Scalars['String']['input']>;
   originalTruthSocialPostId_contains?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  originalTruthSocialPostId_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   originalTruthSocialPostId_ends_with?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  originalTruthSocialPostId_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   originalTruthSocialPostId_gt?: InputMaybe<Scalars['String']['input']>;
   originalTruthSocialPostId_gte?: InputMaybe<Scalars['String']['input']>;
   originalTruthSocialPostId_in?: InputMaybe<Array<Scalars['String']['input']>>;
   originalTruthSocialPostId_lt?: InputMaybe<Scalars['String']['input']>;
   originalTruthSocialPostId_lte?: InputMaybe<Scalars['String']['input']>;
   originalTruthSocialPostId_not?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_not_contains?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  originalTruthSocialPostId_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_starts_with?: InputMaybe<Scalars['String']['input']>;
-  originalTruthSocialPostId_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  originalTruthSocialPostId_not_contains?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_not_contains_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_not_ends_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_not_ends_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_not_in?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
+  originalTruthSocialPostId_not_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_not_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_starts_with?: InputMaybe<
+    Scalars['String']['input']
+  >;
+  originalTruthSocialPostId_starts_with_nocase?: InputMaybe<
+    Scalars['String']['input']
+  >;
   pointsBetTotals?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   pointsBetTotals_contains?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  pointsBetTotals_contains_nocase?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  pointsBetTotals_contains_nocase?: InputMaybe<
+    Array<Scalars['BigInt']['input']>
+  >;
   pointsBetTotals_not?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   pointsBetTotals_not_contains?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  pointsBetTotals_not_contains_nocase?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  pointsBetTotals_not_contains_nocase?: InputMaybe<
+    Array<Scalars['BigInt']['input']>
+  >;
   poolId?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_gt?: InputMaybe<Scalars['BigInt']['input']>;
   poolId_gte?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1566,7 +1690,9 @@ export type Pool_Filter = {
   usdcBetTotals_contains_nocase?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   usdcBetTotals_not?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   usdcBetTotals_not_contains?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  usdcBetTotals_not_contains_nocase?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  usdcBetTotals_not_contains_nocase?: InputMaybe<
+    Array<Scalars['BigInt']['input']>
+  >;
   winningOption?: InputMaybe<Scalars['BigInt']['input']>;
   winningOption_gt?: InputMaybe<Scalars['BigInt']['input']>;
   winningOption_gte?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1603,7 +1729,7 @@ export enum Pool_OrderBy {
   Question = 'question',
   Status = 'status',
   UsdcBetTotals = 'usdcBetTotals',
-  WinningOption = 'winningOption'
+  WinningOption = 'winningOption',
 }
 
 export type Query = {
@@ -1630,11 +1756,9 @@ export type Query = {
   withdrawals: Array<Withdrawal>;
 };
 
-
 export type Query_MetaArgs = {
   block?: InputMaybe<Block_Height>;
 };
-
 
 export type QueryBetArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1642,13 +1766,11 @@ export type QueryBetArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryBetPlacedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryBetPlacedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1660,13 +1782,11 @@ export type QueryBetPlacedsArgs = {
   where?: InputMaybe<BetPlaced_Filter>;
 };
 
-
 export type QueryBetWithdrawalArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryBetWithdrawalsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1678,7 +1798,6 @@ export type QueryBetWithdrawalsArgs = {
   where?: InputMaybe<BetWithdrawal_Filter>;
 };
 
-
 export type QueryBetsArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1689,13 +1808,11 @@ export type QueryBetsArgs = {
   where?: InputMaybe<Bet_Filter>;
 };
 
-
 export type QueryOwnershipTransferredArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryOwnershipTransferredsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1707,13 +1824,11 @@ export type QueryOwnershipTransferredsArgs = {
   where?: InputMaybe<OwnershipTransferred_Filter>;
 };
 
-
 export type QueryPayoutClaimedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryPayoutClaimedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1725,20 +1840,17 @@ export type QueryPayoutClaimedsArgs = {
   where?: InputMaybe<PayoutClaimed_Filter>;
 };
 
-
 export type QueryPoolArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type QueryPoolClosedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryPoolClosedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1750,13 +1862,11 @@ export type QueryPoolClosedsArgs = {
   where?: InputMaybe<PoolClosed_Filter>;
 };
 
-
 export type QueryPoolCreatedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryPoolCreatedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1768,7 +1878,6 @@ export type QueryPoolCreatedsArgs = {
   where?: InputMaybe<PoolCreated_Filter>;
 };
 
-
 export type QueryPoolsArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1779,13 +1888,11 @@ export type QueryPoolsArgs = {
   where?: InputMaybe<Pool_Filter>;
 };
 
-
 export type QueryWithdrawalArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryWithdrawalsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1821,11 +1928,9 @@ export type Subscription = {
   withdrawals: Array<Withdrawal>;
 };
 
-
 export type Subscription_MetaArgs = {
   block?: InputMaybe<Block_Height>;
 };
-
 
 export type SubscriptionBetArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1833,13 +1938,11 @@ export type SubscriptionBetArgs = {
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionBetPlacedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionBetPlacedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1851,13 +1954,11 @@ export type SubscriptionBetPlacedsArgs = {
   where?: InputMaybe<BetPlaced_Filter>;
 };
 
-
 export type SubscriptionBetWithdrawalArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionBetWithdrawalsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1869,7 +1970,6 @@ export type SubscriptionBetWithdrawalsArgs = {
   where?: InputMaybe<BetWithdrawal_Filter>;
 };
 
-
 export type SubscriptionBetsArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1880,13 +1980,11 @@ export type SubscriptionBetsArgs = {
   where?: InputMaybe<Bet_Filter>;
 };
 
-
 export type SubscriptionOwnershipTransferredArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionOwnershipTransferredsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1898,13 +1996,11 @@ export type SubscriptionOwnershipTransferredsArgs = {
   where?: InputMaybe<OwnershipTransferred_Filter>;
 };
 
-
 export type SubscriptionPayoutClaimedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionPayoutClaimedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1916,20 +2012,17 @@ export type SubscriptionPayoutClaimedsArgs = {
   where?: InputMaybe<PayoutClaimed_Filter>;
 };
 
-
 export type SubscriptionPoolArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
-
 export type SubscriptionPoolClosedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionPoolClosedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1941,13 +2034,11 @@ export type SubscriptionPoolClosedsArgs = {
   where?: InputMaybe<PoolClosed_Filter>;
 };
 
-
 export type SubscriptionPoolCreatedArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionPoolCreatedsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1959,7 +2050,6 @@ export type SubscriptionPoolCreatedsArgs = {
   where?: InputMaybe<PoolCreated_Filter>;
 };
 
-
 export type SubscriptionPoolsArgs = {
   block?: InputMaybe<Block_Height>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1970,13 +2060,11 @@ export type SubscriptionPoolsArgs = {
   where?: InputMaybe<Pool_Filter>;
 };
 
-
 export type SubscriptionWithdrawalArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID']['input'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionWithdrawalsArgs = {
   block?: InputMaybe<Block_Height>;
@@ -1990,7 +2078,7 @@ export type SubscriptionWithdrawalsArgs = {
 
 export enum TokenType {
   Points = 'POINTS',
-  Usdc = 'USDC'
+  Usdc = 'USDC',
 }
 
 export type Withdrawal = {
@@ -2112,7 +2200,7 @@ export enum Withdrawal_OrderBy {
   Id = 'id',
   TokenType = 'tokenType',
   TransactionHash = 'transactionHash',
-  User = 'user'
+  User = 'user',
 }
 
 export type _Block_ = {
@@ -2148,5 +2236,5 @@ export enum _SubgraphErrorPolicy_ {
   /** Data will be returned even if the subgraph has indexing errors */
   Allow = 'allow',
   /** If the subgraph has indexing errors, data will be omitted. The default. */
-  Deny = 'deny'
+  Deny = 'deny',
 }

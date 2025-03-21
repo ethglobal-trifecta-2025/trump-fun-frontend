@@ -1,20 +1,20 @@
-import type { CodegenConfig } from "@graphql-codegen/cli";
+import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   overwrite: true,
   schema:
-    "https://subgraph.satsuma-prod.com/53c89bfbc8b7/as-team--945605/trump-fun/api",
-  documents: ["src/**/*.ts(x)"],
+    'https://subgraph.satsuma-prod.com/53c89bfbc8b7/as-team--945605/trump-fun/api',
+  documents: ['src/**/*.ts(x)'],
   generates: {
-    "src/lib/__generated__/": {
-      preset: "client",
+    'src/lib/__generated__/': {
+      preset: 'client',
       presetConfig: {
-        gqlTagName: "gql",
+        gqlTagName: 'gql',
       },
       plugins: [],
     },
-    "./graphql.schema.json": {
-      plugins: ["introspection"],
+    './graphql.schema.json': {
+      plugins: ['introspection'],
     },
   },
   ignoreNoDocuments: true,
