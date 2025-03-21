@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
-import { Comment } from '@/types/database.types';
+import { Comment } from '@/types';
 import { useQuery as useQueryA } from '@apollo/client';
 import { useQuery } from '@tanstack/react-query';
 import {

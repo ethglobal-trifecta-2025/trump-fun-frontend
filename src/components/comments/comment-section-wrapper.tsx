@@ -1,6 +1,6 @@
 'use client';
 
-import { Comment } from '@/types/database.types';
+import { Comment } from '@/types';
 import CommentSection from './comment-section';
 
 interface CommentSectionWrapperProps {
