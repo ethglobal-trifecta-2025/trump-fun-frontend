@@ -1,12 +1,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, TrendingUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface EndingSoonBetProps {
   avatar: string;
   question: string;
   volume: string;
   timeLeft: string;
+  poolId: string;
 }
 
 export function EndingSoonBet({
@@ -14,6 +16,7 @@ export function EndingSoonBet({
   question,
   volume,
   timeLeft,
+  poolId,
 }: EndingSoonBetProps) {
   const [remainingTime, setRemainingTime] = useState('');
 
@@ -49,24 +52,26 @@ export function EndingSoonBet({
   }, [timeLeft]);
 
   return (
-    <div className='flex gap-3'>
-      <Avatar className='h-8 w-8 overflow-hidden rounded-full'>
-        <AvatarImage src={avatar} alt='User' />
-        <AvatarFallback>U</AvatarFallback>
-      </Avatar>
-      <div className='flex-1'>
-        <p className='mb-1 line-clamp-2 text-sm'>{question}</p>
-        <div className='flex items-center justify-between gap-4 text-xs text-gray-400'>
-          <div className='flex items-center gap-1'>
-            <TrendingUp size={12} />
-            <span>{volume}</span>
-          </div>
-          <div className='flex items-center gap-1'>
-            <Clock size={12} className='text-orange-500' />
-            <span>{remainingTime}</span>
+    <Link href={`/pools/${poolId}`} className="block hover:bg-gray-900 rounded-md p-2 -m-2 transition-colors">
+      <div className='flex gap-3'>
+        <Avatar className='h-8 w-8 overflow-hidden rounded-full'>
+          <AvatarImage src={avatar} alt='User' />
+          <AvatarFallback>U</AvatarFallback>
+        </Avatar>
+        <div className='flex-1'>
+          <p className='mb-1 line-clamp-2 text-sm'>{question}</p>
+          <div className='flex items-center justify-between gap-4 text-xs text-gray-400'>
+            <div className='flex items-center gap-1'>
+              <TrendingUp size={12} />
+              <span>{volume}</span>
+            </div>
+            <div className='flex items-center gap-1'>
+              <Clock size={12} className='text-orange-500' />
+              <span>{remainingTime}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

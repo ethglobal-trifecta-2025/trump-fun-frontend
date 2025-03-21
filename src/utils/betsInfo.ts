@@ -4,6 +4,23 @@ import { Pool } from '@/lib/__generated__/graphql';
 const USDC_DECIMALS = 1;
 const POINTS_DECIMALS = 6;
 
+// Helper function to safely handle incomplete Pool objects from GraphQL
+export const safeCastPool = (poolData: any): Pool => {
+  return {
+    ...poolData,
+    bets: poolData.bets || [],
+    closureCriteria: poolData.closureCriteria || '',
+    closureInstructions: poolData.closureInstructions || '',
+    isDraw: poolData.isDraw || false,
+    originalTruthSocialPostId: poolData.originalTruthSocialPostId || '',
+    pointsBetTotals: poolData.pointsBetTotals || [],
+    pointsVolume: poolData.pointsVolume || '0',
+    usdcBetTotals: poolData.usdcBetTotals || [],
+    usdcVolume: poolData.usdcVolume || '0',
+    winningOption: poolData.winningOption || '0'
+  } as Pool;
+};
+
 export const calculateVolume = (pool: Pool, tokenType: TokenType) => {
   if (!pool) return tokenType === TokenType.USDC ? '$0' : '0 pts';
 

@@ -14,13 +14,14 @@ import Link from 'next/link';
 import { GET_POOLS } from '@/app/queries';
 import {
   OrderDirection,
+  Pool,
   Pool_OrderBy,
   PoolStatus,
 } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState, useEffect } from 'react';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
+import { calculateVolume, getBetTotals, safeCastPool } from '@/utils/betsInfo';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
@@ -209,22 +210,25 @@ export default function BettingPlatform() {
 
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
-                {filteredPools.map((pool) => (
-                  <BettingPost
-                    key={pool.id}
-                    id={pool.id}
-                    avatar='/trump.jpeg'
-                    username='realDonaldTrump'
-                    time={pool.createdAt}
-                    question={pool.question}
-                    options={pool.options}
-                    commentCount={0}
-                    volume={calculateVolume(pool, tokenType)}
-                    optionBets={pool.options.map((_, index) =>
-                      getBetTotals(pool as any, tokenType, index)
-                    )}
-                  />
-                ))}
+                {filteredPools.map((pool) => {
+                  const safePool = safeCastPool(pool);
+                  return (
+                    <BettingPost
+                      key={pool.id}
+                      id={pool.id}
+                      avatar='/trump.jpeg'
+                      username='realDonaldTrump'
+                      time={pool.createdAt}
+                      question={pool.question}
+                      options={pool.options}
+                      commentCount={0}
+                      volume={calculateVolume(safePool, tokenType)}
+                      optionBets={pool.options.map((_, index) =>
+                        getBetTotals(safePool, tokenType, index)
+                      )}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>
