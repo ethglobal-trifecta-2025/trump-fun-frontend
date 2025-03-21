@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
 import { Comment } from '@/types';
@@ -27,10 +29,50 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
+import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { useWalletAddress } from '@/hooks/useWalletAddress';
 
 export default function PoolDetailPage() {
   const { id } = useParams();
+  const { login } = usePrivy();
+  const { isConnected, authenticated } = useWalletAddress();
+  
+  const [betAmount, setBetAmount] = useState('');
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [sliderValue, setSliderValue] = useState([0]);
+  const [poolFacts, setPoolFacts] = useState(Math.floor(Math.random() * 50) + 5);
+  const [hasFactsed, setHasFactsed] = useState(false);
+  
+  // Use our custom hook for token balance
+  const { 
+    balance, 
+    formattedBalance, 
+    symbol 
+  } = useTokenBalance();
+
+  // Update bet amount when slider changes
+  useEffect(() => {
+    if (sliderValue[0] > 0 && balance) {
+      const percentage = sliderValue[0] / 100;
+      const maxAmount = parseFloat(balance.formatted);
+      const amount = (maxAmount * percentage).toFixed(6);
+      setBetAmount(amount);
+    } else if (sliderValue[0] === 0) {
+      setBetAmount('');
+    }
+  }, [sliderValue, balance]);
+
+  // Handle percentage button clicks
+  const handlePercentageClick = (percentage: number) => {
+    if (balance) {
+      const maxAmount = parseFloat(balance.formatted);
+      const amount = (maxAmount * (percentage / 100)).toFixed(6);
+      setBetAmount(amount);
+      setSliderValue([percentage]);
+    }
+  };
 
   const {
     data: commentsData,
@@ -58,16 +100,31 @@ export default function PoolDetailPage() {
     notifyOnNetworkStatusChange: true,
   });
 
-  const [poolFacts, setPoolFacts] = useState(Math.floor(Math.random() * 50) + 5);
-  const [hasFactsed, setHasFactsed] = useState(false);
-
   const handleFacts = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    
     if (hasFactsed) {
       setPoolFacts(prev => prev - 1);
     } else {
       setPoolFacts(prev => prev + 1);
     }
     setHasFactsed(!hasFactsed);
+  };
+
+  // Place bet function
+  const placeBet = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+
+    if (!betAmount || selectedOption === null) return;
+
+    // Here you would connect to the smart contract
+    alert(`Placing ${betAmount} USDC bet on option: ${pool.options[selectedOption]}`);
   };
 
   if (isPoolLoading) {
@@ -153,6 +210,7 @@ export default function PoolDetailPage() {
     const total = pool.usdcBetTotals.reduce((sum, bet) => sum + Number(bet), 0);
     return `$${total.toLocaleString()}`;
   };
+
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
       <Link
@@ -168,8 +226,8 @@ export default function PoolDetailPage() {
           <div className='mb-2 flex items-start justify-between'>
             <div className='flex items-center'>
               <Avatar className='mr-3 h-10 w-10'>
-                <AvatarImage src='/placeholder-avatar.png' alt='Creator' />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={'https://ui-avatars.com/api/?name=Creator&background=orange&color=fff'} alt='Creator' />
+                <AvatarFallback>CR</AvatarFallback>
               </Avatar>
               <div>
                 <p className='font-medium'>Pool Creator</p>
@@ -224,48 +282,113 @@ export default function PoolDetailPage() {
             </div>
           </div>
 
-          {/* Betting Section */}
+          {/* Betting form */}
           {isActive && (
-            <div className='mb-6 rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-              <h3 className='mb-4 text-lg font-bold'>Place Your Bet</h3>
-              <div className='mb-4 flex gap-4'>
-                <Button className='flex-1 bg-green-600 hover:bg-green-700'>
-                  YES
-                </Button>
-                <Button className='flex-1 bg-red-600 hover:bg-red-700'>
-                  NO
-                </Button>
+            <div className='mt-6 border-t border-gray-800 pt-4'>
+              <h4 className='mb-2 text-sm font-bold'>Place your bet</h4>
+              
+              {/* Option Buttons */}
+              <div className='mb-4 flex gap-2'>
+                {pool.options.map((option, i) => (
+                  <Button 
+                    key={i}
+                    className={`flex-1 ${
+                      selectedOption === i 
+                        ? 'bg-orange-500 hover:bg-orange-600' 
+                        : 'bg-gray-700 hover:bg-gray-600'
+                    }`}
+                    onClick={() => setSelectedOption(i)}
+                  >
+                    {option}
+                  </Button>
+                ))}
               </div>
-              {/* Added input for amount - wasn't in original but seems needed */}
-              <div className='flex items-center gap-2'>
-                <div className='relative flex-1'>
-                  <input
-                    type='number'
-                    className='w-full rounded-md border border-gray-300 p-2 pl-8 dark:border-gray-600 dark:bg-gray-800'
-                    placeholder='Amount in USDC'
-                  />
-                  <span className='absolute top-2 left-2 font-bold'>$</span>
+              
+              {/* Display USDC Balance */}
+              {balance && (
+                <div className="mb-2 text-xs text-gray-400">
+                  Balance: {formattedBalance} {symbol}
                 </div>
-                <Button className='bg-orange-500 hover:bg-orange-600'>
+              )}
+              
+              {/* Percentage Buttons */}
+              <div className="flex gap-1 mb-2">
+                {[25, 50, 75, 100].map((percent) => (
+                  <Button
+                    key={percent}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => handlePercentageClick(percent)}
+                  >
+                    {percent}%
+                  </Button>
+                ))}
+              </div>
+              
+              {/* Slider */}
+              <div className="mb-4">
+                <Slider
+                  defaultValue={[0]}
+                  max={100}
+                  step={1}
+                  value={sliderValue}
+                  onValueChange={setSliderValue}
+                  className="mb-2"
+                />
+              </div>
+              
+              <div className='mb-4 flex gap-2'>
+                <div className='relative flex-1'>
+                  <Input
+                    type='number'
+                    placeholder='0.00'
+                    value={betAmount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setBetAmount(value);
+                      // Update slider if there's a balance
+                      if (balance && parseFloat(value) > 0) {
+                        const maxAmount = parseFloat(balance.formatted);
+                        const percentage = Math.min(100, (parseFloat(value) / maxAmount) * 100);
+                        setSliderValue([percentage]);
+                      } else {
+                        setSliderValue([0]);
+                      }
+                    }}
+                    className='pr-16'
+                  />
+                  <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
+                    USDC
+                  </div>
+                </div>
+                <Button 
+                  onClick={placeBet} 
+                  disabled={!betAmount || selectedOption === null || !authenticated}
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                >
                   Confirm Bet
                 </Button>
               </div>
               
-              {/* FACTS Button */}
-              <div className='mt-4 flex justify-between items-center border-t pt-4 border-gray-200 dark:border-gray-700'>
-                <div className='text-sm text-muted-foreground'>
-                  Share your support for this prediction
-                </div>
-                <Button 
-                  variant='outline' 
-                  size='sm'
-                  className="gap-1 font-bold text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
-                  onClick={handleFacts}
-                >
-                  {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
-                  <span className='ml-1.5'>{poolFacts}</span>
-                </Button>
-              </div>
+              {selectedOption !== null && (
+                <p className='mb-4 text-xs text-gray-400'>
+                  You are betting {betAmount || '0'} USDC on &quot;{pool.options[selectedOption]}&quot;
+                </p>
+              )}
+              
+              <Button
+                variant='outline'
+                size='sm'
+                className={`gap-1 font-bold ${hasFactsed 
+                  ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                  : 'text-orange-500 hover:text-orange-500'}`}
+                onClick={handleFacts}
+              >
+                {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
+                <span className="ml-1.5">{poolFacts}</span>
+              </Button>
+              <p className="mt-2 text-xs text-gray-400">Share your support for this prediction.</p>
             </div>
           )}
 
@@ -281,18 +404,20 @@ export default function PoolDetailPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value='comments' className='pt-4'>
-              <Suspense
-                fallback={
-                  <div className='py-8 text-center'>Loading comments...</div>
-                }
-              >
+              {comments ? (
                 <CommentSectionWrapper
                   poolId={pool.id}
                   initialComments={comments}
-                  isLoading={isCommentsLoading}
-                  error={commentsError}
+                  isLoading={false}
+                  error={null}
                 />
-              </Suspense>
+              ) : isCommentsLoading ? (
+                <div className='py-8 text-center'>Loading comments...</div>
+              ) : commentsError ? (
+                <div className='py-8 text-center text-red-500'>Failed to load comments</div>
+              ) : (
+                <div className='py-4 text-center text-gray-500'>No comments yet</div>
+              )}
             </TabsContent>
             <TabsContent value='details' className='pt-4'>
               <div className='space-y-4'>

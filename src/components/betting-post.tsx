@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useWalletAddress } from '@/hooks/useWalletAddress';
+import { useTokenBalance } from '@/hooks/useTokenBalance';
 
 interface BettingPostProps {
   id: string;
@@ -34,7 +37,28 @@ export function BettingPost({
   const [showBetForm, setShowBetForm] = useState(false);
   const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
   const [hasFactsed, setHasFactsed] = useState(false);
+  const [sliderValue, setSliderValue] = useState([0]);
   const { authenticated, login } = usePrivy();
+  const { isConnected } = useWalletAddress();
+  
+  // Use our custom hook for token balance
+  const { 
+    balance, 
+    formattedBalance, 
+    symbol 
+  } = useTokenBalance();
+
+  // Update bet amount when slider changes
+  useEffect(() => {
+    if (sliderValue[0] > 0 && balance) {
+      const percentage = sliderValue[0] / 100;
+      const maxAmount = parseFloat(balance.formatted);
+      const amount = (maxAmount * percentage).toFixed(6);
+      setBetAmount(amount);
+    } else if (sliderValue[0] === 0) {
+      setBetAmount('');
+    }
+  }, [sliderValue, balance]);
 
   const handleBetClick = () => {
     if (!authenticated) {
@@ -56,6 +80,16 @@ export function BettingPost({
       setFactsCount(prev => prev + 1);
     }
     setHasFactsed(!hasFactsed);
+  };
+
+  // Handle percentage button clicks
+  const handlePercentageClick = (percentage: number) => {
+    if (balance) {
+      const maxAmount = parseFloat(balance.formatted);
+      const amount = (maxAmount * (percentage / 100)).toFixed(6);
+      setBetAmount(amount);
+      setSliderValue([percentage]);
+    }
   };
 
   const placeBet = () => {
@@ -149,7 +183,9 @@ export function BettingPost({
             <Button
               variant='outline'
               size='sm'
-              className="gap-1 font-bold text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
+              className={`gap-1 font-bold ${hasFactsed 
+                ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                : 'text-orange-500 hover:text-orange-500'}`}
               onClick={handleFacts}
             >
               {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
@@ -170,13 +206,53 @@ export function BettingPost({
         {showBetForm && (
           <div className='mt-4 border-t border-gray-800 pt-4'>
             <h4 className='mb-2 text-sm font-medium'>Place your bet</h4>
+            
+            {/* Display USDC Balance */}
+            {balance && (
+              <div className="mb-2 text-xs text-gray-400">
+                Balance: {formattedBalance} {symbol}
+              </div>
+            )}
+            
+            {/* Percentage Buttons */}
+            <div className="flex gap-1 mb-2">
+              {[25, 50, 75, 100].map((percent) => (
+                <Button
+                  key={percent}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() => handlePercentageClick(percent)}
+                >
+                  {percent}%
+                </Button>
+              ))}
+            </div>
+            
+            {/* Slider */}
+            <Slider
+              defaultValue={[0]}
+              max={100}
+              step={1}
+              value={sliderValue}
+              onValueChange={setSliderValue}
+              className="mb-4"
+            />
+            
             <div className='flex gap-2'>
               <Input
                 type='number'
                 placeholder='Amount (USDC)'
                 className='flex-1'
                 value={betAmount}
-                onChange={(e) => setBetAmount(e.target.value)}
+                onChange={(e) => {
+                  setBetAmount(e.target.value);
+                  if (balance && parseFloat(e.target.value) > 0) {
+                    const maxAmount = parseFloat(balance.formatted);
+                    const percentage = Math.min(100, Math.round((parseFloat(e.target.value) / maxAmount) * 100));
+                    setSliderValue([percentage]);
+                  }
+                }}
               />
               <Button
                 className='bg-orange-600 hover:bg-orange-700'

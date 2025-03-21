@@ -1,16 +1,18 @@
 'use client';
 
 import { PrivyProvider } from '@privy-io/react-auth';
-import { baseSepolia } from 'viem/chains';
+import { baseSepolia, base, mainnet } from 'viem/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, createConfig } from '@privy-io/wagmi';
 import { http } from 'wagmi';
 
 // Create a Wagmi config - ensure we're importing createConfig from @privy-io/wagmi
 const wagmiConfig = createConfig({
-  chains: [baseSepolia],
+  chains: [baseSepolia, mainnet, base],
   transports: {
     [baseSepolia.id]: http(),
+    [mainnet.id]: http(),
+    [base.id]: http(),
   },
 });
 
@@ -48,7 +50,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
           createOnLogin: 'all-users',
         },
         defaultChain: baseSepolia,
-        supportedChains: [baseSepolia],
+        supportedChains: [baseSepolia, mainnet, base],
         passkeys: {
           shouldUnlinkOnUnenrollMfa: false,
           shouldUnenrollMfaOnUnlink: false,
