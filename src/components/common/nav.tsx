@@ -43,11 +43,11 @@ export default function Nav() {
             </SheetTrigger>
             <SheetContent side='right' className='flex h-full flex-col'>
               <SheetTitle></SheetTitle>
-              <div className='mt-6 flex flex-1 flex-col items-center space-y-4'>
+              <div className='mt-6 flex flex-1 flex-col items-center gap-6'>
+                <NetworkIndicator />
                 <TrumpUserPill />
               </div>
               <div className='flex flex-col items-center gap-4 pb-6'>
-                <NetworkIndicator />
                 <ThemeToggle />
               </div>
             </SheetContent>
