@@ -67,7 +67,7 @@ export function NetworkIndicator() {
                 </div>
               </>
             ) : (
-              <p className="mb-2">You're on a supported network.</p>
+              <p className="mb-2">You&apos;re on a supported network.</p>
             )}
           </div>
         )}

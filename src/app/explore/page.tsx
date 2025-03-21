@@ -64,6 +64,16 @@ export default function BettingPlatform() {
     notifyOnNetworkStatusChange: true,
   });
 
+  const { data: endingSoonPools } = useQuery(GET_POOLS, {
+    variables: {
+      filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+      orderBy: Pool_OrderBy.BetsCloseAt,
+      orderDirection: OrderDirection.Asc,
+    },
+    context: { name: 'endingSoonSearch' },
+    notifyOnNetworkStatusChange: true,
+  });
+
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
   };
@@ -251,26 +261,17 @@ export default function BettingPlatform() {
             </div>
 
             <div className='space-y-4'>
-              <EndingSoonBet
-                avatar='/placeholder.svg?height=30&width=30'
-                question='Will the L1X team announce a major partnership during their live...'
-                volume='$0 vol.'
-                timeLeft='01:15:39'
-              />
-
-              <EndingSoonBet
-                avatar='/placeholder.svg?height=30&width=30'
-                question='Will the CanIBetOn team successfully complete their live...'
-                volume='$0 vol.'
-                timeLeft='01:15:39'
-              />
-
-              <EndingSoonBet
-                avatar='/placeholder.svg?height=30&width=30'
-                question='Will the CanIBetOn team successfully complete their live...'
-                volume='$0 vol.'
-                timeLeft='01:15:39'
-              />
+              {endingSoonPools?.pools
+                .slice(0, 3)
+                .map((pool) => (
+                  <EndingSoonBet
+                    key={pool.id}
+                    avatar='/trump.jpeg'
+                    question={pool.question}
+                    volume='$0 vol.'
+                    timeLeft={pool.betsCloseAt}
+                  />
+                ))}
             </div>
           </div>
         </div>

@@ -30,6 +30,7 @@ export const GET_POOLS = gql(`
         gradedBlockNumber
         gradedBlockTimestamp
         gradedTransactionHash
+        betsCloseAt
     }
   }
 `);
