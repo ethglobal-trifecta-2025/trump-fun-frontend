@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import Link from 'next/link';
+import { NetworkIndicator } from '../network-indicator';
 
 export default function Nav() {
   return (
@@ -23,6 +24,7 @@ export default function Nav() {
         <div className='flex h-full items-center gap-4'>
           {/* Desktop navigation */}
           <div className='hidden items-center gap-4 md:flex'>
+            <NetworkIndicator />
             <ThemeToggle />
             <TrumpUserPill />
           </div>
@@ -44,7 +46,8 @@ export default function Nav() {
               <div className='mt-6 flex flex-1 flex-col items-center space-y-4'>
                 <TrumpUserPill />
               </div>
-              <div className='flex justify-center pb-6'>
+              <div className='flex flex-col items-center gap-4 pb-6'>
+                <NetworkIndicator />
                 <ThemeToggle />
               </div>
             </SheetContent>
