@@ -11,9 +11,17 @@ import { useTokenContext } from '@/hooks/useTokenContext';
 export function EndingSoon() {
   const { tokenType } = useTokenContext();
 
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+
+  const oneDayFromNow = currentTimestamp + 86400;
+
   const { data: endingSoonPools } = useQuery(GET_POOLS, {
     variables: {
-      filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+      filter: {
+        betsCloseAt_gt: currentTimestamp.toString(),
+        betsCloseAt_lt: oneDayFromNow.toString(),
+        status_in: [PoolStatus.Pending, PoolStatus.None],
+      },
       orderBy: Pool_OrderBy.BetsCloseAt,
       orderDirection: OrderDirection.Asc,
       first: 3,
