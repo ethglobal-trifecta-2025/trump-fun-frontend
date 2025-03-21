@@ -139,7 +139,13 @@ export default function PoolDetailPage() {
     if (!betAmount || selectedOption === null) return;
 
     // Here you would connect to the smart contract
-    alert(`Placing ${betAmount} USDC bet on option: ${pool.options[selectedOption]}`);
+<<<<<<< HEAD
+    alert(`Placing ${betAmount} ${symbol} bet on option: ${pool.options[selectedOption]}`);
+=======
+    alert(
+      `Placing ${betAmount} USDC bet on option: ${pool.options[selectedOption]}`
+    );
+>>>>>>> 664a626 (wip: start integrating contract)
   };
 
   if (isPoolLoading) {
@@ -394,8 +400,13 @@ export default function PoolDetailPage() {
                   className='mb-2'
                 />
               </div>
+<<<<<<< HEAD
               
-              <div className='mb-4 flex flex-col sm:flex-row gap-2'>
+              <div className='mb-4 flex flex-row gap-2 items-center'>
+=======
+
+              <div className='mb-4 flex flex-col gap-2 sm:flex-row'>
+>>>>>>> 664a626 (wip: start integrating contract)
                 <div className='relative flex-1'>
                   <Input
                     type='number'
@@ -404,14 +415,30 @@ export default function PoolDetailPage() {
                     onChange={(e) => {
                       // Only allow whole numbers
                       const value = e.target.value;
+<<<<<<< HEAD
+                      if (value === '' || /^\d+$/.test(value)) {
+                        setBetAmount(value);
+                        // Update slider if there's a balance
+                        if (balance && parseFloat(value) > 0) {
+                          const maxAmount = parseFloat(balance.formatted);
+                          const percentage = Math.min(100, (parseFloat(value) / maxAmount) * 100);
+                          setSliderValue([percentage]);
+                        } else {
+                          setSliderValue([0]);
+                        }
+=======
                       setBetAmount(value);
                       // Update slider if there's a balance
                       if (balance && parseFloat(value) > 0) {
                         const maxAmount = parseFloat(balance.formatted);
-                        const percentage = Math.min(100, (parseFloat(value) / maxAmount) * 100);
+                        const percentage = Math.min(
+                          100,
+                          (parseFloat(value) / maxAmount) * 100
+                        );
                         setSliderValue([percentage]);
                       } else {
                         setSliderValue([0]);
+>>>>>>> 664a626 (wip: start integrating contract)
                       }
                     }}
                     className='pr-16'
@@ -420,10 +447,35 @@ export default function PoolDetailPage() {
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
                   </div>
                 </div>
+<<<<<<< HEAD
+
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={cn(
+                    "gap-1 font-bold",
+                    hasFactsed 
+                      ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                      : 'text-orange-500 hover:text-orange-500'
+                  )}
+                  onClick={handleFacts}
+                >
+                  {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
+                  <span className="ml-1.5">{poolFacts}</span>
+                </Button>
+
                 <Button 
                   onClick={placeBet} 
                   disabled={!betAmount || selectedOption === null || !authenticated}
-                  className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto"
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
+=======
+                <Button
+                  onClick={placeBet}
+                  disabled={
+                    !betAmount || selectedOption === null || !authenticated
+                  }
+                  className='w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
+>>>>>>> 664a626 (wip: start integrating contract)
                 >
                   Confirm Bet
                 </Button>
@@ -436,22 +488,29 @@ export default function PoolDetailPage() {
                   &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
+<<<<<<< HEAD
               
+              <p className="text-xs text-gray-400">Share your support for this prediction.</p>
+=======
+
               <Button
                 variant='outline'
                 size='sm'
                 className={cn(
-                  "gap-1 font-bold",
-                  hasFactsed 
-                    ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                  'gap-1 font-bold',
+                  hasFactsed
+                    ? 'border-orange-500 bg-orange-500/10 text-orange-500'
                     : 'text-orange-500 hover:text-orange-500'
                 )}
                 onClick={handleFacts}
               >
                 {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
-                <span className="ml-1.5">{poolFacts}</span>
+                <span className='ml-1.5'>{poolFacts}</span>
               </Button>
-              <p className="mt-2 text-xs text-gray-400">Share your support for this prediction.</p>
+              <p className='mt-2 text-xs text-gray-400'>
+                Share your support for this prediction.
+              </p>
+>>>>>>> 664a626 (wip: start integrating contract)
             </div>
           )}
 
