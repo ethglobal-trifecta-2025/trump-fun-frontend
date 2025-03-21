@@ -50,10 +50,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Import utils
 import { cn } from '@/lib/utils';
+import { APP_ADDRESS, POINTS_ADDRESS } from '@/consts/addresses';
 
 // Contract constants
-const TOKEN_ADDRESS = '0xA373482b473E33B96412a6c0cA8B847E6BBB4D0d';
-const APP_ADDRESS = '0x3646Eb6C4459833E3A6791c832b2897051fF17B0';
+
 const TOKEN_DECIMALS = 6; // USDC has 6 decimals
 
 export default function PoolDetailPage() {
@@ -77,16 +77,13 @@ export default function PoolDetailPage() {
 
   // Contract interaction
   const { data: hash, isPending, writeContract } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
   const tokenType = {
     USDC: 0,
     POINTS: 1,
   };
-
-  console.log('isConfirming', isConfirming);
 
   // Use our custom hook for token balance
   const { balance, formattedBalance, symbol, tokenTextLogo } =
@@ -147,7 +144,7 @@ export default function PoolDetailPage() {
       try {
         const allowance = await publicClient.readContract({
           abi: erc20ABI,
-          address: TOKEN_ADDRESS as `0x${string}`,
+          address: POINTS_ADDRESS as `0x${string}`,
           functionName: 'allowance',
           args: [account.address, APP_ADDRESS],
         });
@@ -203,21 +200,10 @@ export default function PoolDetailPage() {
       // Convert amount to token units with proper decimals
       const tokenAmount = BigInt(Math.floor(betAmount * 10 ** TOKEN_DECIMALS));
 
-      // Log for debugging
-      console.log({
-        tokenAddress: TOKEN_ADDRESS,
-        appAddress: APP_ADDRESS,
-        tokenAmount: tokenAmount.toString(),
-        betAmount,
-        currentBalance: formattedBalance,
-        approvedAmount,
-        symbol,
-      });
-
       // First approve tokens to be spent
       const { request: approveRequest } = await publicClient.simulateContract({
         abi: erc20ABI,
-        address: TOKEN_ADDRESS as `0x${string}`,
+        address: POINTS_ADDRESS as `0x${string}`,
         functionName: 'approve',
         account: account.address as `0x${string}`,
         args: [APP_ADDRESS, tokenAmount * BigInt(5000)],
@@ -227,8 +213,6 @@ export default function PoolDetailPage() {
 
       // Wait for the transaction to be confirmed before proceeding
       if (isConfirmed) {
-        console.log('Approve transaction finalized:', hash);
-
         // Now place the bet
         const { request } = await publicClient.simulateContract({
           abi: betAbi,
@@ -240,7 +224,7 @@ export default function PoolDetailPage() {
             selectedOption,
             tokenAmount,
             account.address,
-            tokenType.USDC,
+            tokenType.POINTS,
           ],
         });
 

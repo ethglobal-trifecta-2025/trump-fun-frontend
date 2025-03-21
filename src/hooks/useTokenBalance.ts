@@ -5,6 +5,7 @@ import { useWalletAddress } from './useWalletAddress';
 import { type Address } from 'viem';
 import { useState, useEffect } from 'react';
 import { useTokenContext } from './useTokenContext';
+import { POINTS_ADDRESS } from '@/consts/addresses';
 
 interface UseTokenBalanceOptions {
   /** Whether to enable the balance query */
@@ -19,45 +20,47 @@ export const useTokenBalance = (
   options: UseTokenBalanceOptions = {}
 ) => {
   const { address, isConnected, chainId } = useWalletAddress();
-  const { tokenType, getTokenAddress, tokenSymbol, tokenLogo, tokenTextLogo } = useTokenContext();
-  
+  const { tokenType, getTokenAddress, tokenSymbol, tokenLogo, tokenTextLogo } =
+    useTokenContext();
+
   // Store separate balances for each token type to avoid mixing them up
   const [usdcBalance, setUsdcBalance] = useState<any>(null);
   const [nativeBalance, setNativeBalance] = useState<any>(null);
-  
+
   // Track last token type to detect changes
   const [lastTokenType, setLastTokenType] = useState<string | null>(null);
-  
+
   // Get the correct token address based on token type
   let finalTokenAddress: Address | undefined;
   if (tokenType === 'POINTS') {
     // For POINTS (native token), use undefined to fetch native balance
-    finalTokenAddress = undefined;
+    finalTokenAddress = POINTS_ADDRESS;
   } else {
     // For USDC, use provided address or look it up from the token context
-    finalTokenAddress = tokenAddress || (chainId ? getTokenAddress(chainId) || undefined : undefined);
+    finalTokenAddress =
+      tokenAddress || (chainId ? getTokenAddress() || undefined : undefined);
   }
-  
+
   // Only fetch if wallet is connected
   const shouldFetch = Boolean(
-    isConnected && 
-    address && 
-    (options.enabled !== false)
+    isConnected && address && options.enabled !== false
   );
-  
+
   // Get USDC balance
   const usdcBalanceResult = useBalance({
     address: shouldFetch && tokenType === 'USDC' ? address : undefined,
     token: shouldFetch && tokenType === 'USDC' ? finalTokenAddress : undefined,
     chainId: shouldFetch ? chainId : undefined,
   });
-  
+
   // Get native token balance (ETH/POINTS)
   const nativeBalanceResult = useBalance({
     address: shouldFetch && tokenType === 'POINTS' ? address : undefined,
+    token:
+      shouldFetch && tokenType === 'POINTS' ? finalTokenAddress : undefined,
     chainId: shouldFetch ? chainId : undefined,
   });
-  
+
   // Reset on token type change
   useEffect(() => {
     if (lastTokenType !== null && lastTokenType !== tokenType) {
@@ -65,55 +68,55 @@ export const useTokenBalance = (
     }
     setLastTokenType(tokenType);
   }, [tokenType, lastTokenType]);
-  
+
   // Store successful balances
   useEffect(() => {
     if (usdcBalanceResult.isSuccess && usdcBalanceResult.data) {
       setUsdcBalance(usdcBalanceResult.data);
     }
   }, [usdcBalanceResult.isSuccess, usdcBalanceResult.data]);
-  
+
   useEffect(() => {
     if (nativeBalanceResult.isSuccess && nativeBalanceResult.data) {
       setNativeBalance(nativeBalanceResult.data);
     }
   }, [nativeBalanceResult.isSuccess, nativeBalanceResult.data]);
-  
+
   // Get the appropriate balance object based on token type
-  const activeResult = tokenType === 'POINTS' ? nativeBalanceResult : usdcBalanceResult;
+  const activeResult =
+    tokenType === 'POINTS' ? nativeBalanceResult : usdcBalanceResult;
   const cachedBalance = tokenType === 'POINTS' ? nativeBalance : usdcBalance;
-  
+
   // Choose current balance or fallback to cached
   const finalBalance = activeResult.data || cachedBalance;
-  
+
   // Get token decimals (6 for USDC, 18 for native tokens but display only 4 decimals)
   const tokenDecimals = tokenType === 'USDC' ? 6 : 18;
   // Don't show any decimals in the display (no cents allowed)
-  
+
   // Format balance with proper decimal precision - no decimals for display
-  const formattedBalance = finalBalance?.formatted 
+  const formattedBalance = finalBalance?.formatted
     ? parseFloat(finalBalance.formatted).toFixed(0)
     : '0';
-  
+
   // Determine loading and error states
   const isLoading = activeResult.isLoading;
   const isError = activeResult.isError;
   const refetch = activeResult.refetch;
-  
+
   return {
     // Balance data
     balance: finalBalance,
     isError,
     isLoading,
     refetch,
-    
+
     // Enhanced fields
     formattedBalance,
     symbol: tokenSymbol,
     decimals: finalBalance?.decimals || tokenDecimals,
     tokenLogo,
     tokenTextLogo,
-    hasValidWallet: shouldFetch
+    hasValidWallet: shouldFetch,
   };
-}
-
+};
