@@ -33,6 +33,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
+import { cn } from '@/lib/utils';
 
 export default function PoolDetailPage() {
   const { id } = useParams();
@@ -49,7 +50,8 @@ export default function PoolDetailPage() {
   const { 
     balance, 
     formattedBalance, 
-    symbol 
+    symbol,
+    tokenTextLogo
   } = useTokenBalance();
 
   // Update bet amount when slider changes
@@ -78,6 +80,7 @@ export default function PoolDetailPage() {
     data: commentsData,
     isLoading: isCommentsLoading,
     error: commentsError,
+    refetch: refetchComments,
   } = useQuery({
     queryKey: ['comments', id],
     queryFn: async () => {
@@ -87,6 +90,9 @@ export default function PoolDetailPage() {
       }
       return res.json();
     },
+    staleTime: 60000, // Consider data stale after 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const comments = commentsData?.comments as Comment[];
@@ -101,17 +107,19 @@ export default function PoolDetailPage() {
   });
 
   const handleFacts = () => {
-    if (!authenticated) {
-      login();
-      return;
-    }
+    if (hasFactsed) return;
     
-    if (hasFactsed) {
-      setPoolFacts(prev => prev - 1);
-    } else {
-      setPoolFacts(prev => prev + 1);
+    // Increment the facts count
+    setPoolFacts((prevCount) => prevCount + 1);
+    setHasFactsed(true);
+    
+    // If the user is logged in, add a "FACTS" comment
+    if (isConnected && authenticated) {
+      // Attempt to refetch comments after a delay to show the new FACTS comment
+      setTimeout(() => {
+        refetchComments();
+      }, 2000);
     }
-    setHasFactsed(!hasFactsed);
   };
 
   // Place bet function
@@ -223,7 +231,7 @@ export default function PoolDetailPage() {
 
       <Card className='mb-6'>
         <CardHeader className='pb-4'>
-          <div className='mb-2 flex items-start justify-between'>
+          <div className='mb-2 flex flex-wrap items-start justify-between gap-2'>
             <div className='flex items-center'>
               <Avatar className='mr-3 h-10 w-10'>
                 <AvatarImage src={'https://ui-avatars.com/api/?name=Creator&background=orange&color=fff'} alt='Creator' />
@@ -245,7 +253,6 @@ export default function PoolDetailPage() {
           </div>
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
           <CardDescription className='mt-2'>
-            {/* Adding description - not in original type, using placeholder */}
             {pool.options.join(' vs. ')}
           </CardDescription>
         </CardHeader>
@@ -261,7 +268,7 @@ export default function PoolDetailPage() {
           </div>
 
           {/* Stats */}
-          <div className='mb-6 grid grid-cols-3 gap-4'>
+          <div className='mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4'>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <TrendingUp className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Total Volume</p>
@@ -276,7 +283,6 @@ export default function PoolDetailPage() {
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Participants</p>
               <p className='font-bold'>
-                {/* Not in original type - using placeholder */}
                 {Math.floor(Math.random() * 100) + 10}
               </p>
             </div>
@@ -288,15 +294,16 @@ export default function PoolDetailPage() {
               <h4 className='mb-2 text-sm font-bold'>Place your bet</h4>
               
               {/* Option Buttons */}
-              <div className='mb-4 flex gap-2'>
+              <div className='mb-4 grid grid-cols-2 gap-2'>
                 {pool.options.map((option, i) => (
                   <Button 
                     key={i}
-                    className={`flex-1 ${
+                    className={cn(
+                      "w-full",
                       selectedOption === i 
                         ? 'bg-orange-500 hover:bg-orange-600' 
                         : 'bg-gray-700 hover:bg-gray-600'
-                    }`}
+                    )}
                     onClick={() => setSelectedOption(i)}
                   >
                     {option}
@@ -304,21 +311,21 @@ export default function PoolDetailPage() {
                 ))}
               </div>
               
-              {/* Display USDC Balance */}
+              {/* Display Token Balance */}
               {balance && (
                 <div className="mb-2 text-xs text-gray-400">
-                  Balance: {formattedBalance} {symbol}
+                  Balance: {formattedBalance} <span className="ml-1">{tokenTextLogo}</span> {symbol}
                 </div>
               )}
               
               {/* Percentage Buttons */}
-              <div className="flex gap-1 mb-2">
+              <div className="grid grid-cols-4 gap-1 mb-2">
                 {[25, 50, 75, 100].map((percent) => (
                   <Button
                     key={percent}
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs"
+                    className="w-full text-xs"
                     onClick={() => handlePercentageClick(percent)}
                   >
                     {percent}%
@@ -338,7 +345,7 @@ export default function PoolDetailPage() {
                 />
               </div>
               
-              <div className='mb-4 flex gap-2'>
+              <div className='mb-4 flex flex-col sm:flex-row gap-2'>
                 <div className='relative flex-1'>
                   <Input
                     type='number'
@@ -359,13 +366,13 @@ export default function PoolDetailPage() {
                     className='pr-16'
                   />
                   <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
-                    USDC
+                    <span className="mr-1">{tokenTextLogo}</span> {symbol}
                   </div>
                 </div>
                 <Button 
                   onClick={placeBet} 
                   disabled={!betAmount || selectedOption === null || !authenticated}
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto"
                 >
                   Confirm Bet
                 </Button>
@@ -373,16 +380,19 @@ export default function PoolDetailPage() {
               
               {selectedOption !== null && (
                 <p className='mb-4 text-xs text-gray-400'>
-                  You are betting {betAmount || '0'} USDC on &quot;{pool.options[selectedOption]}&quot;
+                  You are betting {betAmount || '0'} <span className="mx-1">{tokenTextLogo}</span> {symbol} on &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
               
               <Button
                 variant='outline'
                 size='sm'
-                className={`gap-1 font-bold ${hasFactsed 
-                  ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
-                  : 'text-orange-500 hover:text-orange-500'}`}
+                className={cn(
+                  "gap-1 font-bold",
+                  hasFactsed 
+                    ? 'bg-orange-500/10 text-orange-500 border-orange-500' 
+                    : 'text-orange-500 hover:text-orange-500'
+                )}
                 onClick={handleFacts}
               >
                 {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
@@ -393,7 +403,11 @@ export default function PoolDetailPage() {
           )}
 
           {/* Comments Section */}
-          <Tabs defaultValue='comments'>
+          <Tabs defaultValue='comments' onValueChange={(value) => {
+            if (value === 'comments') {
+              refetchComments();
+            }
+          }}>
             <TabsList className='w-full'>
               <TabsTrigger value='comments' className='flex-1'>
                 <MessageCircle className='mr-2' size={16} />
@@ -404,19 +418,19 @@ export default function PoolDetailPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value='comments' className='pt-4'>
-              {comments ? (
+              {isCommentsLoading ? (
+                <div className='py-8 text-center'>Loading comments...</div>
+              ) : commentsError ? (
+                <div className='py-8 text-center text-red-500'>Failed to load comments</div>
+              ) : !comments || comments.length === 0 ? (
+                <div className='py-4 text-center text-gray-500'>No comments yet</div>
+              ) : (
                 <CommentSectionWrapper
                   poolId={pool.id}
                   initialComments={comments}
                   isLoading={false}
                   error={null}
                 />
-              ) : isCommentsLoading ? (
-                <div className='py-8 text-center'>Loading comments...</div>
-              ) : commentsError ? (
-                <div className='py-8 text-center text-red-500'>Failed to load comments</div>
-              ) : (
-                <div className='py-4 text-center text-gray-500'>No comments yet</div>
               )}
             </TabsContent>
             <TabsContent value='details' className='pt-4'>
@@ -424,7 +438,6 @@ export default function PoolDetailPage() {
                 <div>
                   <h4 className='font-medium'>Closure Criteria</h4>
                   <p className='text-muted-foreground'>
-                    {/* Not in provided data - using placeholder */}
                     The result will be determined based on official sources when
                     available.
                   </p>

@@ -14,7 +14,7 @@ export const useWalletAddress = () => {
   const { authenticated, ready: privyReady, user } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
-  const { chainId, usdcAddress } = useNetwork();
+  const { chainId, isNetworkSupported } = useNetwork();
   
   // Get the wallet address from different possible sources
   const privyWalletAddress = walletsReady && wallets?.length > 0 
@@ -42,8 +42,8 @@ export const useWalletAddress = () => {
     address,
     isConnected,
     formattedAddress,
-    usdcAddress,
     chainId,
+    isNetworkSupported,
     privyReady,
     walletsReady,
     authenticated

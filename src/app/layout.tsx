@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import type { Metadata } from 'next';
 import './globals.css';
 import { ApolloClientProvider } from '@/components/providers/apollo-provider';
+import { TokenProvider } from '@/hooks/useTokenContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,13 +42,15 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className='mx-auto max-w-screen-xl'>
-              <ApolloClientProvider>
-                <Nav />
-                {children}
-                <MobileNav />
-              </ApolloClientProvider>
-            </div>
+            <TokenProvider>
+              <div className='mx-auto max-w-screen-xl'>
+                <ApolloClientProvider>
+                  <Nav />
+                  {children}
+                  <MobileNav />
+                </ApolloClientProvider>
+              </div>
+            </TokenProvider>
           </ThemeProvider>
         </PrivyAuthProvider>
       </body>

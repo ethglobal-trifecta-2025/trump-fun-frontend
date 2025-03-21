@@ -37,7 +37,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
         appearance: {
           theme: 'dark',
           accentColor: '#ff6d00',
-          logo: 'https://yourdomain.com/logo.png',
+          logo: process.env.NEXT_PUBLIC_LOGO_URL || undefined,
           walletList: [
             'metamask',
             'coinbase_wallet',

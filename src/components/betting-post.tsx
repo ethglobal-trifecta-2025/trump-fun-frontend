@@ -45,7 +45,8 @@ export function BettingPost({
   const { 
     balance, 
     formattedBalance, 
-    symbol 
+    symbol,
+    tokenTextLogo
   } = useTokenBalance();
 
   // Update bet amount when slider changes
@@ -207,10 +208,10 @@ export function BettingPost({
           <div className='mt-4 border-t border-gray-800 pt-4'>
             <h4 className='mb-2 text-sm font-medium'>Place your bet</h4>
             
-            {/* Display USDC Balance */}
+            {/* Display Token Balance */}
             {balance && (
               <div className="mb-2 text-xs text-gray-400">
-                Balance: {formattedBalance} {symbol}
+                Balance: {formattedBalance} <span className="mx-1">{tokenTextLogo}</span> {symbol}
               </div>
             )}
             

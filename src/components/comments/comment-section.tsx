@@ -47,12 +47,12 @@ export default function CommentSection({
 
   const { wallets } = useWallets();
 
-  const { login } = usePrivy();
+  const { login, authenticated } = usePrivy();
 
   const { signMessage } = useSignMessage();
 
   const isWalletConnected =
-    wallets && wallets.length > 0 && wallets[0]?.address;
+    authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
 
   const handleLoginClick = () => login();
 
@@ -65,10 +65,12 @@ export default function CommentSection({
       const wallet = wallets?.[0];
 
       if (!wallet || !wallet.address) {
-        alert('Please connect a wallet to comment');
-
+        console.warn('Please connect a wallet to comment');
         setIsSubmitting(false);
-
+        
+        if (!authenticated) {
+          handleLoginClick();
+        }
         return;
       }
 
@@ -86,67 +88,82 @@ export default function CommentSection({
 
       const messageStr = JSON.stringify(messageObj);
 
-      const { signature } = await signMessage(
-        { message: messageStr },
+      try {
+        const { signature } = await signMessage(
+          { message: messageStr },
 
-        {
-          uiOptions: {
-            title: 'Sign your comment',
+          {
+            uiOptions: {
+              title: 'Sign your comment',
 
-            description:
-              'Sign this message to verify you are the author of this comment',
+              description:
+                'Sign this message to verify you are the author of this comment',
 
-            buttonText: 'Sign Comment',
-          },
+              buttonText: 'Sign Comment',
+            },
 
-          address: wallet.address,
+            address: wallet.address,
+          }
+        );
+
+        const tempComment: Comment = {
+          body: content,
+
+          pool_id: poolId,
+
+          signature,
+
+          user_address: wallet.address,
+
+          created_at: new Date().toISOString(),
+
+          id: Date.now(),
+
+          updated_at: null,
+
+          commentID: null,
+
+          upvotes: null
+        };
+
+        if (!tempComment || !comments) {
+          console.error('Failed to create temporary comment. Please try again.');
+          setIsSubmitting(false);
+          return;
         }
-      );
 
-      const tempComment: Comment = {
-        body: content,
+        setComments([tempComment, ...comments]);
 
-        pool_id: poolId,
+        const result = await addComment(poolId, content, signature, messageStr);
 
-        signature,
-
-        user_address: wallet.address,
-
-        created_at: new Date().toISOString(),
-
-        id: Date.now(),
-
-        updated_at: null,
-      };
-
-      if (!tempComment || !comments) {
-        alert('Failed to create temporary comment. Please try again.');
-
-        setIsSubmitting(false);
-
-        return;
-      }
-
-      setComments([tempComment, ...comments]);
-
-      const result = await addComment(poolId, content, signature, messageStr);
-
-      if (result.success) {
-        router.refresh();
-      } else {
-        alert('Failed to add comment. Please try again.');
+        if (result.success) {
+          router.refresh();
+        } else {
+          console.error('Failed to add comment:', result.error);
+        }
+      } catch (signError) {
+        console.error('Signing error:', signError);
       }
     } catch (error) {
-      alert(
+      console.error(
         `Error: ${
           error instanceof Error
             ? error.message
-            : 'Unknown error occurred during comment submission. Please try again.'
+            : 'Unknown error occurred during comment submission.'
         }`
       );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFactsClick = () => {
+    if (!isWalletConnected) {
+      handleLoginClick();
+      return;
+    }
+    
+    handleCommentSubmit("FACTS 🦅");
   };
 
   return (

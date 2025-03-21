@@ -1,7 +1,6 @@
 'use client';
 
 import { useChainId, useSwitchChain } from 'wagmi';
-import { USDC_ADDRESSES } from '@/components/network-indicator';
 import { baseSepolia, base, mainnet, sepolia } from 'viem/chains';
 import { useState, useCallback } from 'react';
 
@@ -77,17 +76,13 @@ export const useNetwork = () => {
     }
   }, [switchChain]);
   
-  // Get USDC address for current chain
-  const usdcAddress = USDC_ADDRESSES[chainId as keyof typeof USDC_ADDRESSES] || null;
-  
-  // Check if USDC is supported on current chain
-  const isUsdcSupported = Boolean(usdcAddress);
+  // Check if current network is supported
+  const isNetworkSupported = networkInfo.isSupported;
   
   return {
     chainId,
     networkInfo,
-    usdcAddress,
-    isUsdcSupported,
+    isNetworkSupported,
     supportedNetworks: {
       baseSepolia,
       base,
