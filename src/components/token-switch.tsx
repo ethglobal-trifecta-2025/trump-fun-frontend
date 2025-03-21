@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { POINTS_ADDRESS } from '@/consts/addresses';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { useTokenContext } from '@/hooks/useTokenContext';
+import { useTokenContext, TokenType } from '@/hooks/useTokenContext';
 import { cn } from '@/lib/utils';
 
 export function TokenSwitch() {
@@ -13,11 +13,11 @@ export function TokenSwitch() {
 
   // For POINTS, always use the zero address
   const { formattedBalance, symbol } = useTokenBalance(
-    tokenType === 'POINTS' ? POINTS_ADDRESS : undefined
+    tokenType === TokenType.POINTS ? POINTS_ADDRESS : undefined
   );
 
   const handleToggle = (checked: boolean) => {
-    setTokenType(checked ? 'POINTS' : 'USDC');
+    setTokenType(checked ? TokenType.POINTS : TokenType.USDC);
   };
 
   return (
@@ -29,7 +29,7 @@ export function TokenSwitch() {
               variant='outline'
               className={cn(
                 'flex items-center gap-1 px-2 py-1',
-                tokenType === 'USDC'
+                tokenType === TokenType.USDC
                   ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
                   : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
               )}
@@ -39,7 +39,7 @@ export function TokenSwitch() {
             </Badge>
           </Tooltip.Trigger>
           <Tooltip.Content>
-            <p>{tokenType === 'POINTS' ? 'Trump Points' : 'USDC'}</p>
+            <p>{tokenType === TokenType.POINTS ? 'Trump Points' : 'USDC'}</p>
             <p className='mt-1 text-xs text-gray-400'>
               Balance: {formattedBalance} {symbol}
             </p>
@@ -48,7 +48,7 @@ export function TokenSwitch() {
       </Tooltip.Provider>
 
       <Switch
-        checked={tokenType === 'POINTS'}
+        checked={tokenType === TokenType.POINTS}
         onCheckedChange={handleToggle}
         className={cn('data-[state=checked]:bg-orange-500')}
       />

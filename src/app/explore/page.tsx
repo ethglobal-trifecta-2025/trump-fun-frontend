@@ -18,10 +18,21 @@ import {
   PoolStatus,
 } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
+  const { tokenType } = useTokenContext();
+
+  useEffect(() => {
+    // Only reset to newest if we're not already on newest
+    // This prevents unnecessary re-renders when tokenType changes
+    if (activeFilter !== 'newest') {
+      setActiveFilter('newest');
+    }
+  }, [tokenType, activeFilter]);
 
   const filterConfigs = useMemo(
     () => ({
@@ -43,7 +54,10 @@ export default function BettingPlatform() {
       recently_closed: {
         orderBy: Pool_OrderBy.BetsCloseAt,
         orderDirection: OrderDirection.Desc,
-        filter: { status_in: [PoolStatus.Graded, PoolStatus.Regraded] },
+        filter: {
+          status_in: [PoolStatus.Graded, PoolStatus.Regraded],
+          betsCloseAt_lt: Date.now().toString(),
+        },
       },
     }),
     []
@@ -69,6 +83,7 @@ export default function BettingPlatform() {
       filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
       orderBy: Pool_OrderBy.BetsCloseAt,
       orderDirection: OrderDirection.Asc,
+      first: 3,
     },
     context: { name: 'endingSoonSearch' },
     notifyOnNetworkStatusChange: true,
@@ -201,7 +216,10 @@ export default function BettingPlatform() {
                     question={pool.question}
                     options={pool.options}
                     commentCount={0}
-                    volume='$700'
+                    volume={calculateVolume(pool as any, tokenType)}
+                    optionBets={pool.options.map((_, index) =>
+                      getBetTotals(pool as any, tokenType, index)
+                    )}
                   />
                 ))}
               </div>
@@ -261,17 +279,15 @@ export default function BettingPlatform() {
             </div>
 
             <div className='space-y-4'>
-              {endingSoonPools?.pools
-                .slice(0, 3)
-                .map((pool) => (
-                  <EndingSoonBet
-                    key={pool.id}
-                    avatar='/trump.jpeg'
-                    question={pool.question}
-                    volume='$0 vol.'
-                    timeLeft={pool.betsCloseAt}
-                  />
-                ))}
+              {endingSoonPools?.pools.map((pool) => (
+                <EndingSoonBet
+                  key={pool.id}
+                  avatar='/trump.jpeg'
+                  question={pool.question}
+                  volume={calculateVolume(pool as any, tokenType)}
+                  timeLeft={pool.betsCloseAt}
+                />
+              ))}
             </div>
           </div>
         </div>

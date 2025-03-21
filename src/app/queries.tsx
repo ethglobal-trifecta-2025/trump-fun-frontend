@@ -7,11 +7,13 @@ export const GET_POOLS = gql(`
     $filter: Pool_filter!
     $orderBy: Pool_orderBy!
     $orderDirection: OrderDirection!
+    $first: Int
   ) {
     pools(
       where: $filter
       orderBy: $orderBy
       orderDirection: $orderDirection
+      first: $first
     ) {
         id
         poolId
@@ -31,6 +33,8 @@ export const GET_POOLS = gql(`
         gradedBlockTimestamp
         gradedTransactionHash
         betsCloseAt
+        usdcBetTotals
+        pointsBetTotals
     }
   }
 `);

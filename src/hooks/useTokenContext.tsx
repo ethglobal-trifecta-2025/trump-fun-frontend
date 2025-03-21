@@ -5,15 +5,18 @@ import { Address } from 'viem';
 import Image from 'next/image';
 import { POINTS_ADDRESS, USDC_ADDRESS } from '@/consts/addresses';
 
-// Define token types
-export type TokenType = 'USDC' | 'POINTS';
+// Define token types as enum for better type safety
+export enum TokenType {
+  USDC = 'USDC',
+  POINTS = 'POINTS'
+}
 
 // Token logos/symbols
 export const TOKEN_SYMBOLS: Record<
   TokenType,
   { symbol: string; logo: React.ReactNode }
 > = {
-  USDC: {
+  [TokenType.USDC]: {
     symbol: 'USDC',
     logo: (
       <Image
@@ -25,8 +28,8 @@ export const TOKEN_SYMBOLS: Record<
       />
     ),
   },
-  POINTS: {
-    symbol: 'POINTS',
+  [TokenType.POINTS]: {
+    symbol: 'FREEDOM',
     logo: (
       <Image
         src='/points.svg'
@@ -41,8 +44,8 @@ export const TOKEN_SYMBOLS: Record<
 
 // Simple text logos for places where React nodes can't be used
 export const TOKEN_TEXT_LOGOS: Record<TokenType, string> = {
-  USDC: '💲',
-  POINTS: '🦅',
+  [TokenType.USDC]: '💲',
+  [TokenType.POINTS]: '🦅',
 };
 
 interface TokenContextType {
@@ -56,16 +59,16 @@ interface TokenContextType {
 
 // Create context with default values
 const TokenContext = createContext<TokenContextType>({
-  tokenType: 'USDC',
+  tokenType: TokenType.USDC,
   setTokenType: () => {},
   getTokenAddress: () => null,
-  tokenSymbol: TOKEN_SYMBOLS.USDC.symbol,
-  tokenLogo: TOKEN_SYMBOLS.USDC.logo,
-  tokenTextLogo: TOKEN_TEXT_LOGOS.USDC,
+  tokenSymbol: TOKEN_SYMBOLS[TokenType.USDC].symbol,
+  tokenLogo: TOKEN_SYMBOLS[TokenType.USDC].logo,
+  tokenTextLogo: TOKEN_TEXT_LOGOS[TokenType.USDC],
 });
 
 export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
-  const [tokenType, setTokenType] = useState<TokenType>('USDC');
+  const [tokenType, setTokenType] = useState<TokenType>(TokenType.USDC);
 
   // Get token information
   const tokenSymbol = TOKEN_SYMBOLS[tokenType].symbol;
@@ -74,7 +77,7 @@ export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to get token address for current chain
   const getTokenAddress = (): Address | null => {
-    const address = tokenType === 'USDC' ? USDC_ADDRESS : POINTS_ADDRESS;
+    const address = tokenType === TokenType.USDC ? USDC_ADDRESS : POINTS_ADDRESS;
     return address ? (address as Address) : null;
   };
 
@@ -82,8 +85,10 @@ export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('trump-fun-token-type');
-      if (saved && (saved === 'USDC' || saved === 'POINTS')) {
-        setTokenType(saved);
+      if (saved !== null) {
+        if (saved === TokenType.USDC || saved === TokenType.POINTS) {
+          setTokenType(saved as TokenType);
+        }
       }
     }
   }, []);
