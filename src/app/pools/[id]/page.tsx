@@ -1,5 +1,7 @@
 'use client';
 
+import betAbi from '@/abi/bet.json';
+import erc20ABI from '@/abi/erc20.json';
 import { GET_POOL } from '@/app/queries';
 import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
 import { Progress } from '@/components/Progress';
@@ -34,9 +36,12 @@ import {
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { usePublicClient, useWriteContract, useAccount } from 'wagmi';
-import betAbi from '@/abi/bet.json';
-import erc20ABI from '@/abi/erc20.json';
+import {
+  useAccount,
+  usePublicClient,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from 'wagmi';
 
 export default function PoolDetailPage() {
   const { id } = useParams();
@@ -51,6 +56,7 @@ export default function PoolDetailPage() {
     Math.floor(Math.random() * 50) + 5
   );
   const [hasFactsed, setHasFactsed] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState<string>('0');
 
   // Use our custom hook for token balance
   const { balance, formattedBalance, symbol, tokenTextLogo } =
@@ -78,7 +84,11 @@ export default function PoolDetailPage() {
     }
   };
 
-  const { data: hash, writeContract } = useWriteContract();
+  const { data: hash, isPending, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
   const tokenType = 1;
   const { wallets } = useWallets();
   const { ready } = usePrivy();
@@ -112,6 +122,34 @@ export default function PoolDetailPage() {
     variables: { poolId: id },
     notifyOnNetworkStatusChange: true,
   });
+
+  const tokenAddress = '0xA373482b473E33B96412a6c0cA8B847E6BBB4D0d';
+  const appAddress = '0x3646Eb6C4459833E3A6791c832b2897051fF17B0';
+
+  // Fetch approved amount when component mounts or account changes
+  useEffect(() => {
+    const fetchApprovedAmount = async () => {
+      if (!account.address || !publicClient) return;
+
+      try {
+        const allowance = await publicClient.readContract({
+          abi: erc20ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: 'allowance',
+          args: [account.address, appAddress],
+        });
+
+        // Format the allowance (divide by 10^6 for USDC)
+        const formattedAllowance = Number(allowance) / 10 ** 6;
+        setApprovedAmount(formattedAllowance.toString());
+      } catch (error) {
+        console.error('Error fetching allowance:', error);
+        setApprovedAmount('0');
+      }
+    };
+
+    fetchApprovedAmount();
+  }, [account.address, publicClient, hash]);
 
   const handleFacts = () => {
     if (hasFactsed) return;
@@ -150,36 +188,56 @@ export default function PoolDetailPage() {
         return;
       }
 
-      const tokenAddress = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-      const tokenAmount = BigInt(betAmount * 1e6);
-      const tokenDecimals = 6;
+      const tokenAmount = BigInt(betAmount) * BigInt(10 ** 6);
+
+      console.log('tokenAddress', tokenAddress);
+      console.log('appAddress', appAddress);
+      console.log('tokenAmount', tokenAmount);
+      console.log('betAmount', betAmount);
+      console.log('Current token balance:', formattedBalance, symbol);
+      console.log('Current approved amount:', approvedAmount, symbol);
 
       const { request: approveRequest } = await publicClient.simulateContract({
         abi: erc20ABI,
         address: tokenAddress as `0x${string}`,
         functionName: 'approve',
         account: account.address as `0x${string}`,
-        args: [
-          '0x3646Eb6C4459833E3A6791c832b2897051fF17B0',
-          BigInt(tokenAmount) * BigInt(10 ** tokenDecimals),
-        ],
+        args: [appAddress, tokenAmount * BigInt(5000)],
       });
 
-      const approveTx = await writeContract(approveRequest);
-      console.log('Approve transaction finalized:', approveTx);
+      writeContract(approveRequest);
+      // while (!isConfirmed) {
+      //   await new Promise((resolve) => {
+      //     console.log('Waiting for approve transaction to be confirmed...');
+      //     setTimeout(resolve, 1000);
+      //   });
+      // }
+
+      console.log('Approve transaction finalized:', hash);
 
       const { request } = await publicClient.simulateContract({
         abi: betAbi,
-        address: '0x3646Eb6C4459833E3A6791c832b2897051fF17B0',
+        address: appAddress,
         functionName: 'placeBet',
         account: account.address as `0x${string}`,
-        args: [pool.id, selectedOption, betAmount, account.address, tokenType],
-        value: BigInt(betAmount),
+        args: [
+          pool.id,
+          selectedOption,
+          tokenAmount,
+          account.address,
+          tokenType,
+        ],
       });
 
-      const depositTx = writeContract(request);
+      writeContract(request);
+      while (isPending) {
+        await new Promise((resolve) => {
+          console.log('Waiting for bet transaction to be confirmed...');
+          setTimeout(resolve, 1000);
+        });
+      }
 
-      console.log('Transaction finalized:', depositTx);
+      console.log('Transaction finalized:', hash);
       console.log('Transaction hash:', hash);
       // Handle transaction success (e.g., show a success message)
     } catch (error) {
@@ -377,8 +435,14 @@ export default function PoolDetailPage() {
               {/* Display Token Balance */}
               {balance && (
                 <div className='mb-2 text-xs text-gray-400'>
-                  Balance: {formattedBalance}{' '}
-                  <span className='ml-1'>{tokenTextLogo}</span> {symbol}
+                  <div>
+                    Balance: {formattedBalance}{' '}
+                    <span className='ml-1'>{tokenTextLogo}</span> {symbol}
+                  </div>
+                  <div>
+                    Approved: {approvedAmount}{' '}
+                    <span className='ml-1'>{tokenTextLogo}</span> {symbol}
+                  </div>
                 </div>
               )}
 
