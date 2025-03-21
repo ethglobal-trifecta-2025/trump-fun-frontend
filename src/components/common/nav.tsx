@@ -11,12 +11,15 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet';
+import Link from 'next/link';
 
 export default function Nav() {
   return (
     <>
       <header className='flex h-full items-center justify-between px-4 py-2 md:h-16 md:py-0'>
-        <div className='text-2xl font-bold text-orange-500'>Trump.fun</div>
+        <div className='text-2xl font-bold text-orange-500'>
+          <Link href='/'>Trump.fun</Link>
+        </div>
         <div className='flex h-full items-center gap-4'>
           {/* Desktop navigation */}
           <div className='hidden items-center gap-4 md:flex'>

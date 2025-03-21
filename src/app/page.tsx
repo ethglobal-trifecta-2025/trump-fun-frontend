@@ -1,3 +1,5 @@
+'use client';
+
 import { AuthButton } from '@/components/auth-button';
 import { PoolList } from '@/components/pools/pool-list';
 

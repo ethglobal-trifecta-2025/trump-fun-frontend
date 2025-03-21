@@ -1,10 +1,13 @@
-import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { ThemeProvider } from '@/components/providers/theme-provider';
-import { PrivyAuthProvider } from '@/components/providers/privy-provider';
-import './globals.css';
-import Nav from '@/components/common/nav';
+
 import { MobileNav } from '@/components/common/mobile-nav';
+import Nav from '@/components/common/nav';
+import { PrivyAuthProvider } from '@/components/providers/privy-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
+import type { Metadata } from 'next';
+import './globals.css';
+import { ApolloClientProvider } from '@/components/providers/apollo-provider';
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -39,9 +42,11 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <div className='mx-auto max-w-screen-xl'>
-              <Nav />
-              {children}
-              <MobileNav />
+              <ApolloClientProvider>
+                <Nav />
+                {children}
+                <MobileNav />
+              </ApolloClientProvider>
             </div>
           </ThemeProvider>
         </PrivyAuthProvider>

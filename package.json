@@ -11,6 +11,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@apollo/client": "^3.13.5",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@privy-io/react-auth": "^2.6.4",
     "@privy-io/wagmi": "^1.0.3",

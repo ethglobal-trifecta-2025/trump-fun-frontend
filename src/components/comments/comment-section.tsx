@@ -18,6 +18,8 @@ interface CommentSectionProps {
   poolId: string;
 
   initialComments: Comment[];
+  isLoading: boolean;
+  error: Error | null;
 }
 
 type MessageToSign = {
@@ -116,6 +118,14 @@ export default function CommentSection({
 
         updated_at: null,
       };
+
+      if (!tempComment || !comments) {
+        alert('Failed to create temporary comment. Please try again.');
+
+        setIsSubmitting(false);
+
+        return;
+      }
 
       setComments([tempComment, ...comments]);
 

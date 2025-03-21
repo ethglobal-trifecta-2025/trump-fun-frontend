@@ -1,6 +1,10 @@
-import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
+'use client';
+
+import { GET_POOL } from '@/app/queries';
+import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
+import { Progress } from '@/components/Progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,140 +14,57 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Clock, TrendingUp, MessageCircle, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
 import { Comment } from '@/types/database.types';
-import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
+import { useQuery as useQueryA } from '@apollo/client';
+import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowLeft,
+  Clock,
+  MessageCircle,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-// Type for pools in the sample data
-type SamplePool = {
-  id: string;
-  title: string;
-  description: string;
-  creator: string;
-  creatorAvatar: string;
-  endTime: string;
-  yesPercentage: number;
-  noPercentage: number;
-  totalVolume: string;
-  isActive: boolean;
-  comments: Array<{
-    id: string;
-    user: string;
-    text: string;
-    avatar: string;
-  }>;
-};
+export default function PoolDetailPage() {
+  const { id } = useParams();
 
-// Sample data (would be fetched from API/blockchain in production)
-const SAMPLE_POOLS: SamplePool[] = [
-  {
-    id: '1',
-    title: "WILL I TWEET ABOUT THE DEMOCRATS TOMORROW? THEY'RE A DISASTER!",
-    description:
-      "I'm thinking about tweeting something BIG about the Democrats tomorrow. They've been causing MASSIVE problems for our country. Should I do it? Many people are saying I should!",
-    creator: 'Trump.fun',
-    creatorAvatar: '/trump.jpeg',
-    endTime: '2024-04-30T00:00:00Z',
-    yesPercentage: 75,
-    noPercentage: 25,
-    totalVolume: '10,000 USDC',
-    isActive: true,
-    comments: [
-      {
-        id: 'c1',
-        user: 'PatriotFan45',
-        text: 'You absolutely should, Mr. President!',
-        avatar: '/placeholder.svg',
-      },
-      {
-        id: 'c2',
-        user: 'MAGA2024',
-        text: 'Tell them like it is!',
-        avatar: '/placeholder.svg',
-      },
-    ],
-  },
-  {
-    id: '2',
-    title: 'WILL I GO TO MADISON SQUARE GARDEN NEXT WEEK? BIG CROWDS!',
-    description:
-      'Madison Square Garden has invited me to speak next week. It&apos;s going to be HUGE, probably the biggest crowd they&apos;ve ever had. Many people are saying I should go!',
-    creator: 'Trump.fun',
-    creatorAvatar: '/trump.jpeg',
-    endTime: '2024-04-15T00:00:00Z',
-    yesPercentage: 60,
-    noPercentage: 40,
-    totalVolume: '25,000 USDC',
-    isActive: true,
-    comments: [
-      {
-        id: 'c1',
-        user: 'NYCTrumpFan',
-        text: 'Please come to NY! We love you!',
-        avatar: '/placeholder.svg',
-      },
-    ],
-  },
-  {
-    id: '3',
-    title: 'WILL I ANNOUNCE A NEW POLICY ON IMMIGRATION? THE BORDER IS A MESS!',
-    description:
-      'The border is a complete DISASTER. I&apos;m considering announcing a new policy that would fix everything immediately. Many people want to hear my plan!',
-    creator: 'Trump.fun',
-    creatorAvatar: '/trump.jpeg',
-    endTime: '2024-05-01T00:00:00Z',
-    yesPercentage: 85,
-    noPercentage: 15,
-    totalVolume: '50,000 USDC',
-    isActive: true,
-    comments: [
-      {
-        id: 'c1',
-        user: 'BorderPatrol4Trump',
-        text: 'We need your leadership on this!',
-        avatar: '/placeholder.svg',
-      },
-      {
-        id: 'c2',
-        user: 'AmericaFirst2024',
-        text: "Can't wait to hear your plan!",
-        avatar: '/placeholder.svg',
-      },
-    ],
-  },
-];
+  const {
+    data: commentsData,
+    isLoading: isCommentsLoading,
+    error: commentsError,
+  } = useQuery({
+    queryKey: ['comments', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/comments?poolId=${id}`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
 
-async function getComments(poolId: string): Promise<Comment[]> {
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('comments')
-      .select('*')
-      .eq('pool_id', poolId)
-      .order('created_at', { ascending: false });
+  const comments = commentsData?.comments as Comment[];
 
-    return data as Comment[] || [];
-  } catch (error) {
-    console.error('Error fetching comments:', error);
-    return [];
-  }
-}
+  const {
+    data,
+    loading: isPoolLoading,
+    error: poolError,
+  } = useQueryA<{ pool: Pool }>(GET_POOL, {
+    variables: { poolId: id },
+    notifyOnNetworkStatusChange: true,
+  });
 
-export default async function PoolDetailPage({ params }: { params: { id: string } }) {
-  const id = (await params).id;
-  const comments = await getComments(id);
-
-  // Find the pool from sample data (in production would come from database)
-  const pool = SAMPLE_POOLS.find((p) => p.id === id) || null;
-  
-  if (!pool) {
-    return notFound();
+  if (isPoolLoading) {
+    return (
+      <div className='container mx-auto max-w-4xl px-4 py-8'>Loading...</div>
+    );
   }
 
-  if (!pool) {
+  if (poolError || !data?.pool) {
     return (
       <div className='container mx-auto max-w-4xl px-4 py-8'>
         <Link
@@ -171,9 +92,16 @@ export default async function PoolDetailPage({ params }: { params: { id: string 
     );
   }
 
-    // Helper function to format time remaining - now on server since we don't need real-time updates
+  const { pool } = data;
+
+  const isActive =
+    pool.status === PoolStatus.Pending || pool.status === PoolStatus.None;
+
+  // Format the time left - assuming endTime exists (added fallback)
   const formatTimeLeft = () => {
-    const end = new Date(pool.endTime).getTime();
+    if (!pool.betsCloseAt) return 'Time not specified'; // Fallback for missing endTime
+
+    const end = new Date(pool.betsCloseAt).getTime();
     const now = new Date().getTime();
     const diff = end - now;
 
@@ -185,6 +113,34 @@ export default async function PoolDetailPage({ params }: { params: { id: string 
     return `${days}d ${hours}h remaining`;
   };
 
+  // Calculate YES/NO percentages - assuming usdcBetTotals has at least 2 elements
+  const calculatePercentages = () => {
+    // If usdcBetTotals doesn't exist or is not properly formatted, return default values
+    if (!Array.isArray(pool.usdcBetTotals) || pool.usdcBetTotals.length < 2) {
+      return { yesPercentage: 50, noPercentage: 50 };
+    }
+
+    const yesAmount = Number(pool.usdcBetTotals[0]) || 0;
+    const noAmount = Number(pool.usdcBetTotals[1]) || 0;
+    const total = yesAmount + noAmount;
+
+    if (total === 0) return { yesPercentage: 50, noPercentage: 50 };
+
+    const yesPercentage = Math.round((yesAmount / total) * 100);
+    const noPercentage = 100 - yesPercentage;
+
+    return { yesPercentage, noPercentage };
+  };
+
+  const { yesPercentage, noPercentage } = calculatePercentages();
+
+  // Format total volume
+  const formatTotalVolume = () => {
+    if (!Array.isArray(pool.usdcBetTotals)) return '$0';
+
+    const total = pool.usdcBetTotals.reduce((sum, bet) => sum + Number(bet), 0);
+    return `$${total.toLocaleString()}`;
+  };
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
       <Link
@@ -200,85 +156,137 @@ export default async function PoolDetailPage({ params }: { params: { id: string 
           <div className='mb-2 flex items-start justify-between'>
             <div className='flex items-center'>
               <Avatar className='mr-3 h-10 w-10'>
-                <AvatarImage src={pool.creatorAvatar} alt={pool.creator} />
-                <AvatarFallback>{pool.creator[0]}</AvatarFallback>
+                <AvatarImage src='/placeholder-avatar.png' alt='Creator' />
+                <AvatarFallback>U</AvatarFallback>
               </Avatar>
               <div>
-                <p className='font-medium'>{pool.creator}</p>
+                <p className='font-medium'>Pool Creator</p>
                 <p className='text-muted-foreground text-sm'>
-                  {new Date(pool.endTime).toLocaleDateString()}
+                  {new Date(Number(pool.createdAt)).toLocaleDateString()}
                 </p>
               </div>
             </div>
             <Badge
-              variant={pool.isActive ? 'default' : 'secondary'}
-              className={pool.isActive ? 'bg-green-500' : ''}
+              variant={isActive ? 'default' : 'secondary'}
+              className={isActive ? 'bg-green-500' : ''}
             >
-              {pool.isActive ? 'ACTIVE' : 'CLOSED'}
+              {isActive ? 'ACTIVE' : 'CLOSED'}
             </Badge>
           </div>
-          <CardTitle className='text-2xl font-bold'>{pool.title}</CardTitle>
-          <CardDescription className='mt-2 text-base'>
-            {pool.description}
+          <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
+          <CardDescription className='mt-2'>
+            {/* Adding description - not in original type, using placeholder */}
+            {pool.options.join(' vs. ')}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
+          {/* Progress Bar */}
           <div className='mb-6'>
+            <Progress value={yesPercentage} className='mb-2 h-4' />
             <div className='mb-2 flex justify-between text-sm font-medium'>
-              <span>YES {pool.yesPercentage}%</span>
-              <span>NO {pool.noPercentage}%</span>
-            </div>
-            <div className='h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
-              <div
-                className='h-full bg-orange-600'
-                style={{ width: `${pool.yesPercentage}%` }}
-              />
+              <span>YES {yesPercentage}%</span>
+              <span>NO {noPercentage}%</span>
             </div>
           </div>
 
-          <div className='mb-6 grid grid-cols-2 gap-4'>
+          {/* Stats */}
+          <div className='mb-6 grid grid-cols-3 gap-4'>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <TrendingUp className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Total Volume</p>
-              <p className='font-bold'>{pool.totalVolume}</p>
+              <p className='font-bold'>{formatTotalVolume()}</p>
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Clock className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Time Left</p>
               <p className='font-bold'>{formatTimeLeft()}</p>
             </div>
+            <div className='bg-muted rounded-lg p-4 text-center'>
+              <Users className='mx-auto mb-2 text-orange-500' size={24} />
+              <p className='text-muted-foreground text-sm'>Participants</p>
+              <p className='font-bold'>
+                {/* Not in original type - using placeholder */}
+                {Math.floor(Math.random() * 100) + 10}
+              </p>
+            </div>
           </div>
 
-          {pool.isActive && (
+          {/* Betting Section */}
+          {isActive && (
             <div className='mb-6 rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
               <h3 className='mb-4 text-lg font-bold'>Place Your Bet</h3>
               <div className='mb-4 flex gap-4'>
-                <Button
-                  className='flex-1 bg-gray-700'
-                >
+                <Button className='flex-1 bg-green-600 hover:bg-green-700'>
                   YES
                 </Button>
-                <Button
-                  className='flex-1 bg-gray-700'
-                >
+                <Button className='flex-1 bg-red-600 hover:bg-red-700'>
                   NO
+                </Button>
+              </div>
+              {/* Added input for amount - wasn't in original but seems needed */}
+              <div className='flex items-center gap-2'>
+                <div className='relative flex-1'>
+                  <input
+                    type='number'
+                    className='w-full rounded-md border border-gray-300 p-2 pl-8 dark:border-gray-600 dark:bg-gray-800'
+                    placeholder='Amount in USDC'
+                  />
+                  <span className='absolute top-2 left-2 font-bold'>$</span>
+                </div>
+                <Button className='bg-orange-500 hover:bg-orange-600'>
+                  Confirm Bet
                 </Button>
               </div>
             </div>
           )}
 
+          {/* Comments Section */}
           <Tabs defaultValue='comments'>
             <TabsList className='w-full'>
               <TabsTrigger value='comments' className='flex-1'>
                 <MessageCircle className='mr-2' size={16} />
-                Comments ({comments.length})
+                Comments ({comments?.length ?? 0})
+              </TabsTrigger>
+              <TabsTrigger value='details' className='flex-1'>
+                Details
               </TabsTrigger>
             </TabsList>
             <TabsContent value='comments' className='pt-4'>
-              <Suspense fallback={<div className='py-8 text-center'>Loading comments...</div>}>
-                <CommentSectionWrapper poolId={id} initialComments={comments} />
+              <Suspense
+                fallback={
+                  <div className='py-8 text-center'>Loading comments...</div>
+                }
+              >
+                <CommentSectionWrapper
+                  poolId={pool.id}
+                  initialComments={comments}
+                  isLoading={isCommentsLoading}
+                  error={commentsError}
+                />
               </Suspense>
+            </TabsContent>
+            <TabsContent value='details' className='pt-4'>
+              <div className='space-y-4'>
+                <div>
+                  <h4 className='font-medium'>Closure Criteria</h4>
+                  <p className='text-muted-foreground'>
+                    {/* Not in provided data - using placeholder */}
+                    The result will be determined based on official sources when
+                    available.
+                  </p>
+                </div>
+                <div>
+                  <h4 className='font-medium'>Pool ID</h4>
+                  <p className='text-muted-foreground font-mono text-sm'>
+                    {pool.id}
+                  </p>
+                </div>
+                <div>
+                  <h4 className='font-medium'>Status</h4>
+                  <p className='text-muted-foreground'>{pool.status}</p>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
