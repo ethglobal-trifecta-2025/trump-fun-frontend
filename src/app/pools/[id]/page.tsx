@@ -244,7 +244,7 @@ export default function PoolDetailPage() {
         abi: betABI,
         address: '0x20e975516Fae905839F61754778483ecEA7EB403',
         functionName: 'placeBet',
-        value: amount,
+        value: BigInt(amount),
       });
       console.log('Transaction:', tx);
       console.log('Transaction hash:', hash);
