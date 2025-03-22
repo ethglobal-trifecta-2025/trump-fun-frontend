@@ -303,6 +303,7 @@ export function BettingPost({
                 >
                   {i === 0 ? 'YES' : 'NO'} {percent}%
                 </span>
+
                 <div
                   className={`flex items-center justify-center rounded-full ${
                     tokenType === TokenType.POINTS

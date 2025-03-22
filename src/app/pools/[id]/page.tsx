@@ -474,6 +474,33 @@ export default function PoolDetailPage() {
   const { yesPercentage, noPercentage } = calculatePercentages(pool.usdcBetTotals);
   const totalVolume = formatters.poolVolume(pool);
 
+  const totalPoints = pool.pointsBetTotals.reduce((sum, points) => sum + BigInt(points), BigInt(0));
+  const totalUsdc = pool.usdcBetTotals.reduce((sum, usdc) => sum + BigInt(usdc), BigInt(0));
+
+  const pointsPercentages =
+    totalPoints > BigInt(0)
+      ? pool.pointsBetTotals.map((points) => Number((BigInt(points) * BigInt(100)) / totalPoints))
+      : pool.options.map(() => 0);
+
+  const usdcPercentages =
+    totalUsdc > BigInt(0)
+      ? pool.usdcBetTotals.map((usdc) => Number((BigInt(usdc) * BigInt(100)) / totalUsdc))
+      : pool.options.map(() => 0);
+
+  const percentages = pool.options.map((_, index) => {
+    if (totalPoints > BigInt(0) && totalUsdc > BigInt(0)) {
+      return Math.round((pointsPercentages[index] + usdcPercentages[index]) / 2);
+    } else if (totalPoints > BigInt(0)) {
+      return pointsPercentages[index];
+    } else if (totalUsdc > BigInt(0)) {
+      return usdcPercentages[index];
+    } else {
+      return 0;
+    }
+  });
+
+  const closeDate = new Date(Number(pool.betsCloseAt) * 1000).toLocaleDateString();
+
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
       <Link href='/explore' className='text-muted-foreground mb-6 flex items-center'>
@@ -487,10 +514,12 @@ export default function PoolDetailPage() {
             <div className='flex items-center'>
               <Avatar className='mr-2 h-8 w-8'>
                 <AvatarImage
-                  src={'https://ui-avatars.com/api/?name=Agent&background=orange&color=fff'}
-                  alt='Agent'
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    pool.question.substring(0, 2)
+                  )}&background=orange&color=fff`}
+                  alt={pool.question}
                 />
-                <AvatarFallback>AG</AvatarFallback>
+                <AvatarFallback>{pool.question.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className='text-sm'>
                 <span className='text-muted-foreground'>Created </span>
@@ -513,10 +542,13 @@ export default function PoolDetailPage() {
         <CardContent>
           {/* Progress Bar */}
           <div className='mb-6'>
-            <Progress value={yesPercentage} className='mb-2 h-4' />
+            <Progress value={percentages[0]} className='mb-2 h-4' />
             <div className='mb-2 flex justify-between text-sm font-medium'>
-              <span>YES {yesPercentage}%</span>
-              <span>NO {noPercentage}%</span>
+              {pool.options.map((option, index) => (
+                <span key={index}>
+                  {option} {percentages[index]}%
+                </span>
+              ))}
             </div>
           </div>
 
