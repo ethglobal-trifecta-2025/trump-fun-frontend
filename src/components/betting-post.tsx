@@ -6,13 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { USDC_DECIMALS } from '@/consts';
+import { APP_ADDRESS } from '@/consts/addresses';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { useTokenContext } from '@/hooks/useTokenContext';
+import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 
 interface BettingPostProps {
   id: string;
@@ -59,10 +63,22 @@ export function BettingPost({
   const [sliderValue, setSliderValue] = useState([0]);
   const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState('0');
+
+  // Contract and wallet states
   const { authenticated, login } = usePrivy();
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
-  const { tokenType } = useTokenContext();
+  const { tokenType, getTokenAddress } = useTokenContext();
+  const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
+
+  // Contract interaction hooks
+  const publicClient = usePublicClient();
+  const account = useAccount();
+  const { data: hash, isPending, writeContract } = useWriteContract();
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   // Use our custom hook for token balance
   const { balance, formattedBalance, symbol } = useTokenBalance();
@@ -88,6 +104,31 @@ export function BettingPost({
       setBetAmount('');
     }
   }, [sliderValue, balance]);
+
+  // Fetch approved amount when component mounts or account changes
+  useEffect(() => {
+    const fetchApprovedAmount = async () => {
+      if (!account.address || !publicClient) return;
+
+      try {
+        const allowance = await publicClient.readContract({
+          abi: pointsTokenAbi,
+          address: getTokenAddress() as `0x${string}`,
+          functionName: 'allowance',
+          args: [account.address, APP_ADDRESS],
+        });
+
+        // Format the allowance (divide by 10^TOKEN_DECIMALS for USDC)
+        const formattedAllowance = Number(allowance) / 10 ** USDC_DECIMALS;
+        setApprovedAmount(formattedAllowance.toString());
+      } catch (error) {
+        setApprovedAmount('0');
+        console.error('Error fetching approved amount:', error);
+      }
+    };
+
+    fetchApprovedAmount();
+  }, [account.address, publicClient, hash, getTokenAddress]);
 
   const handleBetClick = () => {
     if (!authenticated) {
@@ -188,7 +229,7 @@ export function BettingPost({
     }
   };
 
-  const placeBet = () => {
+  const placeBet = async () => {
     if (!authenticated) {
       login();
       return;
@@ -196,13 +237,64 @@ export function BettingPost({
 
     if (!betAmount || selectedOption === null) return;
 
-    // Here you would connect to the smart contract
-    alert(`Placing ${betAmount} ${tokenType} bet on "${options[selectedOption]}"`);
+    // Validation checks
+    if (!writeContract || !publicClient || !wallets?.length) {
+      console.error('Wallet or contract not ready');
+      return;
+    }
 
-    // Reset form
-    setBetAmount('');
-    setSelectedOption(null);
-    setShowBetForm(false);
+    if (!account.address) {
+      console.error('Account address is not available');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Convert amount to token units with proper decimals
+      const amount = parseFloat(betAmount);
+      const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
+
+      if (approvedAmount && parseFloat(approvedAmount) < amount) {
+        // First approve tokens to be spent
+        const { request: approveRequest } = await publicClient.simulateContract({
+          abi: pointsTokenAbi,
+          address: getTokenAddress() as `0x${string}`,
+          functionName: 'approve',
+          account: account.address as `0x${string}`,
+          args: [APP_ADDRESS, tokenAmount],
+        });
+
+        console.log('Approving tokens...');
+        writeContract(approveRequest);
+      }
+
+      // Wait for the transaction to be confirmed before proceeding
+      if (isConfirmed || parseFloat(approvedAmount) >= amount) {
+        // Now place the bet
+        const { request } = await publicClient.simulateContract({
+          abi: bettingContractAbi,
+          address: APP_ADDRESS,
+          functionName: 'placeBet',
+          account: account.address as `0x${string}`,
+          args: [BigInt(id), BigInt(selectedOption), tokenAmount, account.address, tokenTypeC],
+        });
+
+        console.log('Placing bet...');
+        writeContract(request);
+
+        // Reset form after transaction is sent
+        if (!isPending) {
+          setBetAmount('');
+          setSelectedOption(null);
+          setShowBetForm(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error placing bet:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -448,9 +540,9 @@ export function BettingPost({
               <Button
                 className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
                 onClick={placeBet}
-                disabled={!betAmount || selectedOption === null}
+                disabled={!betAmount || selectedOption === null || isSubmitting || isPending}
               >
-                Place Bet
+                {isPending ? 'Processing...' : isSubmitting ? 'Waiting...' : 'Place Bet'}
               </Button>
             </div>
             {selectedOption !== null && (
