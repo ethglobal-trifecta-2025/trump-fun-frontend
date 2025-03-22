@@ -1,9 +1,9 @@
 'use client';
 
 import { PrivyProvider } from '@privy-io/react-auth';
-import { baseSepolia, base, mainnet } from 'viem/chains';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, createConfig } from '@privy-io/wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { base, baseSepolia, mainnet } from 'viem/chains';
 import { http } from 'wagmi';
 
 // Create a Wagmi config - ensure we're importing createConfig from @privy-io/wagmi
@@ -35,11 +35,12 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
           'passkey',
         ],
         appearance: {
-          theme: 'dark',
+          theme: 'light',
           accentColor: '#ff6d00',
           logo: process.env.NEXT_PUBLIC_LOGO_URL || undefined,
           walletList: ['metamask', 'coinbase_wallet', 'rainbow', 'wallet_connect'],
           walletChainType: 'ethereum-only',
+          showWalletLoginFirst: true,
         },
         embeddedWallets: {
           createOnLogin: 'all-users',

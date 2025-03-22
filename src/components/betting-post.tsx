@@ -9,6 +9,7 @@ import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { formatDistanceToNow } from 'date-fns';
@@ -17,7 +18,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import TruthSocial from './common/truth-social';
-import { PoolStatus } from '@/lib/__generated__/graphql';
 import { Badge } from './ui/badge';
 
 interface BettingPostProps {
@@ -358,7 +358,8 @@ export function BettingPost({
                     const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
                     const total = yes + no;
 
-                    // Show 0% when no bets instead of default 50/50
+                    // Use exact percentages for the visual bar (not rounded)
+                    // This ensures the visual representation is precise
                     const yesPercent = total > 0 ? (yes / total) * 100 : 0;
                     const noPercent = total > 0 ? (no / total) * 100 : 0;
 
@@ -366,11 +367,11 @@ export function BettingPost({
                       <>
                         <div
                           className={`h-2 rounded-l-full bg-green-500`}
-                          style={{ width: `${yesPercent}%` }}
+                          style={{ width: `${yesPercent.toFixed(2)}%` }}
                         ></div>
                         <div
                           className='h-2 rounded-r-full bg-red-500 dark:bg-red-700'
-                          style={{ width: `${noPercent}%` }}
+                          style={{ width: `${noPercent.toFixed(2)}%` }}
                         ></div>
                       </>
                     );
@@ -390,13 +391,27 @@ export function BettingPost({
 
         <div className='mb-4 space-y-2'>
           {options.map((option, i) => {
-            // Calculate percentages for options
+            // Extract bet amounts
             const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
             const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
             const total = yes + no;
 
-            // Calculate percentage for this option - show 0% when no bets
-            const percent = total > 0 ? Math.round(((i === 0 ? yes : no) / total) * 100) : 0;
+            // Calculate exact percentages first
+            let exactYesPercent = 0;
+            let exactNoPercent = 0;
+
+            if (total > 0) {
+              exactYesPercent = (yes / total) * 100;
+              exactNoPercent = (no / total) * 100;
+            }
+
+            // For display text, ensure they add up to 100%
+            // Round YES, then calculate NO as 100-YES
+            const yesDisplay = total > 0 ? Math.round(exactYesPercent) : 0;
+            const noDisplay = total > 0 ? 100 - yesDisplay : 0;
+
+            // Use the calculated display percentages for each option
+            const percent = i === 0 ? yesDisplay : noDisplay;
 
             return (
               <div

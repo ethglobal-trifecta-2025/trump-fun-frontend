@@ -26,7 +26,7 @@ export default function Nav() {
   ];
   return (
     <>
-      <header className='flex h-full items-center justify-between px-4 py-2 md:h-16 md:py-0'>
+      <header className='fixed top-0 right-0 left-0 z-50 flex h-full items-center justify-between bg-white px-4 py-2 md:h-16 md:py-0 dark:bg-black'>
         <div className='text-2xl font-bold text-orange-500'>
           <Link href='/'>Trump.fun</Link>
         </div>

@@ -426,8 +426,9 @@ export default function PoolDetailPage() {
 
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-        return `${days}d ${hours}h remaining`;
+        return `${days}d ${hours}h ${minutes}m remaining`;
       }
       return 'Time not specified';
     }
@@ -440,8 +441,9 @@ export default function PoolDetailPage() {
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    return `${days}d ${hours}h remaining`;
+    return `${days}d ${hours}h ${minutes}m remaining`;
   };
 
   const calculatePercentages = (usdcBetTotals: string[]) => {
@@ -455,17 +457,20 @@ export default function PoolDetailPage() {
 
     if (total === 0) return { yesPercentage: 0, noPercentage: 0 };
 
-    const yesPercentage = Math.round((yesAmount / total) * 100);
-    const noPercentage = 100 - yesPercentage;
+    // Calculate exact percentages for display
+    // Use exact YES percentage and derive NO as 100-YES
+    const exactYesPercentage = (yesAmount / total) * 100;
+    const yesPercentage = Math.round(exactYesPercentage);
+    const noPercentage = 100 - yesPercentage; // Ensures they add up to exactly 100%
 
     return { yesPercentage, noPercentage };
   };
 
   // Calculate the number of unique betters based on pool data
-  const calculateParticipants = (pool: Pool) => {
+  const calculateBettors = (pool: Pool) => {
     if (!pool) return 0;
 
-    // If we have bet data, use real data
+    // If we have bet data, use real data from smart contract
     if (pool.bets && pool.bets.length > 0) {
       // Create a Set to track unique addresses
       const uniqueAddresses = new Set();
@@ -481,9 +486,8 @@ export default function PoolDetailPage() {
       return uniqueAddresses.size;
     }
 
-    // Fallback to a determined value based on pool ID to ensure consistency
-    const poolIdSeed = parseInt(pool.id, 16) || pool.poolId || 0;
-    return Math.max(5, poolIdSeed % 100); // Between 5 and 104 participants
+    // If no bets data, show 0 bettors
+    return 0;
   };
 
   // Formatters for display
@@ -553,14 +557,33 @@ export default function PoolDetailPage() {
       : pool.options.map(() => 0);
 
   const percentages = pool.options.map((_, index) => {
+    let result;
+
     if (totalPoints > BigInt(0) && totalUsdc > BigInt(0)) {
-      return Math.round((pointsPercentages[index] + usdcPercentages[index]) / 2);
+      // Calculate a weighted average of both percentages
+      result = (pointsPercentages[index] + usdcPercentages[index]) / 2;
     } else if (totalPoints > BigInt(0)) {
-      return pointsPercentages[index];
+      result = pointsPercentages[index];
     } else if (totalUsdc > BigInt(0)) {
-      return usdcPercentages[index];
+      result = usdcPercentages[index];
     } else {
       return 0;
+    }
+
+    // Round only when needed for display
+    if (index === 0) {
+      // For YES, round to nearest integer
+      return Math.round(result);
+    } else {
+      // For NO, ensure it adds up to 100%
+      return (
+        100 -
+        Math.round(
+          pointsPercentages[0] > 0 || usdcPercentages[0] > 0
+            ? (pointsPercentages[0] + usdcPercentages[0]) / 2
+            : 0
+        )
+      );
     }
   });
 
@@ -602,13 +625,6 @@ export default function PoolDetailPage() {
             </div>
           </div>
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
-          <div className='mt-2 flex items-start'>
-            <span className='text-sm text-gray-500 dark:text-gray-400'>
-              {formatDistanceToNow(new Date(Number(pool.createdAt) * 1000), {
-                addSuffix: true,
-              })}
-            </span>
-          </div>
         </CardHeader>
 
         <CardContent>
@@ -658,8 +674,8 @@ export default function PoolDetailPage() {
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Participants</p>
-              <p className='font-bold'>{calculateParticipants(pool)}</p>
+              <p className='text-muted-foreground text-sm'>Bettors</p>
+              <p className='font-bold'>{calculateBettors(pool)}</p>
             </div>
           </div>
 

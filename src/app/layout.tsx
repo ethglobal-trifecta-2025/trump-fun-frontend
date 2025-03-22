@@ -2,12 +2,12 @@ import { Geist, Geist_Mono } from 'next/font/google';
 
 import { MobileNav } from '@/components/common/mobile-nav';
 import Nav from '@/components/common/nav';
+import { ApolloClientProvider } from '@/components/providers/apollo-provider';
 import { PrivyAuthProvider } from '@/components/providers/privy-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { TokenProvider } from '@/hooks/useTokenContext';
 import type { Metadata } from 'next';
 import './globals.css';
-import { ApolloClientProvider } from '@/components/providers/apollo-provider';
-import { TokenProvider } from '@/hooks/useTokenContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -43,7 +43,7 @@ export default function RootLayout({
               <div className='mx-auto max-w-screen-xl'>
                 <ApolloClientProvider>
                   <Nav />
-                  {children}
+                  <div className='pt-16 md:pt-20'>{children}</div>
                   <MobileNav />
                 </ApolloClientProvider>
               </div>
