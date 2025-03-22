@@ -535,6 +535,7 @@ export enum Bet_OrderBy {
   PoolGradedBlockNumber = 'pool__gradedBlockNumber',
   PoolGradedBlockTimestamp = 'pool__gradedBlockTimestamp',
   PoolGradedTransactionHash = 'pool__gradedTransactionHash',
+  PoolId = 'pool__id',
   PoolIsDraw = 'pool__isDraw',
   PoolLastUpdatedBlockNumber = 'pool__lastUpdatedBlockNumber',
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
@@ -865,6 +866,7 @@ export enum PayoutClaimed_OrderBy {
   BetChainId = 'bet__chainId',
   BetChainName = 'bet__chainName',
   BetCreatedAt = 'bet__createdAt',
+  BetId = 'bet__id',
   BetIsWithdrawn = 'bet__isWithdrawn',
   BetOption = 'bet__option',
   BetPoolId = 'bet__poolId',
@@ -891,6 +893,7 @@ export enum PayoutClaimed_OrderBy {
   PoolGradedBlockNumber = 'pool__gradedBlockNumber',
   PoolGradedBlockTimestamp = 'pool__gradedBlockTimestamp',
   PoolGradedTransactionHash = 'pool__gradedTransactionHash',
+  PoolId = 'pool__id',
   PoolIsDraw = 'pool__isDraw',
   PoolLastUpdatedBlockNumber = 'pool__lastUpdatedBlockNumber',
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
@@ -2202,6 +2205,8 @@ export type GetBetsQuery = {
     blockNumber: any;
     blockTimestamp: any;
     transactionHash: any;
+    tokenType: TokenType;
+    isWithdrawn: boolean;
     pool: {
       __typename?: 'Pool';
       id: string;
@@ -2212,6 +2217,11 @@ export type GetBetsQuery = {
       chainId: any;
       chainName: string;
       createdAt: any;
+      pointsVolume: any;
+      usdcVolume: any;
+      usdcBetTotals: Array<any>;
+      pointsBetTotals: Array<any>;
+      originalTruthSocialPostId: string;
     };
   }>;
 };
@@ -2627,6 +2637,8 @@ export const GetBetsDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'blockNumber' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'blockTimestamp' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'transactionHash' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'tokenType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isWithdrawn' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'pool' },
@@ -2641,6 +2653,11 @@ export const GetBetsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'chainName' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'pointsVolume' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'usdcVolume' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'usdcBetTotals' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'pointsBetTotals' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'originalTruthSocialPostId' } },
                     ],
                   },
                 },

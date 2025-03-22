@@ -206,7 +206,7 @@ export function BettingPost({
   };
 
   return (
-    <div className='bg-background overflow-hidden rounded-lg border border-gray-800 transition-colors hover:border-gray-700'>
+    <div className='bg-background overflow-hidden rounded-lg border border-gray-200 transition-colors hover:border-gray-100 dark:border-gray-800 dark:hover:border-gray-700'>
       <div className='p-4'>
         <div className='mb-2 flex items-center gap-2'>
           <Avatar className='h-10 w-10 overflow-hidden rounded-full'>
@@ -219,7 +219,7 @@ export function BettingPost({
           <Link
             href={`https://truthsocial.com/@realDonaldTrump/posts/${truthSocialId}`}
             target='_blank'
-            className='flex items-center gap-2 text-sm text-gray-400'
+            className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400'
           >
             <div className='flex items-center gap-2'>
               <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
@@ -236,13 +236,13 @@ export function BettingPost({
 
         <div className='mb-3 rounded-md'>
           {volume === '0' ? (
-            <div className='p-2 text-center text-gray-400'>
+            <div className='p-2 text-center text-gray-500 dark:text-gray-400'>
               <span>No bets</span>
             </div>
           ) : (
             <div className='relative'>
               {/* Progress bar for volume visualization */}
-              <div className='flex-1 rounded-full bg-gray-800'>
+              <div className='flex-1 rounded-full bg-gray-200 dark:bg-gray-800'>
                 <div className='flex overflow-hidden rounded-full'>
                   {(() => {
                     const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
@@ -260,7 +260,7 @@ export function BettingPost({
                           style={{ width: `${yesPercent}%` }}
                         ></div>
                         <div
-                          className='h-2 rounded-r-full bg-gray-700'
+                          className='h-2 rounded-r-full bg-gray-300 dark:bg-gray-700'
                           style={{ width: `${noPercent}%` }}
                         ></div>
                       </>
@@ -271,7 +271,9 @@ export function BettingPost({
 
               {/* Show total volume */}
               <div className='mt-1 flex justify-end'>
-                <div className={`text-sm font-medium text-gray-400`}>{volume} vol.</div>
+                <div className={`text-sm font-medium text-gray-500 dark:text-gray-400`}>
+                  {volume} vol.
+                </div>
               </div>
             </div>
           )}
@@ -293,13 +295,13 @@ export function BettingPost({
                 key={i}
                 className={`flex items-center justify-between rounded-md p-2 transition-colors ${
                   selectedOption === i
-                    ? 'border border-orange-500 bg-gray-800'
-                    : 'bg-gray-900 opacity-70 hover:bg-gray-800'
+                    ? 'border border-orange-500 bg-gray-100 dark:bg-gray-800'
+                    : 'bg-gray-50 opacity-90 hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-800'
                 } cursor-pointer`}
                 onClick={() => setSelectedOption(i)}
               >
                 <span
-                  className={`font-medium ${selectedOption === i ? 'text-white' : 'text-gray-400'}`}
+                  className={`font-medium ${selectedOption === i ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
                 >
                   {i === 0 ? 'YES' : 'NO'} {percent}%
                 </span>
@@ -309,11 +311,11 @@ export function BettingPost({
                     tokenType === TokenType.POINTS
                       ? selectedOption === i
                         ? 'bg-orange-500'
-                        : 'bg-orange-700'
+                        : 'bg-orange-400 dark:bg-orange-700'
                       : selectedOption === i
                         ? 'bg-orange-500'
-                        : 'bg-orange-700'
-                  } px-3 py-1 text-sm font-medium ${selectedOption === i ? '' : 'opacity-70'}`}
+                        : 'bg-orange-400 dark:bg-orange-700'
+                  } px-3 py-1 text-sm font-medium ${selectedOption === i ? '' : 'opacity-80'}`}
                 >
                   {optionBets[i] || '0'}
                 </div>
@@ -323,7 +325,12 @@ export function BettingPost({
         </div>
 
         <div className='flex items-center justify-between'>
-          <Button variant='ghost' size='sm' className='text-gray-400 hover:text-gray-300' asChild>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            asChild
+          >
             <Link href={`/pools/${id}`}>
               <MessageCircle size={18} className='mr-1' />
               {commentCount > 0 ? commentCount : 'Comment'}
@@ -361,12 +368,12 @@ export function BettingPost({
         </div>
 
         {showBetForm && (
-          <div className='mt-4 border-t border-gray-800 pt-4'>
+          <div className='mt-4 border-t border-gray-200 pt-4 dark:border-gray-800'>
             <h4 className='mb-2 text-sm font-medium'>Place your bet</h4>
 
             {/* Display Token Balance */}
             {balance && (
-              <div className='mb-2 text-xs text-gray-400'>
+              <div className='mb-2 text-xs text-gray-500 dark:text-gray-400'>
                 Balance: {formattedBalance} {symbol}
               </div>
             )}
@@ -427,7 +434,7 @@ export function BettingPost({
               </Button>
             </div>
             {selectedOption !== null && (
-              <p className='mt-2 text-xs text-gray-400'>
+              <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
                 You are betting {betAmount || '0'} {tokenType} on &quot;
                 {options[selectedOption]}&quot;
               </p>

@@ -1,4 +1,4 @@
-import { USDC_DECIMALS, POINTS_DECIMALS } from '@/consts';
+import { POINTS_DECIMALS, USDC_DECIMALS } from '@/consts';
 import { TokenType } from '@/hooks/useTokenContext';
 import { GetPoolQuery, GetPoolsQuery } from '@/lib/__generated__/graphql';
 
@@ -37,7 +37,7 @@ export const calculateVolume = (
         return '0 pts';
       }
 
-      return `${Math.floor(value).toLocaleString()} pts`;
+      return `${Math.floor(value).toLocaleString()}`;
     }
   } catch (error) {
     console.error('Error calculating volume:', error, { pool, tokenType });

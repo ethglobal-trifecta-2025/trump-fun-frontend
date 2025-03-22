@@ -2,6 +2,9 @@
 
 import { AuthButton } from '@/components/auth-button';
 import { PoolList } from '@/components/pools/pool-list';
+import { Button } from '@/components/ui/button';
+import { Compass } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -18,6 +21,12 @@ export default function Home() {
                 true.
               </p>
               <div className='flex flex-col gap-2 min-[400px]:flex-row'>
+                <Button variant='default' className='bg-orange-500 hover:bg-orange-600' asChild>
+                  <Link href='/explore'>
+                    <Compass className='mr-2 h-4 w-4' />
+                    Explore
+                  </Link>
+                </Button>
                 <AuthButton />
               </div>
             </div>
