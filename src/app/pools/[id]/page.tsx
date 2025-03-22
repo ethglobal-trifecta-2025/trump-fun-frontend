@@ -35,6 +35,7 @@ import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
+import { Related } from '@/components/Related';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -45,6 +46,7 @@ export default function PoolDetailPage() {
   const account = useAccount();
   const { ready } = usePrivy();
   const { wallets } = useWallets();
+  const [selectedTab, setSelectedTab] = useState<'comments' | 'activity' | 'related'>('comments');
 
   // Component state
   const [betAmount, setBetAmount] = useState<number>(0);
@@ -446,26 +448,6 @@ export default function PoolDetailPage() {
     return `${days}d ${hours}h ${minutes}m remaining`;
   };
 
-  const calculatePercentages = (usdcBetTotals: string[]) => {
-    if (!Array.isArray(usdcBetTotals) || usdcBetTotals.length < 2) {
-      return { yesPercentage: 0, noPercentage: 0 };
-    }
-
-    const yesAmount = Number(usdcBetTotals[0]) || 0;
-    const noAmount = Number(usdcBetTotals[1]) || 0;
-    const total = yesAmount + noAmount;
-
-    if (total === 0) return { yesPercentage: 0, noPercentage: 0 };
-
-    // Calculate exact percentages for display
-    // Use exact YES percentage and derive NO as 100-YES
-    const exactYesPercentage = (yesAmount / total) * 100;
-    const yesPercentage = Math.round(exactYesPercentage);
-    const noPercentage = 100 - yesPercentage; // Ensures they add up to exactly 100%
-
-    return { yesPercentage, noPercentage };
-  };
-
   // Calculate the number of unique betters based on pool data
   const calculateBettors = (pool: Pool) => {
     if (!pool) return 0;
@@ -540,7 +522,6 @@ export default function PoolDetailPage() {
 
   const { pool } = data;
   const isActive = pool.status === PoolStatus.Pending || pool.status === PoolStatus.None;
-  const { yesPercentage, noPercentage } = calculatePercentages(pool.usdcBetTotals);
   const totalVolume = formatters.poolVolume(pool);
 
   const totalPoints = pool.pointsBetTotals.reduce((sum, points) => sum + BigInt(points), BigInt(0));
@@ -570,24 +551,8 @@ export default function PoolDetailPage() {
       return 0;
     }
 
-    // Round only when needed for display
-    if (index === 0) {
-      // For YES, round to nearest integer
-      return Math.round(result);
-    } else {
-      // For NO, ensure it adds up to 100%
-      return (
-        100 -
-        Math.round(
-          pointsPercentages[0] > 0 || usdcPercentages[0] > 0
-            ? (pointsPercentages[0] + usdcPercentages[0]) / 2
-            : 0
-        )
-      );
-    }
+    return result;
   });
-
-  const closeDate = new Date(Number(pool.betsCloseAt) * 1000).toLocaleDateString();
 
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
@@ -813,13 +778,58 @@ export default function PoolDetailPage() {
             </div>
           )}
 
-          {/* Comments Section */}
-          <CommentSectionWrapper
-            poolId={pool.id}
-            initialComments={comments || []}
-            isLoading={isCommentsLoading}
-            error={commentsError}
-          />
+          {/* Tabs */}
+          <div className='mt-6'>
+            <div className='border-b border-gray-200 dark:border-gray-700'>
+              <nav className='-mb-px flex space-x-4' aria-label='Tabs'>
+                <button
+                  className={cn(
+                    'cursor-pointer border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap',
+                    'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300',
+                    'border-transparent',
+                    selectedTab === 'comments' && 'border-orange-500 text-orange-600'
+                  )}
+                  onClick={() => setSelectedTab('comments')}
+                >
+                  Comments
+                </button>
+                <button
+                  className={cn(
+                    'cursor-pointer border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap',
+                    'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300',
+                    'border-transparent',
+                    selectedTab === 'activity' && 'border-orange-500 text-orange-600'
+                  )}
+                  onClick={() => setSelectedTab('activity')}
+                >
+                  Activity
+                </button>
+                <button
+                  className={cn(
+                    'cursor-pointer border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap',
+                    'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300',
+                    'border-transparent',
+                    selectedTab === 'related' && 'border-orange-500 text-orange-600'
+                  )}
+                  onClick={() => setSelectedTab('related')}
+                >
+                  Related
+                </button>
+              </nav>
+            </div>
+            <div className='mt-4'>
+              {selectedTab === 'comments' && (
+                <CommentSectionWrapper
+                  poolId={pool.id}
+                  initialComments={comments || []}
+                  isLoading={isCommentsLoading}
+                  error={commentsError}
+                />
+              )}
+              {selectedTab === 'activity' && <div>Activity content goes here...</div>}
+              {selectedTab === 'related' && <Related question={pool.question} />}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
