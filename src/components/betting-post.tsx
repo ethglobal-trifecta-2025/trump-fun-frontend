@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { X, MessageCircle } from 'lucide-react';
-import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { useTokenContext, TokenType } from '@/hooks/useTokenContext';
+import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { usePrivy } from '@privy-io/react-auth';
+import { formatDistanceToNow } from 'date-fns';
+import { MessageCircle, X } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface BettingPostProps {
   id: string;
@@ -188,18 +188,28 @@ export function BettingPost({
             return (
               <div
                 key={i}
-                className={`flex items-center justify-between rounded-md p-2 ${
-                  selectedOption === i ? 'bg-gray-800' : 'bg-gray-900'
+                className={`flex items-center justify-between rounded-md p-2 transition-colors ${
+                  selectedOption === i
+                    ? 'border border-orange-500 bg-gray-800'
+                    : 'bg-gray-900 opacity-70 hover:bg-gray-800'
                 } cursor-pointer`}
                 onClick={() => setSelectedOption(i)}
               >
-                <span className='font-medium text-white'>
+                <span
+                  className={`font-medium ${selectedOption === i ? 'text-white' : 'text-gray-400'}`}
+                >
                   {i === 0 ? 'YES' : 'NO'} {percent}%
                 </span>
                 <div
                   className={`flex items-center justify-center rounded-full ${
-                    tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'
-                  } px-3 py-1 text-sm font-medium`}
+                    tokenType === TokenType.POINTS
+                      ? selectedOption === i
+                        ? 'bg-orange-500'
+                        : 'bg-orange-700'
+                      : selectedOption === i
+                        ? 'bg-blue-500'
+                        : 'bg-blue-700'
+                  } px-3 py-1 text-sm font-medium ${selectedOption === i ? '' : 'opacity-70'}`}
                 >
                   {optionBets[i] || '0'}
                 </div>
