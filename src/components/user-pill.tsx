@@ -2,6 +2,7 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { UserPill } from '@privy-io/react-auth/ui';
+import { PrivyLoginButton } from './login-button';
 
 export function TrumpUserPill() {
   const { authenticated, ready } = usePrivy();
@@ -11,30 +12,9 @@ export function TrumpUserPill() {
   }
 
   if (!authenticated) {
-    return (
-      <UserPill
-        action={{
-          type: 'login',
-          options: {
-            loginMethods: [
-              'email',
-              'wallet',
-              'twitter',
-              'google',
-              'discord',
-              'apple',
-              'farcaster',
-              'passkey',
-            ],
-          },
-        }}
-        expanded={true}
-        size={20}
-      />
-    );
+    return <PrivyLoginButton />;
   }
 
-  // When authenticated, display the user pill with expanded view and logout button
   return (
     <div className='flex items-center gap-2'>
       <UserPill expanded={true} ui={{ background: 'accent' }} size={16} />

@@ -112,15 +112,14 @@ const CommentItem = ({ comment }: CommentItemProps) => {
 
       if (result.success) {
         console.log('Update successful, updating UI');
-        // Use the server's returned values instead of calculated ones
-        setIsLiked(result.isLiked ?? newIsLiked);
+        setIsLiked(newIsLiked);
         setUpvotes(result.upvotes ?? newUpvotes);
 
         // Update localStorage after successful server update
-        saveCommentLike(comment.id, result.isLiked ?? newIsLiked);
+        saveCommentLike(comment.id, newIsLiked);
 
         console.log('Final state:', {
-          isLiked: result.isLiked ?? newIsLiked,
+          isLiked: newIsLiked,
           upvotes: result.upvotes ?? newUpvotes,
         });
       } else {
