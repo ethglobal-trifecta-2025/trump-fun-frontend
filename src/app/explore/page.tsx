@@ -13,7 +13,7 @@ import Link from 'next/link';
 
 import { GET_POOLS } from '@/app/queries';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
+import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { TRUMP_FUN_TWITTER_URL, TRUMP_FUN_TWITTER_USERNAME } from '@/utils/config';
 import { useQuery } from '@apollo/client';
@@ -86,7 +86,7 @@ export default function BettingPlatform() {
     if (!searchQuery.trim()) return pools.pools;
 
     const query = searchQuery.toLowerCase().trim();
-    return pools.pools.filter((pool) => pool.question.toLowerCase().includes(query));
+    return pools.pools.filter((pool: Pool) => pool.question.toLowerCase().includes(query));
   }, [pools?.pools, searchQuery]);
 
   const renderFilterButton = (value: string, label: string) => (
@@ -200,7 +200,7 @@ export default function BettingPlatform() {
 
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
-                {filteredPools.map((pool) => {
+                {filteredPools.map((pool: Pool) => {
                   return (
                     <BettingPost
                       key={pool.id}
