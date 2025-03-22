@@ -26,12 +26,6 @@ const verifySignature = (messageStr: string, signature: string): string | null =
 /**
  * Server action to toggle FACTS (likes) on a pool
  *
- * IMPORTANT: This requires the Supabase 'pool_facts' table to be created with:
- * - id (primary key)
- * - pool_id (string)
- * - user_address (string)
- * - created_at (timestamp)
- *
  * @param poolId - The ID of the pool to toggle FACTS for
  * @param operation - Whether to like or unlike
  * @param signature - The signature from the user
@@ -68,34 +62,62 @@ export async function togglePoolFacts(
       };
     }
 
+    const user_id = walletAddress.toLowerCase();
+
     // Check if user has already liked this pool
-    const { data: existingLike } = await supabase
-      .from('pool_facts')
+    const { data: existingFact } = await supabase
+      .from('facts')
       .select('id')
       .eq('pool_id', poolId)
-      .eq('user_address', walletAddress.toLowerCase())
+      .eq('user_id', user_id)
+      .is('comment_id', null) // Makes sure we're checking pool FACTS not comment FACTS
       .single();
 
-    if (operation === 'like' && !existingLike) {
-      // Add a like record
-      await supabase.from('pool_facts').insert({
+    console.log('Existing fact:', existingFact, 'Operation:', operation);
+
+    if (operation === 'like' && !existingFact) {
+      // Add a FACT record
+      const { error: insertError } = await supabase.from('facts').insert({
         pool_id: poolId,
-        user_address: walletAddress.toLowerCase(),
-        created_at: new Date().toISOString(),
+        user_id: user_id,
+        comment_id: null, // null means this FACT is for the pool, not a comment
       });
-    } else if (operation === 'unlike' && existingLike) {
-      // Remove the like record
-      await supabase.from('pool_facts').delete().match({
-        pool_id: poolId,
-        user_address: walletAddress.toLowerCase(),
-      });
+
+      if (insertError) {
+        console.error('Error inserting FACT:', insertError);
+        return {
+          success: false,
+          error: `Failed to add FACT: ${insertError.message}`,
+        };
+      }
+    } else if (operation === 'unlike' && existingFact) {
+      // Remove the FACT record
+      const { error: deleteError } = await supabase
+        .from('facts')
+        .delete()
+        .eq('pool_id', poolId)
+        .eq('user_id', user_id)
+        .is('comment_id', null);
+
+      if (deleteError) {
+        console.error('Error deleting FACT:', deleteError);
+        return {
+          success: false,
+          error: `Failed to remove FACT: ${deleteError.message}`,
+        };
+      }
     }
 
     // Get updated count
-    const { count } = await supabase
-      .from('pool_facts')
+    const { count, error: countError } = await supabase
+      .from('facts')
       .select('*', { count: 'exact', head: true })
-      .eq('pool_id', poolId);
+      .eq('pool_id', poolId)
+      .is('comment_id', null);
+
+    if (countError) {
+      console.error('Error getting FACTS count:', countError);
+    }
 
     return {
       success: true,
@@ -104,6 +126,7 @@ export async function togglePoolFacts(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error in togglePoolFacts:', errorMessage);
     return {
       success: false,
       error: `Failed to toggle pool FACTS: ${errorMessage}`,

@@ -25,6 +25,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 
 // Import utils
 import { togglePoolFacts } from '@/app/actions/pool-facts';
@@ -114,6 +116,51 @@ export default function PoolDetailPage() {
   const currentTokenContext = useTokenContext();
   const currentTokenType = currentTokenContext.tokenType;
 
+  // Fetch initial FACTS count and status when component mounts
+  useEffect(() => {
+    const fetchInitialFacts = async () => {
+      try {
+        // First, check localStorage for immediate display
+        const localFacts = parseInt(localStorage.getItem(`pool_facts_${id}`) || '0', 10) || 5;
+        const localHasFactsed = localStorage.getItem(`pool_facts_liked_${id}`) === 'true';
+
+        setPoolFacts(localFacts);
+        setHasFactsed(localHasFactsed);
+
+        // Then try to fetch from server for more accurate data
+        if (ready && id) {
+          try {
+            // Include wallet address in query if available
+            const walletAddress =
+              wallets && wallets[0]?.address ? wallets[0].address.toLowerCase() : '';
+
+            const res = await fetch(`/api/pool-facts?poolId=${id}&address=${walletAddress}`);
+            if (res.ok) {
+              const data = await res.json();
+
+              // Update with server data if available
+              if (typeof data.count === 'number') {
+                setPoolFacts(Math.max(data.count, 5)); // Ensure at least 5 FACTS
+                setHasFactsed(!!data.userLiked);
+
+                // Update localStorage for consistency
+                localStorage.setItem(`pool_facts_${id}`, data.count.toString());
+                localStorage.setItem(`pool_facts_liked_${id}`, data.userLiked.toString());
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching FACTS data:', error);
+            // Fall back to localStorage values set above
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing FACTS data:', error);
+      }
+    };
+
+    fetchInitialFacts();
+  }, [id, wallets, ready, authenticated]);
+
   // Update bet amount when slider changes
   useEffect(() => {
     if (!balance) return;
@@ -177,17 +224,22 @@ export default function PoolDetailPage() {
       return;
     }
 
+    console.log('Starting FACTS process for pool:', id);
+    console.log('Current state:', { hasFactsed, poolFacts });
+
     setIsFactsProcessing(true);
 
     try {
       const wallet = wallets?.[0];
       if (!wallet || !wallet.address) {
+        console.log('No wallet connected');
         setIsFactsProcessing(false);
         return;
       }
 
       // Determine the action without updating state yet
       const newIsFactsed = !hasFactsed;
+      console.log('New FACTS state will be:', newIsFactsed);
 
       // Create message for signature
       const messageObj = {
@@ -199,8 +251,10 @@ export default function PoolDetailPage() {
       };
 
       const messageStr = JSON.stringify(messageObj);
+      console.log('Prepared message for signing:', messageObj);
 
       // Request signature from user
+      console.log('Requesting signature...');
       const { signature } = await signMessage(
         { message: messageStr },
         {
@@ -212,23 +266,10 @@ export default function PoolDetailPage() {
           address: wallet.address,
         }
       );
-
-      // Only update after successful signature
-      setHasFactsed(newIsFactsed);
-
-      // Update facts count after signature is complete
-      const newFactsCount = newIsFactsed ? poolFacts + 1 : Math.max(5, poolFacts - 1);
-      setPoolFacts(newFactsCount);
-
-      // Temporary localStorage solution until Supabase is ready
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
-        localStorage.setItem(`pool_facts_liked_${id}`, newIsFactsed.toString());
-      }
-
-      // FUTURE: When Supabase is ready, uncomment this code
+      console.log('Signature received');
 
       // Call the server action to update the database
+      console.log('Calling togglePoolFacts...');
       const result = await togglePoolFacts(
         id as string,
         newIsFactsed ? 'like' : 'unlike',
@@ -236,19 +277,41 @@ export default function PoolDetailPage() {
         messageStr
       );
 
-      // Update UI with server data if successful
-      if (result.success && typeof result.facts === 'number') {
-        setPoolFacts(result.facts);
+      console.log('Server response:', result);
+
+      // Only update UI after successful server response
+      if (result.success) {
+        console.log('Update successful, updating UI');
+        // Make sure we use the server's count
+        const serverFactsCount =
+          typeof result.facts === 'number'
+            ? Math.max(result.facts, 5)
+            : newIsFactsed
+              ? poolFacts + 1
+              : Math.max(5, poolFacts - 1);
+
+        setHasFactsed(newIsFactsed);
+        setPoolFacts(serverFactsCount);
+
+        // Update localStorage after successful server update
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`pool_facts_${id}`, serverFactsCount.toString());
+          localStorage.setItem(`pool_facts_liked_${id}`, newIsFactsed.toString());
+        }
+
+        console.log('Final state:', { hasFactsed: newIsFactsed, poolFacts: serverFactsCount });
+      } else {
+        console.error('Error from server:', result.error);
       }
     } catch (error) {
-      // No need to revert since we're only updating after successful signature
-      // Don't log errors when user rejects the request
       if (
         error instanceof Error &&
-        !error.message.includes('rejected') &&
-        !error.message.includes('cancel') &&
-        !error.message.includes('user rejected')
+        (error.message.includes('rejected') ||
+          error.message.includes('cancel') ||
+          error.message.includes('user rejected'))
       ) {
+        console.log('User rejected signature');
+      } else {
         console.error('Error handling FACTS:', error);
       }
     } finally {
@@ -369,7 +432,7 @@ export default function PoolDetailPage() {
   };
 
   // Calculate the number of unique betters based on pool data
-  const calculateBetters = (pool: Pool) => {
+  const calculateParticipants = (pool: Pool) => {
     if (!pool) return 0;
 
     // If we have bet data, use real data
@@ -390,7 +453,7 @@ export default function PoolDetailPage() {
 
     // Fallback to a determined value based on pool ID to ensure consistency
     const poolIdSeed = parseInt(pool.id, 16) || pool.poolId || 0;
-    return Math.max(5, poolIdSeed % 100); // Between 5 and 104 betters
+    return Math.max(5, poolIdSeed % 100); // Between 5 and 104 participants
   };
 
   // Formatters for display
@@ -410,40 +473,6 @@ export default function PoolDetailPage() {
 
     // Use existing formatters from the file
   };
-
-  // FUTURE: When Supabase is ready, uncomment this function
-  /*
-  // Fetch initial FACTS count and status from the server
-  const fetchPoolFacts = async () => {
-    try {
-      // Include wallet address in query if available
-      const walletAddress = wallets && wallets[0]?.address 
-        ? wallets[0].address.toLowerCase() 
-        : '';
-      
-      const res = await fetch(`/api/pool-facts?poolId=${id}&address=${walletAddress}`);
-      if (!res.ok) return;
-      
-      const data = await res.json();
-      
-      // Update facts count with explicit type handling
-      const factsCount = typeof data.count === 'number' ? data.count : 0;
-      setPoolFacts(factsCount);
-      
-      // Update hasFactsed state
-      setHasFactsed(!!data.userLiked);
-    } catch (error) {
-      // Silently handle error and keep using localStorage data
-    }
-  };
-
-  // Fetch FACTS data when component mounts and when wallet changes
-  useEffect(() => {
-    if (ready && id) {
-      fetchPoolFacts();
-    }
-  }, [id, wallets, ready]);
-  */
 
   // Loading state
   if (isPoolLoading) {
@@ -519,29 +548,50 @@ export default function PoolDetailPage() {
           <div className='mb-2 flex flex-wrap items-start justify-between gap-2'>
             <div className='flex items-center'>
               <Avatar className='mr-2 h-8 w-8'>
-                <AvatarImage
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    pool.question.substring(0, 2)
-                  )}&background=orange&color=fff`}
-                  alt={pool.question}
-                />
-                <AvatarFallback>{pool.question.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage src='/trump.jpeg' alt='realDonaldTrump' />
+                <AvatarFallback>DT</AvatarFallback>
               </Avatar>
               <div className='text-sm'>
-                <span className='text-muted-foreground'>Created </span>
+                <div className='font-bold'>realDonaldTrump</div>
                 <span className='text-muted-foreground'>
                   {new Date(Number(pool.createdAt) * 1000).toLocaleDateString()}
                 </span>
               </div>
             </div>
-            <Badge
-              variant={isActive ? 'default' : 'secondary'}
-              className={isActive ? 'bg-green-500' : ''}
-            >
-              {isActive ? 'ACTIVE' : 'CLOSED'}
-            </Badge>
+            <div className='flex items-center gap-3'>
+              <Badge
+                variant={isActive ? 'default' : 'secondary'}
+                className={isActive ? 'bg-green-500' : ''}
+              >
+                {isActive ? 'ACTIVE' : 'CLOSED'}
+              </Badge>
+              <Link
+                href={
+                  pool.originalTruthSocialPostId
+                    ? `https://truthsocial.com/@realDonaldTrump/posts/${pool.originalTruthSocialPostId}`
+                    : 'https://truthsocial.com/@realDonaldTrump'
+                }
+                target='_blank'
+                className='flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400'
+              >
+                <Image
+                  src='/truth-social.png'
+                  alt='truth-social'
+                  width={24}
+                  height={24}
+                  style={{ width: 'auto', height: 'auto' }}
+                />
+              </Link>
+            </div>
           </div>
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
+          <div className='mt-2 flex items-start'>
+            <span className='text-sm text-gray-500 dark:text-gray-400'>
+              {formatDistanceToNow(new Date(Number(pool.createdAt) * 1000), {
+                addSuffix: true,
+              })}
+            </span>
+          </div>
         </CardHeader>
 
         <CardContent>
@@ -550,8 +600,16 @@ export default function PoolDetailPage() {
             <Progress
               value={percentages[0]}
               className='mb-2 h-4'
-              foregroundColor='bg-green-500'
-              backgroundColor='bg-red-500'
+              foregroundColor={
+                totalVolume === '$0' || totalVolume === '0 pts' || percentages[0] === 0
+                  ? 'bg-gray-300 dark:bg-gray-600'
+                  : 'bg-green-500'
+              }
+              backgroundColor={
+                totalVolume === '$0' || totalVolume === '0 pts' || percentages[0] === 0
+                  ? 'bg-gray-200 dark:bg-gray-700'
+                  : 'bg-red-500'
+              }
             />
             <div className='mb-2 flex justify-between text-sm font-medium'>
               {pool.options.map((option, index) => (
@@ -583,8 +641,8 @@ export default function PoolDetailPage() {
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Betters</p>
-              <p className='font-bold'>{calculateBetters(pool)}</p>
+              <p className='text-muted-foreground text-sm'>Participants</p>
+              <p className='font-bold'>{calculateParticipants(pool)}</p>
             </div>
           </div>
 

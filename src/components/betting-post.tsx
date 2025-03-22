@@ -2,13 +2,13 @@
 
 import { isPoolFactsd, savePoolFacts } from '@/app/pool-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useTokenContext } from '@/hooks/useTokenContext';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
-import { formatDistanceToNow } from 'date-fns';
 import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -216,16 +216,21 @@ export function BettingPost({
           <div className='flex-1'>
             <div className='font-bold'>{username}</div>
           </div>
-          <Link
-            href={`https://truthsocial.com/@realDonaldTrump/posts/${truthSocialId}`}
-            target='_blank'
-            className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400'
+          <Badge
+            variant='outline'
+            className='text-muted-foreground hover:bg-muted ml-2 flex cursor-pointer items-center gap-1 rounded-full border-transparent px-3 text-xs'
           >
             <div className='flex items-center gap-2'>
-              <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
-              <Image src='/truth-social.png' alt='truth-social' width={20} height={20} />
+              <Image
+                src='/truth-social.png'
+                alt='truth-social'
+                width={20}
+                height={20}
+                style={{ width: 'auto', height: 'auto' }}
+              />
+              <p>Truth Social</p>
             </div>
-          </Link>
+          </Badge>
         </div>
 
         <Link href={`/pools/${id}`} className='block'>
@@ -236,8 +241,20 @@ export function BettingPost({
 
         <div className='mb-3 rounded-md'>
           {volume === '0' ? (
-            <div className='p-2 text-center text-gray-500 dark:text-gray-400'>
-              <span>No bets</span>
+            <div className='relative'>
+              {/* Empty progress bar for no bets */}
+              <div className='flex-1 rounded-full bg-gray-200 dark:bg-gray-800'>
+                <div className='flex overflow-hidden rounded-full'>
+                  <div className='h-2 w-full bg-gray-300 dark:bg-gray-700'></div>
+                </div>
+              </div>
+
+              {/* Show zero volume */}
+              <div className='mt-1 flex justify-end'>
+                <div className={`text-sm font-medium text-gray-500 dark:text-gray-400`}>
+                  {volume} vol.
+                </div>
+              </div>
             </div>
           ) : (
             <div className='relative'>

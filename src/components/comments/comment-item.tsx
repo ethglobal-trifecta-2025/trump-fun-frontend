@@ -31,7 +31,7 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       const wasLiked = isCommentLiked(comment.id);
       setIsLiked(wasLiked);
     }
-  }, [comment.id]);
+  }, [comment.id, authenticated]);
 
   if (!comment || !comment.id) {
     return null;
@@ -45,18 +45,23 @@ const CommentItem = ({ comment }: CommentItemProps) => {
 
     if (isSubmitting) return;
 
+    console.log('Starting like process for comment:', comment.id);
+    console.log('Current state:', { isLiked, upvotes });
+
     setIsSubmitting(true);
 
     try {
       const wallet = wallets?.[0];
 
       if (!wallet || !wallet.address) {
+        console.log('No wallet connected');
         setIsSubmitting(false);
         return;
       }
 
       // Determine action without updating state yet
       const newIsLiked = !isLiked;
+      console.log('New like state will be:', newIsLiked);
 
       // Calculate the correct upvote count based on the current state
       // and whether the user is liking or unliking
@@ -68,6 +73,7 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         // If user is unliking and was liked before
         newUpvotes = Math.max(0, upvotes - 1);
       }
+      console.log('Calculated new upvotes:', newUpvotes);
 
       const messageObj = {
         action: 'toggle_like',
@@ -78,7 +84,9 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       };
 
       const messageStr = JSON.stringify(messageObj);
+      console.log('Prepared message for signing:', messageObj);
 
+      console.log('Requesting signature...');
       const { signature } = await signMessage(
         { message: messageStr },
         {
@@ -90,29 +98,35 @@ const CommentItem = ({ comment }: CommentItemProps) => {
           address: wallet.address,
         }
       );
+      console.log('Signature received');
 
-      // Only update state after successful signature
-      setIsLiked(newIsLiked);
-      setUpvotes(newUpvotes);
+      // Call API first to ensure the data is saved
+      console.log('Calling toggleLike...');
+      const result = await toggleLike(
+        comment.id,
+        newIsLiked ? 'like' : 'unlike',
+        signature,
+        messageStr
+      );
+      console.log('Server response:', result);
 
-      // Update localStorage after successful signature
-      saveCommentLike(comment.id, newIsLiked);
+      if (result.success) {
+        console.log('Update successful, updating UI');
+        // Use the server's returned values instead of calculated ones
+        setIsLiked(result.isLiked ?? newIsLiked);
+        setUpvotes(result.upvotes ?? newUpvotes);
 
-      // Call API after successful signature
-      toggleLike(comment.id, newIsLiked ? 'like' : 'unlike', signature, messageStr)
-        .then((result) => {
-          if (!result.success) {
-            // Revert on API error
-            setIsLiked(!newIsLiked);
-            setUpvotes(newIsLiked ? newUpvotes - 1 : newUpvotes + 1); // Revert to previous count
-            saveCommentLike(comment.id, !newIsLiked);
-          }
-        })
-        .catch(() => {
-          // Silently handle errors
+        // Update localStorage after successful server update
+        saveCommentLike(comment.id, result.isLiked ?? newIsLiked);
+
+        console.log('Final state:', {
+          isLiked: result.isLiked ?? newIsLiked,
+          upvotes: result.upvotes ?? newUpvotes,
         });
+      } else {
+        console.error('Error toggling comment like:', result.error);
+      }
     } catch (error) {
-      // Don't need to revert since we only update after successful signature
       // Only log errors that aren't user rejections
       if (
         error instanceof Error &&
@@ -121,6 +135,8 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         !error.message.includes('user rejected')
       ) {
         console.error('Error handling comment FACTS:', error);
+      } else {
+        console.log('User rejected the signature request');
       }
     } finally {
       setIsSubmitting(false);
