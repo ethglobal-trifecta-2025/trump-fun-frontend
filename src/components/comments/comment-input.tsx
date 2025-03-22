@@ -38,9 +38,7 @@ const CommentInput = ({
 
         <div className='flex flex-1 flex-col gap-2'>
           <textarea
-            placeholder={
-              isWalletConnected ? 'Add a comment...' : 'Sign in to comment...'
-            }
+            placeholder={isWalletConnected ? 'Add a comment...' : 'Sign in to comment...'}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className='min-h-[80px] w-full rounded-md border p-3 dark:bg-gray-800'

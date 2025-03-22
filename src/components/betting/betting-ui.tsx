@@ -23,9 +23,7 @@ export default function BettingUI({
   yesBets,
   noBets,
 }: BettingUIProps) {
-  const [selectedOption, setSelectedOption] = useState<'yes' | 'no' | null>(
-    null
-  );
+  const [selectedOption, setSelectedOption] = useState<'yes' | 'no' | null>(null);
 
   const [betAmount, setBetAmount] = useState('1');
 
@@ -47,15 +45,11 @@ export default function BettingUI({
         `Option: ${selectedOption} (current percentage: ${selectedOption === 'yes' ? yesPercentage : noPercentage}%)`
       );
 
-      console.log(
-        `Current count: ${selectedOption === 'yes' ? yesBets : noBets} bets`
-      );
+      console.log(`Current count: ${selectedOption === 'yes' ? yesBets : noBets} bets`);
 
       console.log(`Amount: ${betAmount} ETH`);
 
-      alert(
-        `Bet submitted: ${selectedOption.toUpperCase()} for ${betAmount} ETH`
-      );
+      alert(`Bet submitted: ${selectedOption.toUpperCase()} for ${betAmount} ETH`);
     } catch (error) {
       console.error('Error placing bet:', error);
 

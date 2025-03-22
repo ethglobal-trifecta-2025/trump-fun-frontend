@@ -15,9 +15,6 @@ interface CommentItemProps {
 
 const CommentItem = ({ comment }: CommentItemProps) => {
   // Ensure we have a valid comment object
-  if (!comment || !comment.id) {
-    return null;
-  }
 
   const [upvotes, setUpvotes] = useState<number>(comment.upvotes || 0);
   const [isLiked, setIsLiked] = useState(false);
@@ -35,6 +32,10 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       setIsLiked(wasLiked);
     }
   }, [comment.id]);
+
+  if (!comment || !comment.id) {
+    return null;
+  }
 
   const handleLike = async () => {
     if (!isWalletConnected) {

@@ -38,12 +38,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
           theme: 'dark',
           accentColor: '#ff6d00',
           logo: process.env.NEXT_PUBLIC_LOGO_URL || undefined,
-          walletList: [
-            'metamask',
-            'coinbase_wallet',
-            'rainbow',
-            'wallet_connect',
-          ],
+          walletList: ['metamask', 'coinbase_wallet', 'rainbow', 'wallet_connect'],
           walletChainType: 'ethereum-only',
         },
         embeddedWallets: {

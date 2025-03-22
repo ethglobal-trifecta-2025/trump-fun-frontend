@@ -21,8 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Trump.fun - Predict The Donald's Next Move",
-  description:
-    'Bet on what Trump will say or do next on the Trump.fun prediction market platform',
+  description: 'Bet on what Trump will say or do next on the Trump.fun prediction market platform',
 };
 
 export default function RootLayout({
@@ -32,9 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <PrivyAuthProvider>
           <ThemeProvider
             attribute='class'

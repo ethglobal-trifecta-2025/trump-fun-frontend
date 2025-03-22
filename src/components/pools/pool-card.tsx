@@ -18,7 +18,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className='flex h-full flex-col'>
           <div className='mb-4'>
             <div className='mb-2 flex justify-between text-sm'>
               <span>YES 50%</span>
@@ -34,10 +34,8 @@ export function PoolCard({ pool }: { pool: Pool }) {
             </div>
             <div className='text-sm font-medium'>Volume: 0</div>
           </div>
-          <div className='mt-4'>
-            <Button className='w-full bg-orange-500 hover:bg-orange-600'>
-              View Details
-            </Button>
+          <div className='mt-auto pt-4'>
+            <Button className='w-full bg-orange-500 hover:bg-orange-600'>View Details</Button>
           </div>
         </CardContent>
       </Card>

@@ -28,44 +28,32 @@
     "type": "error"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "approver", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "approver", "type": "address" }],
     "name": "ERC20InvalidApprover",
     "type": "error"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "receiver", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "receiver", "type": "address" }],
     "name": "ERC20InvalidReceiver",
     "type": "error"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "sender", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "sender", "type": "address" }],
     "name": "ERC20InvalidSender",
     "type": "error"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "spender", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }],
     "name": "ERC20InvalidSpender",
     "type": "error"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "owner", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }],
     "name": "OwnableInvalidOwner",
     "type": "error"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
     "name": "OwnableUnauthorizedAccount",
     "type": "error"
   },
@@ -159,9 +147,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
     "name": "balanceOf",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
@@ -241,9 +227,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "newOwner", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }],
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",

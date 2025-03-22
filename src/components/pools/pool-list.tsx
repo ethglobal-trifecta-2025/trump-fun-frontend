@@ -3,12 +3,7 @@
 import { GET_POOLS } from '@/app/queries';
 import { useQuery } from '@apollo/client';
 import { PoolCard } from './pool-card';
-import {
-  OrderDirection,
-  Pool,
-  Pool_OrderBy,
-  PoolStatus,
-} from '@/lib/__generated__/graphql';
+import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 
 export function PoolList() {
   const {
@@ -31,10 +26,7 @@ export function PoolList() {
     return (
       <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
         {Array.from({ length: pools?.pools.length || 6 }).map((_, i) => (
-          <div
-            key={i}
-            className='bg-muted h-[300px] animate-pulse rounded-lg p-4'
-          />
+          <div key={i} className='bg-muted h-[300px] animate-pulse rounded-lg p-4' />
         ))}
       </div>
     );

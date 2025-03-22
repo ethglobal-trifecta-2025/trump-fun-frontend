@@ -20,7 +20,7 @@ export function NetworkIndicator() {
           variant='outline'
           className={cn(
             networkInfo.color,
-            'mr-2 cursor-pointer bg-blue-600/40 text-blue-400 px-2 py-1 font-medium hover:bg-blue-600/40 hover:text-blue-400',
+            'mr-2 cursor-pointer bg-blue-600/40 px-2 py-1 font-medium text-blue-400 hover:bg-blue-600/40 hover:text-blue-400',
             !networkInfo.isSupported && 'border-red-500 text-red-500'
           )}
           onClick={() => setIsHovering(!isHovering)}

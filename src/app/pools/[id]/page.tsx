@@ -29,9 +29,10 @@ import { Slider } from '@/components/ui/slider';
 // Import utils
 import { GET_POOL } from '@/app/queries';
 import { USDC_DECIMALS } from '@/consts';
-import { APP_ADDRESS, POINTS_ADDRESS } from '@/consts/addresses';
+import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
+import { togglePoolFacts } from '@/app/actions/pool-facts';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -42,7 +43,6 @@ export default function PoolDetailPage() {
   const account = useAccount();
   const { ready } = usePrivy();
   const { wallets } = useWallets();
-  const { signMessage } = useSignMessage();
 
   // Component state
   const [betAmount, setBetAmount] = useState<number>(0);
@@ -64,16 +64,15 @@ export default function PoolDetailPage() {
   });
   const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('0');
+  const { tokenType, getTokenAddress } = useTokenContext();
+  const { signMessage } = useSignMessage();
 
   // Contract interaction
   const { data: hash, isPending, writeContract } = useWriteContract();
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
-  const tokenType = {
-    USDC: 0,
-    POINTS: 1,
-  };
+  const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
 
   // Use our custom hook for token balance
   const { balance, formattedBalance, symbol, tokenTextLogo } = useTokenBalance();
@@ -138,7 +137,7 @@ export default function PoolDetailPage() {
       try {
         const allowance = await publicClient.readContract({
           abi: pointsTokenAbi,
-          address: POINTS_ADDRESS as `0x${string}`,
+          address: getTokenAddress() as `0x${string}`,
           functionName: 'allowance',
           args: [account.address, APP_ADDRESS],
         });
@@ -153,7 +152,7 @@ export default function PoolDetailPage() {
     };
 
     fetchApprovedAmount();
-  }, [account.address, publicClient, hash]);
+  }, [account.address, publicClient, hash, getTokenAddress]);
 
   // Handle percentage button clicks
   const handlePercentageClick = (percentage: number) => {
@@ -196,17 +195,17 @@ export default function PoolDetailPage() {
       const messageStr = JSON.stringify(messageObj);
 
       // Request signature from user
-      // const { signature } = await signMessage(
-      //   { message: messageStr },
-      //   {
-      //     uiOptions: {
-      //       title: newIsFactsed ? 'Sign to FACTS' : 'Sign to remove FACTS',
-      //       description: 'Sign this message to verify your action',
-      //       buttonText: 'Sign',
-      //     },
-      //     address: wallet.address,
-      //   }
-      // );
+      const { signature } = await signMessage(
+        { message: messageStr },
+        {
+          uiOptions: {
+            title: newIsFactsed ? 'Sign to FACTS' : 'Sign to remove FACTS',
+            description: 'Sign this message to verify your action',
+            buttonText: 'Sign',
+          },
+          address: wallet.address,
+        }
+      );
 
       // Only update after successful signature
       setHasFactsed(newIsFactsed);
@@ -222,7 +221,7 @@ export default function PoolDetailPage() {
       }
 
       // FUTURE: When Supabase is ready, uncomment this code
-      /*
+
       // Call the server action to update the database
       const result = await togglePoolFacts(
         id as string,
@@ -235,7 +234,6 @@ export default function PoolDetailPage() {
       if (result.success && typeof result.facts === 'number') {
         setPoolFacts(result.facts);
       }
-      */
     } catch (error) {
       // No need to revert since we're only updating after successful signature
       // Don't log errors when user rejects the request
@@ -278,19 +276,21 @@ export default function PoolDetailPage() {
       // Convert amount to token units with proper decimals
       const tokenAmount = BigInt(Math.floor(betAmount * 10 ** USDC_DECIMALS));
 
-      // First approve tokens to be spent
-      const { request: approveRequest } = await publicClient.simulateContract({
-        abi: pointsTokenAbi,
-        address: POINTS_ADDRESS as `0x${string}`,
-        functionName: 'approve',
-        account: account.address as `0x${string}`,
-        args: [APP_ADDRESS, tokenAmount * BigInt(5000)],
-      });
+      if (approvedAmount && parseFloat(approvedAmount) < betAmount) {
+        // First approve tokens to be spent
+        const { request: approveRequest } = await publicClient.simulateContract({
+          abi: pointsTokenAbi,
+          address: getTokenAddress() as `0x${string}`,
+          functionName: 'approve',
+          account: account.address as `0x${string}`,
+          args: [APP_ADDRESS, tokenAmount],
+        });
 
-      writeContract(approveRequest);
+        writeContract(approveRequest);
+      }
 
       // Wait for the transaction to be confirmed before proceeding
-      if (isConfirmed) {
+      if (isConfirmed || parseFloat(approvedAmount) >= betAmount) {
         // Now place the bet
         const { request } = await publicClient.simulateContract({
           abi: bettingContractAbi,
@@ -302,7 +302,7 @@ export default function PoolDetailPage() {
             BigInt(selectedOption),
             tokenAmount,
             account.address,
-            tokenType.POINTS,
+            tokenTypeC,
           ],
         });
 

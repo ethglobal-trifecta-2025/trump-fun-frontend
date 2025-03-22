@@ -25,7 +25,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className='fixed right-0 bottom-0 left-0 z-[50] block bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 md:hidden'>
+    <div className='fixed right-0 bottom-0 left-0 z-[50] block border-t border-gray-200 bg-white md:hidden dark:border-gray-800 dark:bg-black'>
       <div className='flex h-20 items-center'>
         {NavLinks.map((item) => (
           <Link

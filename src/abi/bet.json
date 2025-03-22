@@ -23,16 +23,12 @@
   {
     "name": "OwnableInvalidOwner",
     "type": "error",
-    "inputs": [
-      { "name": "owner", "type": "address", "internalType": "address" }
-    ]
+    "inputs": [{ "name": "owner", "type": "address", "internalType": "address" }]
   },
   {
     "name": "OwnableUnauthorizedAccount",
     "type": "error",
-    "inputs": [
-      { "name": "account", "type": "address", "internalType": "address" }
-    ]
+    "inputs": [{ "name": "account", "type": "address", "internalType": "address" }]
   },
   { "name": "PoolAlreadyClosed", "type": "error", "inputs": [] },
   { "name": "PoolDoesntExist", "type": "error", "inputs": [] },
@@ -269,9 +265,7 @@
   {
     "name": "bets",
     "type": "function",
-    "inputs": [
-      { "name": "betId", "type": "uint256", "internalType": "uint256" }
-    ],
+    "inputs": [{ "name": "betId", "type": "uint256", "internalType": "uint256" }],
     "outputs": [
       { "name": "id", "type": "uint256", "internalType": "uint256" },
       { "name": "owner", "type": "address", "internalType": "address" },
@@ -293,9 +287,7 @@
   {
     "name": "claimPayouts",
     "type": "function",
-    "inputs": [
-      { "name": "betIds", "type": "uint256[]", "internalType": "uint256[]" }
-    ],
+    "inputs": [{ "name": "betIds", "type": "uint256[]", "internalType": "uint256[]" }],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -333,9 +325,7 @@
         "internalType": "struct BettingContract.CreatePoolParams"
       }
     ],
-    "outputs": [
-      { "name": "poolId", "type": "uint256", "internalType": "uint256" }
-    ],
+    "outputs": [{ "name": "poolId", "type": "uint256", "internalType": "uint256" }],
     "stateMutability": "nonpayable"
   },
   {
@@ -383,26 +373,20 @@
         "internalType": "enum BettingContract.TokenType"
       }
     ],
-    "outputs": [
-      { "name": "betId", "type": "uint256", "internalType": "uint256" }
-    ],
+    "outputs": [{ "name": "betId", "type": "uint256", "internalType": "uint256" }],
     "stateMutability": "nonpayable"
   },
   {
     "name": "pointsToken",
     "type": "function",
     "inputs": [],
-    "outputs": [
-      { "name": "", "type": "address", "internalType": "contract ERC20" }
-    ],
+    "outputs": [{ "name": "", "type": "address", "internalType": "contract ERC20" }],
     "stateMutability": "view"
   },
   {
     "name": "pools",
     "type": "function",
-    "inputs": [
-      { "name": "poolId", "type": "uint256", "internalType": "uint256" }
-    ],
+    "inputs": [{ "name": "poolId", "type": "uint256", "internalType": "uint256" }],
     "outputs": [
       { "name": "id", "type": "uint256", "internalType": "uint256" },
       { "name": "question", "type": "string", "internalType": "string" },
@@ -439,9 +423,7 @@
   {
     "name": "transferOwnership",
     "type": "function",
-    "inputs": [
-      { "name": "newOwner", "type": "address", "internalType": "address" }
-    ],
+    "inputs": [{ "name": "newOwner", "type": "address", "internalType": "address" }],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -449,9 +431,7 @@
     "name": "usdc",
     "type": "function",
     "inputs": [],
-    "outputs": [
-      { "name": "", "type": "address", "internalType": "contract ERC20" }
-    ],
+    "outputs": [{ "name": "", "type": "address", "internalType": "contract ERC20" }],
     "stateMutability": "view"
   },
   {
@@ -475,17 +455,13 @@
       { "name": "bettor", "type": "address", "internalType": "address" },
       { "name": "", "type": "uint256", "internalType": "uint256" }
     ],
-    "outputs": [
-      { "name": "betIds", "type": "uint256", "internalType": "uint256" }
-    ],
+    "outputs": [{ "name": "betIds", "type": "uint256", "internalType": "uint256" }],
     "stateMutability": "view"
   },
   {
     "name": "withdraw",
     "type": "function",
-    "inputs": [
-      { "name": "betId", "type": "uint256", "internalType": "uint256" }
-    ],
+    "inputs": [{ "name": "betId", "type": "uint256", "internalType": "uint256" }],
     "outputs": [],
     "stateMutability": "nonpayable"
   }

@@ -137,10 +137,10 @@ export default function CommentSection({
 
         // Add comment to database but don't refresh the page
         await addComment(poolId, content, signature, messageStr);
-      } catch (signError) {
+      } catch {
         // Silent error handling to avoid UI disruption
       }
-    } catch (error) {
+    } catch {
       // Silent error handling to avoid UI disruption
     } finally {
       setIsSubmitting(false);

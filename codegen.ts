@@ -2,8 +2,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   overwrite: true,
-  schema:
-    'https://api.studio.thegraph.com/query/105510/trump-fun/version/latest',
+  schema: 'https://api.studio.thegraph.com/query/105510/trump-fun/version/latest',
   documents: ['src/**/*.ts(x)'],
   generates: {
     'src/lib/__generated__/': {
