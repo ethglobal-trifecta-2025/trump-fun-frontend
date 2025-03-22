@@ -3,24 +3,26 @@
 import { AuthButton } from '@/components/auth-button';
 import { PoolList } from '@/components/pools/pool-list';
 import { Button } from '@/components/ui/button';
+import { TRUMP_FUN_TG_URL, TRUMP_FUN_TWITTER_URL } from '@/utils/config';
 import { CheckCircle, Compass, DollarSign, Users } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
   return (
     <div className='bg-background flex min-h-screen'>
       <main className='flex-1'>
-        <section className='py-12 md:py-24'>
+        <section className='pt-10 md:pt-16'>
           <div className='container px-4 md:px-6'>
-            <div className='flex flex-col items-center gap-4 text-center'>
-              <h1 className='text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl'>
-                Predict Trump&apos;s Next Moves
-              </h1>
-              <p className='text-muted-foreground max-w-[700px] md:text-xl'>
-                Place bets on what Trump will say or do next and win big when your predictions come
-                true.
-              </p>
-              <div className='flex flex-col gap-2 min-[400px]:flex-row'>
+            <div className='flex flex-col items-center gap-4 text-center relative'>
+              <Image
+                src='/hero.png'
+                alt='Trump'
+                width={1000}
+                height={1000}
+                className='w-full h-auto rounded-lg'
+              />
+              <div className='flex flex-col gap-2 min-[400px]:flex-row md:absolute md:bottom-28 md:left-1/2 md:transform md:-translate-x-1/2 mt-4 md:mt-0'>
                 <Button
                   variant='default'
                   className='bg-orange-500 text-white hover:bg-orange-600'
@@ -85,15 +87,20 @@ export default function Home() {
                   Predict what Trump will do next and win big!
                 </p>
               </div>
-              <div className='flex flex-col items-center gap-4 md:flex-row'>
-                <Link href='https://twitter.com/trumpfun' target='_blank' rel='noopener noreferrer'>
-                  {/* <Image
-                    src='/x.jpg'
-                    alt='Twitter'
-                    width={20}
-                    height={20}
-                    className='rounded-full'
-                  /> */}
+              <div className='flex flex-col items-center gap-6 md:flex-row'>
+                <Link href={TRUMP_FUN_TG_URL} target='_blank' rel='noopener noreferrer'>
+                  <Image src='/tg.svg' alt='tg' width={20} height={20} className='size-7' />
+                </Link>
+                <Link href={TRUMP_FUN_TWITTER_URL} target='_blank' rel='noopener noreferrer'>
+                  <svg
+                    viewBox='0 0 24 24'
+                    aria-hidden='true'
+                    className='size-6 fill-current text-orange-500'
+                  >
+                    <g>
+                      <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z'></path>
+                    </g>
+                  </svg>
                 </Link>
               </div>
             </div>

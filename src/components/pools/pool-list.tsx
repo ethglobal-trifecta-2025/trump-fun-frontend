@@ -17,7 +17,7 @@ export function PoolList() {
       },
       orderBy: Pool_OrderBy.CreatedAt,
       orderDirection: OrderDirection.Desc,
-      first: 6,
+      first: 9,
     },
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,

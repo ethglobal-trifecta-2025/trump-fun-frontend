@@ -89,7 +89,7 @@ export function AuthButton() {
         <DropdownMenuTrigger asChild>
           <Button
             variant='outline'
-            className='border-orange-500 text-orange-500 hover:bg-orange-50'
+            className='border-orange-500 bg-background/0 text-orange-500 hover:bg-orange-50'
           >
             <Wallet className='mr-2 h-4 w-4' />
             {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Wallet'}
