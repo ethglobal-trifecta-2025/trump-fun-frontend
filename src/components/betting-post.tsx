@@ -239,9 +239,9 @@ export function BettingPost({
             <Button
               variant='outline'
               size='sm'
-              className={`gap-1 font-bold ${
+              className={`gap-1 border-orange-500 font-bold ${
                 hasFactsed
-                  ? 'border-orange-500 bg-orange-500/10 text-orange-500'
+                  ? 'bg-orange-500/10 text-orange-500'
                   : 'text-orange-500 hover:text-orange-500'
               }`}
               onClick={handleFacts}
@@ -251,9 +251,8 @@ export function BettingPost({
             </Button>
 
             <Button
-              variant='ghost'
               size='sm'
-              className='text-gray-400 hover:text-orange-500'
+              className='bg-orange-500/40 text-orange-500 hover:bg-orange-500/50 hover:text-orange-500'
               onClick={handleBetClick}
             >
               Bet

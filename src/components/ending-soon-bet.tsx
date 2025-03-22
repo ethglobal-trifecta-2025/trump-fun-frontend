@@ -63,7 +63,7 @@ export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: En
               <span>{volume}</span>
             </div>
             <div className='flex items-center gap-1'>
-              <Clock size={12} className='text-orange-500' />
+              <Clock size={12} className='text-gray-400' />
               <span>{remainingTime}</span>
             </div>
           </div>

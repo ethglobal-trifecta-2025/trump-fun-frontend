@@ -18,10 +18,7 @@ export function TrendingBet({ question, volume, progress, poolId }: TrendingBetP
         <p className='mb-2 line-clamp-3 font-medium'>{question}</p>
         <div className='mb-2 flex items-center gap-2'>
           <div className='h-1 flex-1 overflow-hidden rounded-full bg-gray-800'>
-            <div
-              className='h-full bg-gradient-to-r from-blue-500 to-orange-500'
-              style={{ width: `${progress}%` }}
-            ></div>
+            <div className='h-full bg-orange-500' style={{ width: `${progress}%` }}></div>
           </div>
           <div className='flex items-center gap-1 text-sm text-gray-400'>
             <TrendingUp size={14} />
