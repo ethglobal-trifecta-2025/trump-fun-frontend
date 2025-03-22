@@ -18,6 +18,7 @@ import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { TRUMP_FUN_TWITTER_URL, TRUMP_FUN_TWITTER_USERNAME } from '@/utils/config';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
@@ -58,7 +59,7 @@ export default function BettingPlatform() {
     [activeFilter, filterConfigs]
   );
 
-  const { data: pools, refetch: refetchPools } = useQuery(GET_POOLS, {
+  const { data: pools, refetch: refetchPools, loading: isLoading } = useQuery(GET_POOLS, {
     variables: {
       filter,
       orderBy,
@@ -98,6 +99,14 @@ export default function BettingPlatform() {
       {label}
     </Button>
   );
+
+  if (isLoading) {
+    return (
+      <div className='container mx-auto max-w-4xl px-4 py-8 h-screen flex flex-col justify-center items-center'>
+        <Image src='/loader.gif' alt='Loading' width={100} height={100} className='animate-spin rounded-full size-40 z-50' />
+      </div>
+    );
+  }
 
   return (
     <div className='flex h-[calc(100vh-4rem)] flex-col'>

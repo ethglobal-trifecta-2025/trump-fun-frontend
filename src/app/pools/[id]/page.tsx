@@ -36,6 +36,7 @@ import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
 import { Related } from '@/components/Related';
+import Image from 'next/image';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -492,7 +493,11 @@ export default function PoolDetailPage() {
 
   // Loading state
   if (isPoolLoading) {
-    return <div className='container mx-auto max-w-4xl px-4 py-8'>Loading...</div>;
+    return (
+      <div className='container mx-auto max-w-4xl px-4 py-8 h-screen flex flex-col justify-center items-center'>
+        <Image src='/loader.gif' alt='Loading' width={100} height={100} className='animate-spin rounded-full size-40 z-50' />
+      </div>
+    );
   }
 
   // Error state
