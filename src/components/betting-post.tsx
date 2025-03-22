@@ -136,19 +136,12 @@ export function BettingPost({
         }
       );
 
-      console.log(
-        `FACTS ${isAdding ? 'added to' : 'removed from'} pool ${id} with signature`,
-        signature.substring(0, 10) + '...'
-      );
-
       // In the future, send this signature to your backend or smart contract
       // const result = await togglePoolFacts(id, isAdding, signature, messageStr);
 
       // For now just simulate a delay
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      console.error('Error updating FACTS:', error);
-
       // Revert optimistic update on error
       const isAdding = !hasFactsed;
       setHasFactsed(!isAdding);
@@ -156,8 +149,6 @@ export function BettingPost({
 
       // Revert localStorage
       savePoolFacts(id, !isAdding);
-
-      alert('Failed to update FACTS. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

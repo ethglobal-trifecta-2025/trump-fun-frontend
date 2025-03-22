@@ -53,17 +53,8 @@ export default function CommentSection({
 
   const { signMessage } = useSignMessage();
 
-  // Debug logs for comment data
-  console.log('CommentSection mounted:', {
-    poolId,
-    initialCommentsCount: initialComments?.length || 0,
-    initialComments,
-    currentCommentsCount: comments?.length || 0,
-  });
-
   // Update comments when initialComments changes
   useEffect(() => {
-    console.log('initialComments changed:', initialComments?.length || 0);
     if (initialComments && initialComments.length > 0) {
       setComments(initialComments);
     }
@@ -82,7 +73,6 @@ export default function CommentSection({
       const wallet = wallets?.[0];
 
       if (!wallet || !wallet.address) {
-        console.warn('Please connect a wallet to comment');
         setIsSubmitting(false);
 
         if (!authenticated) {
@@ -143,7 +133,6 @@ export default function CommentSection({
         };
 
         if (!tempComment || !comments) {
-          console.error('Failed to create temporary comment. Please try again.');
           setIsSubmitting(false);
           return;
         }

@@ -391,11 +391,6 @@ export default function PoolDetailPage() {
 
       // Extra safety check to prevent NaN from ever being displayed
       if (volume === 'NaN' || volume === '$NaN' || volume.includes('NaN')) {
-        console.error('NaN detected in volume calculation:', {
-          pool,
-          currentTokenType,
-          volume,
-        });
         return currentTokenType === TokenType.USDC ? '$0' : '0 pts';
       }
 
