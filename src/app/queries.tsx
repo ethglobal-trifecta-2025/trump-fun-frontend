@@ -150,6 +150,12 @@ export const GET_POOL = gql(`
       gradedBlockNumber
       gradedBlockTimestamp
       gradedTransactionHash
+      betsCloseAt
+      usdcBetTotals
+      pointsBetTotals
+      usdcVolume
+      pointsVolume
+      winningOption
     }
   }
 `);

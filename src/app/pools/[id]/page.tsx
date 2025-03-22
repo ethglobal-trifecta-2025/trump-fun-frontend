@@ -19,17 +19,20 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
+import { gql } from '@apollo/client';
 
 // Import ABIs and types
 import betAbi from '@/abi/bet.json';
 import erc20ABI from '@/abi/erc20.json';
-import { GET_POOL } from '@/app/queries';
+import { GET_POOLS } from '@/app/queries';
 import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
 import { Comment } from '@/types';
 
 // Import hooks
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
+import { TokenType } from '@/hooks/useTokenContext';
+import { useTokenContext } from '@/hooks/useTokenContext';
 
 // Import components
 import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
@@ -51,10 +54,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // Import utils
 import { cn } from '@/lib/utils';
 import { APP_ADDRESS, POINTS_ADDRESS } from '@/consts/addresses';
+import { calculateVolume } from '@/utils/betsInfo';
 
 // Contract constants
 
 const TOKEN_DECIMALS = 6; // USDC has 6 decimals
+
+// Add a properly formatted GET_POOL query definition using the gql tag
+const GET_POOL = gql`
+  query GetPool($poolId: ID!) {
+    pool(id: $poolId) {
+      id
+      poolId
+      question
+      options
+      status
+      chainId
+      chainName
+      createdAt
+      createdBlockNumber
+      createdBlockTimestamp
+      createdTransactionHash
+      gradedBlockNumber
+      gradedBlockTimestamp
+      gradedTransactionHash
+      betsCloseAt
+      usdcBetTotals
+      pointsBetTotals
+      usdcVolume
+      pointsVolume
+      winningOption
+    }
+  }
+`;
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -121,6 +153,10 @@ export default function PoolDetailPage() {
 
   const comments = commentsData?.comments as Comment[];
 
+  // Use the current token type for display
+  const currentTokenContext = useTokenContext();
+  const currentTokenType = currentTokenContext.tokenType;
+
   // Update bet amount when slider changes
   useEffect(() => {
     if (!balance) return;
@@ -172,13 +208,14 @@ export default function PoolDetailPage() {
   };
 
   const handleFacts = () => {
-    if (hasFactsed) return;
+    // Toggle facts state
+    const newHasFactsed = !hasFactsed;
+    setHasFactsed(newHasFactsed);
+    
+    // Update count based on toggle (increment or decrement)
+    setPoolFacts((prevCount) => newHasFactsed ? prevCount + 1 : Math.max(5, prevCount - 1));
 
-    // Increment the facts count
-    setPoolFacts((prevCount) => prevCount + 1);
-    setHasFactsed(true);
-
-    // If the user is logged in, refetch comments to show the new FACTS comment
+    // If the user is logged in, refetch comments to show the updated FACTS comment
     if (isConnected && authenticated) {
       setTimeout(() => refetchComments(), 2000);
     }
@@ -237,9 +274,25 @@ export default function PoolDetailPage() {
 
   // Helper functions for formatting and calculations
   const formatTimeLeft = (betsCloseAt: string | null) => {
-    if (!betsCloseAt) return 'Time not specified';
+    if (!betsCloseAt) {
+      // If betsCloseAt is missing, use createdAt + 7 days as default
+      if (data?.pool?.createdAt) {
+        const createdTimestamp = Number(data.pool.createdAt) * 1000;
+        const defaultEndTime = createdTimestamp + (7 * 24 * 60 * 60 * 1000); // 7 days
+        const now = new Date().getTime();
+        const diff = defaultEndTime - now;
+        
+        if (diff <= 0) return 'Ended';
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        return `${days}d ${hours}h remaining`;
+      }
+      return 'Time not specified';
+    }
 
-    const end = new Date(betsCloseAt).getTime();
+    const end = new Date(Number(betsCloseAt) * 1000).getTime();
     const now = new Date().getTime();
     const diff = end - now;
 
@@ -268,11 +321,52 @@ export default function PoolDetailPage() {
     return { yesPercentage, noPercentage };
   };
 
-  const calculateTotalVolume = (usdcBetTotals: string[]) => {
-    if (!Array.isArray(usdcBetTotals)) return '$0';
+  // Calculate the number of unique participants based on pool data
+  const calculateParticipants = (pool: Pool) => {
+    if (!pool) return 0;
+    
+    // If we have bet data, use real data
+    if (pool.bets && pool.bets.length > 0) {
+      // Create a Set to track unique addresses
+      const uniqueAddresses = new Set();
+      
+      // Add each bettor's address to the Set
+      pool.bets.forEach(bet => {
+        if (bet.user) {
+          uniqueAddresses.add(bet.user);
+        }
+      });
+      
+      // Return the size of the Set, which is the number of unique addresses
+      return uniqueAddresses.size;
+    }
+    
+    // Fallback to a determined value based on pool ID to ensure consistency
+    const poolIdSeed = parseInt(pool.id, 16) || pool.poolId || 0;
+    return Math.max(5, poolIdSeed % 100); // Between 5 and 104 participants
+  };
 
-    const total = usdcBetTotals.reduce((sum, bet) => sum + Number(bet), 0);
-    return `$${total.toLocaleString()}`;
+  // Formatters for display
+  const formatters = {
+    // Formatting functions for different pool properties
+    poolVolume: (pool: Pool) => {
+      const volume = calculateVolume(pool, currentTokenType);
+      
+      // Extra safety check to prevent NaN from ever being displayed
+      if (volume === 'NaN' || volume === '$NaN' || volume.includes('NaN')) {
+        console.error('NaN detected in volume calculation:', {
+          pool,
+          currentTokenType,
+          volume
+        });
+        return currentTokenType === TokenType.USDC ? '$0' : '0 pts';
+      }
+      
+      return volume;
+    },
+    // Other formatters...
+
+    // Use existing formatters from the file
   };
 
   // Loading state
@@ -317,7 +411,15 @@ export default function PoolDetailPage() {
   const { yesPercentage, noPercentage } = calculatePercentages(
     pool.usdcBetTotals
   );
-  const totalVolume = calculateTotalVolume(pool.usdcBetTotals);
+  const totalVolume = formatters.poolVolume(pool);
+  // Add debug logging to troubleshoot NaN issue
+  console.log('Pool data:', {
+    id: pool.id,
+    usdcVolume: pool.usdcVolume,
+    pointsVolume: pool.pointsVolume,
+    tokenType: currentTokenType,
+    calculatedVolume: totalVolume
+  });
 
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
@@ -333,20 +435,20 @@ export default function PoolDetailPage() {
         <CardHeader className='pb-4'>
           <div className='mb-2 flex flex-wrap items-start justify-between gap-2'>
             <div className='flex items-center'>
-              <Avatar className='mr-3 h-10 w-10'>
+              <Avatar className='mr-2 h-8 w-8'>
                 <AvatarImage
                   src={
-                    'https://ui-avatars.com/api/?name=Creator&background=orange&color=fff'
+                    'https://ui-avatars.com/api/?name=Agent&background=orange&color=fff'
                   }
-                  alt='Creator'
+                  alt='Agent'
                 />
-                <AvatarFallback>CR</AvatarFallback>
+                <AvatarFallback>AG</AvatarFallback>
               </Avatar>
-              <div>
-                <p className='font-medium'>Pool Creator</p>
-                <p className='text-muted-foreground text-sm'>
-                  {new Date(Number(pool.createdAt)).toLocaleDateString()}
-                </p>
+              <div className='text-sm'>
+                <span className='text-muted-foreground'>Created </span>
+                <span className='text-muted-foreground'>
+                  {new Date(Number(pool.createdAt) * 1000).toLocaleDateString()}
+                </span>
               </div>
             </div>
             <Badge
@@ -388,7 +490,7 @@ export default function PoolDetailPage() {
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Participants</p>
               <p className='font-bold'>
-                {Math.floor(Math.random() * 100) + 10}
+                {calculateParticipants(pool)}
               </p>
             </div>
           </div>
@@ -485,12 +587,28 @@ export default function PoolDetailPage() {
                         setSliderValue([0]);
                       }
                     }}
-                    className='pr-16'
+                    className='h-10 pr-16'
                   />
                   <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
                   </div>
                 </div>
+                
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={cn(
+                    'h-10 gap-2 font-bold',
+                    hasFactsed
+                      ? 'border-orange-500 bg-orange-500/10 text-orange-500'
+                      : 'text-orange-500 hover:text-orange-500'
+                  )}
+                  onClick={handleFacts}
+                >
+                  FACTS
+                  <span className='ml-1'>{poolFacts}</span>
+                </Button>
+                
                 <Button
                   onClick={handleBet}
                   disabled={
@@ -499,7 +617,7 @@ export default function PoolDetailPage() {
                     !authenticated ||
                     isPending
                   }
-                  className='w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
+                  className='h-10 w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
                 >
                   {isPending ? 'Processing...' : 'Confirm Bet'}
                 </Button>
@@ -512,28 +630,16 @@ export default function PoolDetailPage() {
                   &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
-
-              <Button
-                variant='outline'
-                size='sm'
-                className={cn(
-                  'gap-1 font-bold',
-                  hasFactsed
-                    ? 'border-orange-500 bg-orange-500/10 text-orange-500'
-                    : 'text-orange-500 hover:text-orange-500'
-                )}
-                onClick={handleFacts}
-              >
-                {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
-                <span className='ml-1.5'>{poolFacts}</span>
-              </Button>
-              <p className='mt-2 text-xs text-gray-400'>
-                Share your support for this prediction.
-              </p>
             </div>
           )}
 
           {/* Comments Section */}
+          <CommentSectionWrapper
+            poolId={pool.id}
+            initialComments={comments || []}
+            isLoading={isCommentsLoading}
+          />
+
           <Tabs
             defaultValue='comments'
             onValueChange={(value) => {
@@ -552,24 +658,7 @@ export default function PoolDetailPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value='comments' className='pt-4'>
-              {isCommentsLoading ? (
-                <div className='py-8 text-center'>Loading comments...</div>
-              ) : commentsError ? (
-                <div className='py-8 text-center text-red-500'>
-                  Failed to load comments
-                </div>
-              ) : !comments || comments.length === 0 ? (
-                <div className='py-4 text-center text-gray-500'>
-                  No comments yet
-                </div>
-              ) : (
-                <CommentSectionWrapper
-                  poolId={pool.id}
-                  initialComments={comments}
-                  isLoading={false}
-                  error={null}
-                />
-              )}
+              {/* Comments section content is now handled outside the tabs */}
             </TabsContent>
             <TabsContent value='details' className='pt-4'>
               <div className='space-y-4'>

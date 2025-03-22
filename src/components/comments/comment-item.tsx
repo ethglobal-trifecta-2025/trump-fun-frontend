@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { RandomAvatar } from 'react-random-avatars';
@@ -9,6 +9,7 @@ import { Database } from '../../types/database.types';
 import { formatDate } from '@/utils/formatDate';
 import { toggleLike } from '@/app/actions/like-actions';
 import { Button } from '@/components/ui/button';
+import { isCommentLiked, saveCommentLike } from '@/app/pool-actions';
 
 interface CommentItemProps {
   comment: Database['public']['Tables']['comments']['Row'];
@@ -16,14 +17,22 @@ interface CommentItemProps {
 
 const CommentItem = ({ comment }: CommentItemProps) => {
   const [upvotes, setUpvotes] = useState<number>(comment.upvotes || 0);
-  const [isLiked, setIsLiked] = useState(Boolean(comment.upvotes && comment.upvotes > 0 && Math.random() > 0.5));
+  const [isLiked, setIsLiked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { login } = usePrivy();
+  const { login, authenticated } = usePrivy();
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
   
-  const isWalletConnected = wallets && wallets.length > 0 && wallets[0]?.address;
+  const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
+  
+  // Check localStorage when component mounts to see if this comment was liked before
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const wasLiked = isCommentLiked(comment.id);
+      setIsLiked(wasLiked);
+    }
+  }, [comment.id]);
   
   const handleLike = async () => {
     if (!isWalletConnected) {
@@ -39,7 +48,7 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       const wallet = wallets?.[0];
       
       if (!wallet || !wallet.address) {
-        alert('Please connect a wallet to like comments');
+        console.warn('Please connect a wallet to like comments');
         setIsSubmitting(false);
         return;
       }
@@ -50,6 +59,9 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       
       setIsLiked(newIsLiked);
       setUpvotes(newUpvotes);
+      
+      // Update localStorage to persist the like
+      saveCommentLike(comment.id, newIsLiked);
       
       const messageObj = {
         action: 'toggle_like',
@@ -65,8 +77,8 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         { message: messageStr },
         {
           uiOptions: {
-            title: 'Sign to like comment',
-            description: 'Sign this message to verify your like action',
+            title: newIsLiked ? 'Sign to FACTS' : 'Sign to remove FACTS',
+            description: 'Sign this message to verify your action',
             buttonText: 'Sign',
           },
           address: wallet.address,
@@ -84,16 +96,18 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         // Revert optimistic update on error
         setIsLiked(!newIsLiked);
         setUpvotes(newIsLiked ? upvotes - 1 : upvotes + 1);
-        alert('Failed to like: ' + result.error);
-      } else {
-        router.refresh(); // Refresh page data
+        // Also update localStorage to revert
+        saveCommentLike(comment.id, !newIsLiked);
+        console.error('Failed to like: ' + result.error);
       }
     } catch (error) {
       console.error('Error liking comment:', error);
       
       // Revert optimistic update on error
-      setIsLiked(!isLiked);
-      setUpvotes(isLiked ? upvotes + 1 : upvotes - 1);
+      const revertedLiked = !isLiked;
+      setIsLiked(revertedLiked);
+      setUpvotes(revertedLiked ? upvotes + 1 : upvotes - 1);
+      saveCommentLike(comment.id, revertedLiked);
     } finally {
       setIsSubmitting(false);
     }
@@ -121,12 +135,13 @@ const CommentItem = ({ comment }: CommentItemProps) => {
             <Button
               variant='ghost'
               size='sm'
-              className="gap-1 px-2 text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
+              className="gap-2 h-9 px-3 text-orange-500 hover:text-orange-500 active:text-orange-500 focus:text-orange-500"
               onClick={handleLike}
               disabled={isSubmitting}
             >
-              <span className="font-bold">{isLiked ? "FACTS 🦅" : "FACTS"}</span>
-              <span className="ml-1.5">{upvotes}</span>
+              <span className="font-bold">{isLiked ? "FACTS" : "FACTS"}</span>
+              {isLiked && <span>🦅</span>}
+              <span className="ml-1">{upvotes}</span>
             </Button>
           </div>
         </div>

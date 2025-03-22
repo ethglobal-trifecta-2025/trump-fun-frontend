@@ -1,26 +1,27 @@
 'use client';
 
 import { BettingPost } from '@/components/betting-post';
-import { EndingSoon } from '@/components/ending-soon';
-import { HighestVolume } from '@/components/highest-volume';
+import { EndingSoonBet } from '@/components/ending-soon-bet';
+import { TrendingBet } from '@/components/trending-bet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search } from 'lucide-react';
+import { Clock, Search, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { HighestVolume } from '@/components/highest-volume';
+import { EndingSoon } from '@/components/ending-soon';
 
 import { GET_POOLS } from '@/app/queries';
 import {
   OrderDirection,
-  Pool,
   Pool_OrderBy,
   PoolStatus,
 } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState, useEffect } from 'react';
-import { useTokenContext } from '@/hooks/useTokenContext';
+import { useTokenContext, TokenType } from '@/hooks/useTokenContext';
 import { calculateVolume, getBetTotals, safeCastPool } from '@/utils/betsInfo';
 
 export default function BettingPlatform() {
@@ -28,7 +29,13 @@ export default function BettingPlatform() {
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
 
-  useEffect(() => {}, [tokenType]);
+  useEffect(() => {
+    // Only reset to newest if we're not already on newest
+    // This prevents unnecessary re-renders when tokenType changes
+    if (activeFilter !== 'newest') {
+      setActiveFilter('newest');
+    }
+  }, [tokenType]);
 
   const filterConfigs = useMemo(
     () => ({
@@ -38,9 +45,11 @@ export default function BettingPlatform() {
         filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
       },
       highest: {
-        orderBy: Pool_OrderBy.Bets,
+        orderBy: tokenType === TokenType.USDC 
+          ? Pool_OrderBy.UsdcVolume 
+          : Pool_OrderBy.PointsVolume,
         orderDirection: OrderDirection.Desc,
-        filter: { status_in: [PoolStatus.Pending] },
+        filter: { },
       },
       ending_soon: {
         orderBy: Pool_OrderBy.BetsCloseAt,
@@ -56,7 +65,7 @@ export default function BettingPlatform() {
         },
       },
     }),
-    []
+    [tokenType]
   );
 
   const { orderBy, orderDirection, filter } = useMemo(
@@ -64,7 +73,7 @@ export default function BettingPlatform() {
     [activeFilter, filterConfigs]
   );
 
-  const { data: pools } = useQuery(GET_POOLS, {
+  const { data: pools, refetch: refetchPools } = useQuery(GET_POOLS, {
     variables: {
       filter,
       orderBy,
@@ -74,10 +83,24 @@ export default function BettingPlatform() {
     notifyOnNetworkStatusChange: true,
   });
 
- 
+  const { data: endingSoonPools } = useQuery(GET_POOLS, {
+    variables: {
+      filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+      orderBy: Pool_OrderBy.BetsCloseAt,
+      orderDirection: OrderDirection.Asc,
+      first: 3,
+    },
+    context: { name: 'endingSoonSearch' },
+    notifyOnNetworkStatusChange: true,
+  });
 
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
+    
+    // Force refetch after filter change
+    setTimeout(() => {
+      refetchPools();
+    }, 100);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,7 +117,11 @@ export default function BettingPlatform() {
     );
   }, [pools?.pools, searchQuery]);
 
-  
+  const filteredEndingSoonPools = useMemo(() => {
+    if (!endingSoonPools?.pools) return [];
+    return endingSoonPools.pools;
+  }, [endingSoonPools?.pools]);
+
   const renderFilterButton = (value: string, label: string) => (
     <Button
       variant={activeFilter === value ? 'default' : 'ghost'}
@@ -214,16 +241,16 @@ export default function BettingPlatform() {
                   const safePool = safeCastPool(pool);
                   return (
                     <BettingPost
-                      key={pool.id}
-                      id={pool.id}
+                      key={safePool.id}
+                      id={safePool.id}
                       avatar='/trump.jpeg'
                       username='realDonaldTrump'
-                      time={pool.createdAt}
-                      question={pool.question}
-                      options={pool.options}
+                      time={safePool.createdAt}
+                      question={safePool.question}
+                      options={safePool.options}
                       commentCount={0}
                       volume={calculateVolume(safePool, tokenType)}
-                      optionBets={pool.options.map((_, index) =>
+                      optionBets={safePool.options.map((_, index) =>
                         getBetTotals(safePool, tokenType, index)
                       )}
                     />

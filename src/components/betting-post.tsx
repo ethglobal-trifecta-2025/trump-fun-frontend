@@ -143,59 +143,78 @@ export function BettingPost({
               <span>No bets</span>
             </div>
           ) : (
-            <div className='relative flex items-center justify-between'>
+            <div className='relative'>
+              {/* Progress bar for volume visualization */}
               <div className='flex-1 rounded-full bg-gray-800'>
                 <div className='flex overflow-hidden rounded-full'>
-                  <div
-                    className={`h-2 rounded-l-full ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'}`}
-                    style={{
-                      width: `${Math.min(100, (parseFloat(optionBets[0]) / parseFloat(volume.replace('$', '').replace(' pts', ''))) * 100)}%`,
-                    }}
-                  ></div>
-                  <div
-                    className='h-2 rounded-r-full bg-gray-700'
-                    style={{
-                      width: `${Math.min(100, (parseFloat(optionBets[1]) / parseFloat(volume.replace('$', '').replace(' pts', ''))) * 100)}%`,
-                    }}
-                  ></div>
+                  {(() => {
+                    const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
+                    const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
+                    const total = yes + no;
+                    
+                    // Default to 50/50 if no bets
+                    const yesPercent = total > 0 ? (yes / total) * 100 : 50;
+                    const noPercent = total > 0 ? (no / total) * 100 : 50;
+                    
+                    return (
+                      <>
+                        <div
+                          className={`h-2 rounded-l-full ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'}`}
+                          style={{ width: `${yesPercent}%` }}
+                        ></div>
+                        <div
+                          className='h-2 rounded-r-full bg-gray-700'
+                          style={{ width: `${noPercent}%` }}
+                        ></div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
-              <div
-                className={`ml-2 ${tokenType === TokenType.POINTS ? 'text-orange-400' : 'text-blue-400'}`}
-              >
-                {volume} vol.
+              
+              {/* Show total volume */}
+              <div className='mt-1 flex justify-end'>
+                <div className={`text-sm font-medium text-gray-400`}>
+                  {volume} vol.
+                </div>
               </div>
             </div>
           )}
         </div>
 
         <div className='mb-4 space-y-2'>
-          {options.map((option, i) => (
-            <div
-              key={i}
-              className={`flex items-center justify-between rounded-md p-2 transition-colors ${
-                selectedOption === i ? 'bg-gray-800' : 'hover:bg-gray-900'
-              } cursor-pointer`}
-              onClick={() => setSelectedOption(i)}
-            >
-              <span
-                className={
-                  i === selectedOption
-                    ? 'font-medium text-white'
-                    : 'text-gray-400'
-                }
+          {options.map((option, i) => {
+            // Calculate percentages for options
+            const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
+            const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
+            const total = yes + no;
+            
+            // Calculate percentage for this option
+            const percent = total > 0 
+              ? Math.round(((i === 0 ? yes : no) / total) * 100) 
+              : (i === 0 ? 50 : 50);
+            
+            return (
+              <div
+                key={i}
+                className={`flex items-center justify-between rounded-md p-2 ${
+                  selectedOption === i ? 'bg-gray-800' : 'bg-gray-900'
+                } cursor-pointer`}
+                onClick={() => setSelectedOption(i)}
               >
-                {option}
-              </span>
-              <div className='flex items-center gap-1'>
+                <span className="font-medium text-white">
+                  {i === 0 ? 'YES' : 'NO'} {percent}%
+                </span>
                 <div
-                  className={`flex items-center justify-center rounded-md ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'} px-1 py-0.5 text-xs`}
+                  className={`flex items-center justify-center rounded-full ${
+                    tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'
+                  } px-3 py-1 text-sm font-medium`}
                 >
                   {optionBets[i] || '0'}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className='flex items-center justify-between'>
