@@ -522,7 +522,6 @@ export enum Bet_OrderBy {
   IsWithdrawn = 'isWithdrawn',
   Option = 'option',
   Pool = 'pool',
-  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
@@ -858,7 +857,6 @@ export type PayoutClaimed_Filter = {
 export enum PayoutClaimed_OrderBy {
   Amount = 'amount',
   Bet = 'bet',
-  BetId = 'betId',
   BetAmount = 'bet__amount',
   BetBetId = 'bet__betId',
   BetBlockNumber = 'bet__blockNumber',
@@ -880,7 +878,6 @@ export enum PayoutClaimed_OrderBy {
   ChainName = 'chainName',
   Id = 'id',
   Pool = 'pool',
-  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
