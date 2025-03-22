@@ -29,7 +29,7 @@ export function TrumpUserPill() {
           },
         }}
         expanded={true}
-        size={40}
+        size={20}
       />
     );
   }
@@ -37,7 +37,7 @@ export function TrumpUserPill() {
   // When authenticated, display the user pill with expanded view and logout button
   return (
     <div className='flex items-center gap-2'>
-      <UserPill expanded={true} ui={{ background: 'accent' }} size={20} />
+      <UserPill expanded={true} ui={{ background: 'accent' }} size={16} />
     </div>
   );
 }

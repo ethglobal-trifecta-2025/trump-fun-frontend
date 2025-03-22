@@ -21,7 +21,7 @@ export function AuthButton() {
   // Only check authReady initially
   if (!authReady) {
     return (
-      <Button disabled className='bg-gray-400'>
+      <Button size='lg' disabled className='bg-gray-400 w-full max-w-48 h-12'>
         Loading Auth...
       </Button>
     );
@@ -32,7 +32,9 @@ export function AuthButton() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className='bg-orange-500 hover:bg-orange-700'>Connect</Button>
+          <Button variant='outline' size='lg' className='border-2 border-orange-500 bg-background/0 text-orange-500 hover:text-orange-600 hover:bg-orange-50 w-full md:max-w-48 h-12 text-lg font-semibold'>
+            Connect
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-56'>
           <DropdownMenuItem
@@ -66,7 +68,7 @@ export function AuthButton() {
   // If authenticated but wallets aren't ready yet
   if (!walletsReady) {
     return (
-      <Button disabled className='bg-gray-400'>
+      <Button size='lg' disabled className='bg-gray-400 w-full max-w-48 h-12 text-lg font-semibold'>
         Loading Wallets...
       </Button>
     );
@@ -75,7 +77,7 @@ export function AuthButton() {
   // If authenticated and wallets are ready, but no wallets exist
   if (wallets.length === 0) {
     return (
-      <Button onClick={() => createWallet()} className='bg-orange-500 hover:bg-orange-600'>
+      <Button size='lg' onClick={() => createWallet()} className='bg-orange-500 hover:bg-orange-600 w-full md:max-w-48 h-12 text-lg font-semibold'>
         <Plus className='mr-2 h-4 w-4' />
         Create Wallet with Passkey
       </Button>
@@ -89,7 +91,7 @@ export function AuthButton() {
         <DropdownMenuTrigger asChild>
           <Button
             variant='outline'
-            className='border-orange-500 bg-background/0 text-orange-500 hover:bg-orange-50'
+            className='border-2 border-orange-500 bg-background/0 text-orange-500 hover:bg-orange-50 w-full md:max-w-48 h-12 text-lg font-semibold'
           >
             <Wallet className='mr-2 h-4 w-4' />
             {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Wallet'}

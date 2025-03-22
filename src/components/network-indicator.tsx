@@ -67,7 +67,6 @@ export function NetworkIndicator() {
         )}
       </div>
 
-      <TokenSwitch />
     </div>
   );
 }

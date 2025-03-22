@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <div className='bg-background flex min-h-screen'>
       <main className='flex-1'>
-        <section className='pt-10 md:pt-16'>
+        <section className='pt-8'>
           <div className='container px-4 md:px-6'>
             <div className='flex flex-col items-center gap-4 text-center relative'>
               <Image
@@ -22,14 +22,14 @@ export default function Home() {
                 height={1000}
                 className='w-full h-auto rounded-lg'
               />
-              <div className='flex flex-col gap-2 min-[400px]:flex-row md:absolute md:bottom-28 md:left-1/2 md:transform md:-translate-x-1/2 mt-4 md:mt-0'>
+              <div className='flex flex-col md:flex-row gap-2 w-full md:absolute md:bottom-28 md:left-10 md:transform mt-4 md:mt-0'>
                 <Button
                   variant='default'
-                  className='bg-orange-500 text-white hover:bg-orange-600'
+                  className='bg-orange-500 text-white hover:bg-orange-600 w-full md:max-w-48 h-12 text-lg font-semibold'
                   asChild
                 >
                   <Link href='/explore'>
-                    <Compass className='mr-1 h-4 w-4' />
+                    <Compass className='mr-2 h-4 w-4' />
                     Explore
                   </Link>
                 </Button>

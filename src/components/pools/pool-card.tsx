@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { Pool } from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistance } from 'date-fns';
 import Link from 'next/link';
 import TruthSocial from '../common/truth-social';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -47,20 +47,11 @@ export function PoolCard({ pool }: { pool: Pool }) {
     }
   });
 
-  const closeDate = new Date(Number(pool.betsCloseAt) * 1000).toLocaleDateString();
+  const timeUntilClose = formatDistance(new Date(Number(pool.betsCloseAt) * 1000), new Date(), {
+    addSuffix: true,
+  });
 
-  // const getBadgeVariant = () => {
-  //   switch (pool.status) {
-  //     case PoolStatus.Pending:
-  //       return 'bg-green-500';
-  //     case PoolStatus.Graded:
-  //       return 'bg-red-500';
-  //     case PoolStatus.None:
-  //       return 'bg-blue-500';
-  //     default:
-  //       return 'bg-gray-500';
-  //   }
-  // };
+  const isClosed = new Date(Number(pool.betsCloseAt) * 1000) < new Date();
 
   return (
     <div>
@@ -78,38 +69,61 @@ export function PoolCard({ pool }: { pool: Pool }) {
               {pool.originalTruthSocialPostId && (
                 <div className='flex items-center gap-x-2'>
                   <span className='text-muted-foreground text-xs'>
-                    {formatDistanceToNow(new Date(pool.createdAt * 1000), { addSuffix: true })}
+                    {formatDistance(new Date(pool.createdAt * 1000), new Date(), {
+                      addSuffix: true,
+                    })}
                   </span>
                   <TruthSocial postId={pool.originalTruthSocialPostId} />
                 </div>
               )}
             </div>
           </div>
-          <CardTitle className='line-clamp-3 text-base font-medium'>{pool.question}</CardTitle>
+          <CardTitle className=''>
+            <Link href={`/pools/${pool.id}`} className='block'>
+              <p className='font-mediumtransition-colors line-clamp-3 text-base hover:text-orange-500'>
+                {pool.question}
+              </p>
+            </Link>
+          </CardTitle>
         </CardHeader>
         <CardContent className='flex h-full flex-col'>
-          <div className='mb-4'>
-            <div className='mb-2 flex justify-between text-sm font-medium'>
-              {pool.options.map((option, index) => (
-                <span key={index} className={index === 0 ? 'text-green-500' : 'text-red-500'}>
-                  {option} {percentages[index]}%
-                </span>
-              ))}
-            </div>
-            <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
-              <div className='flex h-full'>
-                {pool.options.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-full ${index === 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                    style={{ width: `${percentages[index]}%` }}
-                  />
-                ))}
+          {pool.options.length > 0 ? (
+            <div className='mb-4'>
+              <div className='mb-2 flex justify-between text-sm font-medium'>
+                {pool.options.map((option, index) => {
+                  return (
+                    <span key={index} className={index === 0 ? 'text-green-500' : 'text-red-500'}>
+                      {option} {percentages[index]}%
+                    </span>
+                  );
+                })}
+              </div>
+              <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
+                <div className='flex h-full'>
+                  {pool.options.map((_, index) => {
+                    // Ensure percentages add up to 100% for the progress bar
+                    const totalPercentage = percentages.reduce((sum, p) => sum + p, 0);
+                    const displayWidth =
+                      totalPercentage > 0
+                        ? Math.round((percentages[index] / totalPercentage) * 100)
+                        : 0; // Don't show any filled bar if no bets placed
+
+                    return (
+                      <div
+                        key={index}
+                        className={`h-full ${index === 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                        style={{ width: `${displayWidth}%` }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
           <div className='flex items-center justify-between'>
-            <div className='text-muted-foreground text-sm'>Ends: {closeDate}</div>
+            <div className='text-muted-foreground text-sm'>
+              {isClosed ? 'Bets are closed' : `Bets close in: ${timeUntilClose}`}
+            </div>
             <div className='text-sm font-medium'>Volume: {calculateVolume(pool, tokenType)}</div>
           </div>
           <Link href={`/pools/${pool.id}`} className='mt-auto pt-4'>

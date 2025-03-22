@@ -8,7 +8,7 @@ import { POINTS_ADDRESS, USDC_ADDRESS } from '@/consts/addresses';
 // Define token types as enum for better type safety
 export enum TokenType {
   USDC = 'USD',
-  POINTS = 'POINTS',
+  POINTS = 'FREEDOM',
 }
 
 // Token logos/symbols

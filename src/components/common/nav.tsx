@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { NetworkIndicator } from '../network-indicator';
 import { ThemeToggle } from '../theme-toggle';
 import { TrumpUserPill } from '../user-pill';
+import { TokenSwitch } from '../token-switch';
 
 export default function Nav() {
   const { formattedBalance, tokenTextLogo } = useTokenBalance();
@@ -26,7 +27,7 @@ export default function Nav() {
   ];
   return (
     <>
-      <header className='fixed top-0 right-0 left-0 z-50 flex h-full items-center justify-between bg-white px-4 py-2 md:h-16 md:py-0 dark:bg-black'>
+      <header className='container mx-auto fixed top-0 right-0 left-0 z-50 flex h-fit items-center justify-between bg-white px-4 py-2 md:h-16 md:py-0 dark:bg-black'>
         <div className='text-2xl font-bold text-orange-500'>
           <Link href='/'>Trump.fun</Link>
         </div>
@@ -47,13 +48,14 @@ export default function Nav() {
                 </Link>
               </Button>
             ))}
+
+            <TokenSwitch />
             <div className='flex items-center gap-2'>
               <div className='text-sm text-gray-400'>Balance</div>
               <div className='font-bold'>
                 {tokenTextLogo} {formattedBalance}
               </div>
             </div>
-
             <TrumpUserPill />
             <ThemeToggle />
           </div>
