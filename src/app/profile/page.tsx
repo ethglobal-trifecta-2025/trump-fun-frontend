@@ -195,7 +195,7 @@ export default function ProfilePage() {
               <div className='text-center'>
                 <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                 <div className='font-bold'>
-                  {formattedBalance} {tokenTextLogo}
+                  {tokenTextLogo}{formattedBalance}
                 </div>
               </div>
               <div className='text-center'>
@@ -209,8 +209,8 @@ export default function ProfilePage() {
               Token Actions
             </div>
 
-            <p>
-              Withdrawable Balance: {formattedWithdrawableBalance} {tokenTextLogo}
+            <p className='text-sm text-gray-500 dark:text-gray-400'>
+              Withdrawable Balance: {tokenTextLogo}{formattedWithdrawableBalance}
             </p>
 
             <div className='mb-2'>
@@ -360,6 +360,7 @@ export default function ProfilePage() {
                     username='realDonaldTrump'
                     time={bet.pool.createdAt}
                     question={bet.pool.question}
+                    status={bet.pool.status}
                     options={bet.pool.options}
                     selectedOption={bet.option}
                     truthSocialId={bet.pool.originalTruthSocialPostId}

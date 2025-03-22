@@ -26,11 +26,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { formatDistanceToNow } from 'date-fns';
-import Image from 'next/image';
 
 // Import utils
 import { togglePoolFacts } from '@/app/actions/pool-facts';
 import { GET_POOL } from '@/app/queries';
+import TruthSocial from '@/components/common/truth-social';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
@@ -565,23 +565,10 @@ export default function PoolDetailPage() {
               >
                 {isActive ? 'ACTIVE' : 'CLOSED'}
               </Badge>
-              <Link
-                href={
-                  pool.originalTruthSocialPostId
-                    ? `https://truthsocial.com/@realDonaldTrump/posts/${pool.originalTruthSocialPostId}`
-                    : 'https://truthsocial.com/@realDonaldTrump'
-                }
-                target='_blank'
-                className='flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400'
-              >
-                <Image
-                  src='/truth-social.png'
-                  alt='truth-social'
-                  width={24}
-                  height={24}
-                  style={{ width: 'auto', height: 'auto' }}
-                />
-              </Link>
+              <span className='text-muted-foreground text-xs'>
+                {formatDistanceToNow(new Date(pool.createdAt * 1000), { addSuffix: true })}
+              </span>
+              <TruthSocial postId={pool.originalTruthSocialPostId} />
             </div>
           </div>
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>

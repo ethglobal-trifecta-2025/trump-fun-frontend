@@ -219,6 +219,7 @@ export default function BettingPlatform() {
                       optionBets={pool.options.map((_, index) =>
                         getBetTotals(pool, tokenType, index)
                       )}
+                      status={pool.status}
                     />
                   );
                 })}

@@ -2,17 +2,19 @@
 
 import { isPoolFactsd, savePoolFacts } from '@/app/pool-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useTokenContext } from '@/hooks/useTokenContext';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
-import { MessageCircle } from 'lucide-react';
-import Image from 'next/image';
+import { formatDistanceToNow } from 'date-fns';
+import {  MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import TruthSocial from './common/truth-social';
+import { PoolStatus } from '@/lib/__generated__/graphql';
+import { Badge } from './ui/badge';
 
 interface BettingPostProps {
   id: string;
@@ -22,6 +24,7 @@ interface BettingPostProps {
   question: string;
   options: string[];
   truthSocialId: string;
+  status: PoolStatus;
   commentCount?: number;
   volume?: string;
   optionBets?: string[];
@@ -35,6 +38,7 @@ export function BettingPost({
   question,
   options,
   truthSocialId,
+  status,
   commentCount = 0,
   volume = '0',
   optionBets = [],
@@ -63,6 +67,7 @@ export function BettingPost({
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
   const { tokenType } = useTokenContext();
+  const isActive = status === PoolStatus.Pending || status === PoolStatus.None;
 
   // Use our custom hook for token balance
   const { balance, formattedBalance, symbol } = useTokenBalance();
@@ -216,21 +221,16 @@ export function BettingPost({
           <div className='flex-1'>
             <div className='font-bold'>{username}</div>
           </div>
-          <Badge
-            variant='outline'
-            className='text-muted-foreground hover:bg-muted ml-2 flex cursor-pointer items-center gap-1 rounded-full border-transparent px-3 text-xs'
-          >
-            <div className='flex items-center gap-2'>
-              <Image
-                src='/truth-social.png'
-                alt='truth-social'
-                width={20}
-                height={20}
-                style={{ width: 'auto', height: 'auto' }}
-              />
-              <p>Truth Social</p>
-            </div>
-          </Badge>
+          <div className='flex items-center gap-2'>
+            <Badge
+              variant={isActive ? 'default' : 'secondary'}
+              className={isActive ? 'bg-green-500' : ''}
+            >
+              {isActive ? 'ACTIVE' : 'CLOSED'}
+            </Badge>
+            <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
+            <TruthSocial postId={truthSocialId} />
+          </div>
         </div>
 
         <Link href={`/pools/${id}`} className='block'>

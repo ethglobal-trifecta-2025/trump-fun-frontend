@@ -3,7 +3,7 @@
 import { AuthButton } from '@/components/auth-button';
 import { PoolList } from '@/components/pools/pool-list';
 import { Button } from '@/components/ui/button';
-import { Compass } from 'lucide-react';
+import { CheckCircle, Compass, DollarSign, Users } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
@@ -21,9 +21,13 @@ export default function Home() {
                 true.
               </p>
               <div className='flex flex-col gap-2 min-[400px]:flex-row'>
-                <Button variant='default' className='bg-orange-500 hover:bg-orange-600' asChild>
+                <Button
+                  variant='default'
+                  className='bg-orange-500 text-white hover:bg-orange-600'
+                  asChild
+                >
                   <Link href='/explore'>
-                    <Compass className='mr-2 h-4 w-4' />
+                    <Compass className='mr-1 h-4 w-4' />
                     Explore
                   </Link>
                 </Button>
@@ -38,26 +42,12 @@ export default function Home() {
             <PoolList />
           </div>
         </section>
-
-        <section className='bg-muted/50 py-12 md:py-24'>
+        <section className='bg-muted/50 py-12 md:py-18'>
           <div className='container px-4 md:px-6'>
             <div className='grid gap-6 lg:grid-cols-3 lg:gap-12'>
               <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                 <div className='rounded-full bg-orange-100 p-4'>
-                  <svg
-                    className='h-6 w-6 text-orange-500'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                    xmlns='http://www.w3.org/2000/svg'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth='2'
-                      d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                    ></path>
-                  </svg>
+                  <CheckCircle className='h-6 w-6 text-orange-500' />
                 </div>
                 <h3 className='text-xl font-bold'>Predict</h3>
                 <p className='text-muted-foreground'>
@@ -66,40 +56,14 @@ export default function Home() {
               </div>
               <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                 <div className='rounded-full bg-orange-100 p-4'>
-                  <svg
-                    className='h-6 w-6 text-orange-500'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                    xmlns='http://www.w3.org/2000/svg'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth='2'
-                      d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                    ></path>
-                  </svg>
+                  <DollarSign className='h-6 w-6 text-orange-500' />
                 </div>
                 <h3 className='text-xl font-bold'>Earn</h3>
                 <p className='text-muted-foreground'>Win big when your predictions come true.</p>
               </div>
               <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                 <div className='rounded-full bg-orange-100 p-4'>
-                  <svg
-                    className='h-6 w-6 text-orange-500'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                    xmlns='http://www.w3.org/2000/svg'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth='2'
-                      d='M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z'
-                    ></path>
-                  </svg>
+                  <Users className='h-6 w-6 text-orange-500' />
                 </div>
                 <h3 className='text-xl font-bold'>Connect</h3>
                 <p className='text-muted-foreground'>
@@ -109,6 +73,35 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <footer className='bg-background border-t border-gray-200 py-8 dark:border-gray-800'>
+          <div className='container px-4 md:px-6'>
+            <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
+              <div className='flex flex-col items-center gap-2 md:items-start'>
+                <div className='text-2xl font-bold text-orange-500'>
+                  <Link href='/'>Trump.fun</Link>
+                </div>
+                <p className='text-muted-foreground text-center text-sm md:text-left'>
+                  Predict what Trump will do next and win big!
+                </p>
+              </div>
+              <div className='flex flex-col items-center gap-4 md:flex-row'>
+                <Link href='https://twitter.com/trumpfun' target='_blank' rel='noopener noreferrer'>
+                  {/* <Image
+                    src='/x.jpg'
+                    alt='Twitter'
+                    width={20}
+                    height={20}
+                    className='rounded-full'
+                  /> */}
+                </Link>
+              </div>
+            </div>
+            <div className='text-muted-foreground mt-8 text-center text-xs'>
+              © {new Date().getFullYear()} Trump.fun. All rights reserved.
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );

@@ -1,9 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { POINTS_DECIMALS, USDC_DECIMALS } from '@/consts';
 import { TokenType } from '@/hooks/useTokenContext';
+import { PoolStatus } from '@/lib/__generated__/graphql';
 import { formatDistanceToNow } from 'date-fns';
-import Image from 'next/image';
 import Link from 'next/link';
+import TruthSocial from './common/truth-social';
+import { Badge } from './ui/badge';
 
 interface UserBettingPostProps {
   id: string;
@@ -13,6 +15,7 @@ interface UserBettingPostProps {
   question: string;
   options: string[];
   volume: string;
+  status: PoolStatus;
   selectedOption: number;
   userBet: {
     amount: string;
@@ -34,6 +37,7 @@ export function UserBettingPost({
   volume,
   selectedOption,
   userBet,
+  status,
   tokenType,
   truthSocialId,
 }: UserBettingPostProps) {
@@ -46,6 +50,7 @@ export function UserBettingPost({
 
   const symbol = resolvedTokenType === TokenType.USDC ? '💲' : '🦅';
   const decimals = resolvedTokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
+  const isActive = status === PoolStatus.Pending || status === PoolStatus.None;
 
   const formattedAmount = (parseFloat(userBet.amount) / Math.pow(10, decimals)).toFixed(0);
   const formattedPayout = userBet.payout
@@ -64,15 +69,14 @@ export function UserBettingPost({
             <div className='font-bold'>{username}</div>
           </div>
           <div className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400'>
+            <Badge
+              variant={isActive ? 'default' : 'secondary'}
+              className={isActive ? 'bg-green-500' : ''}
+            >
+              {isActive ? 'ACTIVE' : 'CLOSED'}
+            </Badge>
             <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
-            {truthSocialId && (
-              <Link
-                href={`https://truthsocial.com/@realDonaldTrump/posts/${truthSocialId}`}
-                target='_blank'
-              >
-                <Image src='/truth-social.png' alt='truth-social' width={20} height={20} />
-              </Link>
-            )}
+            {truthSocialId && <TruthSocial postId={truthSocialId} />}
           </div>
         </div>
 
@@ -87,7 +91,9 @@ export function UserBettingPost({
             <span className='!text-sm !font-normal text-gray-600 dark:text-gray-400'>
               Option Selected:
             </span>
-            <span className='text-base font-medium text-orange-500'>
+            <span
+              className={`text-base font-medium ${options[selectedOption]?.toLowerCase() === 'yes' ? 'text-green-500' : options[selectedOption]?.toLowerCase() === 'no' ? 'text-red-500' : 'text-orange-500'}`}
+            >
               {` `}
               {options[selectedOption]}
             </span>

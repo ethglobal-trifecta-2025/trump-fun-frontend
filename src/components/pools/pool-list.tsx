@@ -1,9 +1,9 @@
 'use client';
 
 import { GET_POOLS } from '@/app/queries';
+import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { PoolCard } from './pool-card';
-import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 
 export function PoolList() {
   const {
@@ -17,6 +17,7 @@ export function PoolList() {
       },
       orderBy: Pool_OrderBy.CreatedAt,
       orderDirection: OrderDirection.Desc,
+      first: 6,
     },
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,
