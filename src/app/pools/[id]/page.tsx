@@ -22,17 +22,17 @@ import CommentSectionWrapper from '@/components/comments/comment-section-wrapper
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 
 // Import utils
+import { togglePoolFacts } from '@/app/actions/pool-facts';
 import { GET_POOL } from '@/app/queries';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-import { togglePoolFacts } from '@/app/actions/pool-facts';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -153,6 +153,11 @@ export default function PoolDetailPage() {
 
     fetchApprovedAmount();
   }, [account.address, publicClient, hash, getTokenAddress]);
+
+  // Log approvedAmount when it changes
+  useEffect(() => {
+    console.log(`Approved amount: ${approvedAmount}`);
+  }, [approvedAmount]);
 
   // Handle percentage button clicks
   const handlePercentageClick = (percentage: number) => {
@@ -507,7 +512,6 @@ export default function PoolDetailPage() {
             </Badge>
           </div>
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
-          <CardDescription className='mt-2'>{pool.options.join(' vs. ')}</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -515,8 +519,12 @@ export default function PoolDetailPage() {
           <div className='mb-6'>
             <Progress value={yesPercentage} className='mb-2 h-4' />
             <div className='mb-2 flex justify-between text-sm font-medium'>
-              <span>YES {yesPercentage}%</span>
-              <span>NO {noPercentage}%</span>
+              <span>
+                {pool.options[0]} {yesPercentage}%
+              </span>
+              <span>
+                {pool.options[1]} {noPercentage}%
+              </span>
             </div>
           </div>
 
@@ -561,20 +569,6 @@ export default function PoolDetailPage() {
                   </Button>
                 ))}
               </div>
-
-              {/* Display Token Balance */}
-              {balance && (
-                <div className='mb-2 text-xs text-gray-400'>
-                  <div>
-                    Balance: {formattedBalance} <span className='ml-1'>{tokenTextLogo}</span>{' '}
-                    {symbol}
-                  </div>
-                  <div>
-                    Approved: {approvedAmount} <span className='ml-1'>{tokenTextLogo}</span>{' '}
-                    {symbol}
-                  </div>
-                </div>
-              )}
 
               {/* Percentage Buttons */}
               <div className='mb-2 grid grid-cols-4 gap-1'>
@@ -633,6 +627,11 @@ export default function PoolDetailPage() {
                   <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
                   </div>
+                  {balance && (
+                    <div className='absolute right-0 -bottom-5 text-xs text-gray-400'>
+                      Balance: {formattedBalance}
+                    </div>
+                  )}
                 </div>
 
                 <Button

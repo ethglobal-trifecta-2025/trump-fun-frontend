@@ -2,7 +2,12 @@
 
 import { GET_POOLS } from '@/app/queries';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { GetPoolsQuery, OrderDirection, Pool_OrderBy } from '@/lib/__generated__/graphql';
+import {
+  GetPoolsQuery,
+  OrderDirection,
+  Pool_OrderBy,
+  PoolStatus,
+} from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { TrendingUp } from 'lucide-react';
@@ -13,7 +18,9 @@ export function HighestVolume() {
 
   const { data: volumePools } = useQuery(GET_POOLS, {
     variables: {
-      filter: {},
+      filter: {
+        status: PoolStatus.Pending,
+      },
       orderBy: tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
       orderDirection: OrderDirection.Desc,
       first: 5,

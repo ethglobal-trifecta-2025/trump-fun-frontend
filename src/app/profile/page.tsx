@@ -186,8 +186,6 @@ export default function ProfilePage() {
 
           <nav className='space-y-1'>
             {renderFilterButton('active', 'Active Bets', <History className='h-4 w-4' />)}
-            {/* {renderFilterButton('won', 'Won Bets', <Trophy className='h-4 w-4' />)} */}
-            {/* {renderFilterButton('lost', 'Lost Bets', <Wallet className='h-4 w-4' />)} */}
             {renderFilterButton('all', 'All Bets', <History className='h-4 w-4' />)}
             <Separator className='my-2' />
             <Button variant='ghost' className='w-full justify-start gap-2 font-medium'>
