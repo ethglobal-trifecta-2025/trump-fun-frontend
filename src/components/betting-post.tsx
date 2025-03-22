@@ -286,8 +286,8 @@ export function BettingPost({
                         ? 'bg-orange-500'
                         : 'bg-orange-700'
                       : selectedOption === i
-                        ? 'bg-blue-500'
-                        : 'bg-blue-700'
+                        ? 'bg-orange-500'
+                        : 'bg-orange-700'
                   } px-3 py-1 text-sm font-medium ${selectedOption === i ? '' : 'opacity-70'}`}
                 >
                   {optionBets[i] || '0'}

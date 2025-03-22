@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { POINTS_ADDRESS } from '@/consts/addresses';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { useTokenContext, TokenType } from '@/hooks/useTokenContext';
+import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { cn } from '@/lib/utils';
 
 export function TokenSwitch() {
@@ -30,7 +30,7 @@ export function TokenSwitch() {
               className={cn(
                 'flex items-center gap-1 px-2 py-1',
                 tokenType === TokenType.USDC
-                  ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+                  ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
                   : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
               )}
             >
