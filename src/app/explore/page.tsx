@@ -16,20 +16,12 @@ import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
-
-  useEffect(() => {
-    // Only reset to newest if we're not already on newest
-    // This prevents unnecessary re-renders when tokenType changes
-    if (activeFilter !== 'newest') {
-      setActiveFilter('newest');
-    }
-  }, [activeFilter, tokenType]);
 
   const filterConfigs = useMemo(
     () => ({
@@ -213,6 +205,7 @@ export default function BettingPlatform() {
                       question={pool.question}
                       options={pool.options}
                       commentCount={0}
+                      truthSocialId={pool.originalTruthSocialPostId}
                       volume={calculateVolume(pool, tokenType)}
                       optionBets={pool.options.map((_, index) =>
                         getBetTotals(pool, tokenType, index)

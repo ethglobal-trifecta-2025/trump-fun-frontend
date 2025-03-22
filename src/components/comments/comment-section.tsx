@@ -155,14 +155,14 @@ export default function CommentSection({
     }
   };
 
-  const handleFactsClick = () => {
-    if (!isWalletConnected) {
-      handleLoginClick();
-      return;
-    }
+  // const handleFactsClick = () => {
+  //   if (!isWalletConnected) {
+  //     handleLoginClick();
+  //     return;
+  //   }
 
-    handleCommentSubmit('FACTS 🦅');
-  };
+  //   handleCommentSubmit('FACTS 🦅');
+  // };
 
   return (
     <div>

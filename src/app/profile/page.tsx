@@ -1,5 +1,6 @@
 'use client';
 
+import { BettingPost } from '@/components/betting-post';
 import { EndingSoon } from '@/components/ending-soon';
 import { HighestVolume } from '@/components/highest-volume';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,11 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { History, Search, Settings, Trophy, Wallet } from 'lucide-react';
-import { BettingPost } from '@/components/betting-post';
 
 import { GET_BETS } from '@/app/queries';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { OrderDirection, Bet_OrderBy, PoolStatus, Bet_Filter } from '@/lib/__generated__/graphql';
+import { Bet_Filter, Bet_OrderBy, OrderDirection, PoolStatus } from '@/lib/__generated__/graphql';
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState } from 'react';
@@ -68,7 +68,7 @@ export default function ProfilePage() {
         },
       },
     }),
-    []
+    [address]
   );
 
   const { orderBy, orderDirection, filter } = useMemo(
@@ -221,6 +221,7 @@ export default function ProfilePage() {
                     optionBets={bet.pool.options.map((_: string, index: number) =>
                       getBetTotals(bet.pool, tokenType, index)
                     )}
+                    truthSocialId={bet.pool.originalTruthSocialPostId}
                   />
                 ))}
                 {filteredPools.length === 0 && (

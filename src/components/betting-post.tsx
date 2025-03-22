@@ -8,7 +8,8 @@ import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -19,6 +20,7 @@ interface BettingPostProps {
   time: number; // Changed to number (unix timestamp)
   question: string;
   options: string[];
+  truthSocialId: string;
   commentCount?: number;
   volume?: string;
   optionBets?: string[];
@@ -31,6 +33,7 @@ export function BettingPost({
   time, // Now expecting unix timestamp
   question,
   options,
+  truthSocialId,
   commentCount = 0,
   volume = '0',
   optionBets = [],
@@ -119,10 +122,16 @@ export function BettingPost({
           <div className='flex-1'>
             <div className='font-bold'>{username}</div>
           </div>
-          <div className='flex items-center gap-2 text-sm text-gray-400'>
-            <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
-            <X size={16} />
-          </div>
+          <Link
+            href={`https://truthsocial.com/@realDonaldTrump/posts/${truthSocialId}`}
+            target='_blank'
+            className='flex items-center gap-2 text-sm text-gray-400'
+          >
+            <div className='flex items-center gap-2'>
+              <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
+              <Image src='/truth-social.png' alt='truth-social' width={20} height={20} />
+            </div>
+          </Link>
         </div>
 
         <Link href={`/pools/${id}`} className='block'>
@@ -153,7 +162,7 @@ export function BettingPost({
                     return (
                       <>
                         <div
-                          className={`h-2 rounded-l-full ${tokenType === TokenType.POINTS ? 'bg-orange-500' : 'bg-blue-500'}`}
+                          className={`h-2 rounded-l-full bg-orange-500`}
                           style={{ width: `${yesPercent}%` }}
                         ></div>
                         <div
@@ -237,7 +246,7 @@ export function BettingPost({
               }`}
               onClick={handleFacts}
             >
-              {hasFactsed ? 'FACTS 🦅' : 'FACTS'}
+              {hasFactsed ? 'FACTS 🦅' : 'FACTS '}
               <span className='ml-1.5'>{factsCount}</span>
             </Button>
 
@@ -311,7 +320,7 @@ export function BettingPost({
                 }}
               />
               <Button
-                className={`${tokenType === TokenType.POINTS ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                className={`bg-orange-600 hover:bg-orange-700`}
                 onClick={placeBet}
                 disabled={!betAmount || selectedOption === null}
               >

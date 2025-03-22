@@ -522,6 +522,7 @@ export enum Bet_OrderBy {
   IsWithdrawn = 'isWithdrawn',
   Option = 'option',
   Pool = 'pool',
+  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
@@ -534,7 +535,6 @@ export enum Bet_OrderBy {
   PoolGradedBlockNumber = 'pool__gradedBlockNumber',
   PoolGradedBlockTimestamp = 'pool__gradedBlockTimestamp',
   PoolGradedTransactionHash = 'pool__gradedTransactionHash',
-  PoolId = 'pool__id',
   PoolIsDraw = 'pool__isDraw',
   PoolLastUpdatedBlockNumber = 'pool__lastUpdatedBlockNumber',
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
@@ -857,6 +857,7 @@ export type PayoutClaimed_Filter = {
 export enum PayoutClaimed_OrderBy {
   Amount = 'amount',
   Bet = 'bet',
+  BetId = 'betId',
   BetAmount = 'bet__amount',
   BetBetId = 'bet__betId',
   BetBlockNumber = 'bet__blockNumber',
@@ -864,7 +865,6 @@ export enum PayoutClaimed_OrderBy {
   BetChainId = 'bet__chainId',
   BetChainName = 'bet__chainName',
   BetCreatedAt = 'bet__createdAt',
-  BetId = 'bet__id',
   BetIsWithdrawn = 'bet__isWithdrawn',
   BetOption = 'bet__option',
   BetPoolId = 'bet__poolId',
@@ -878,6 +878,7 @@ export enum PayoutClaimed_OrderBy {
   ChainName = 'chainName',
   Id = 'id',
   Pool = 'pool',
+  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
@@ -890,7 +891,6 @@ export enum PayoutClaimed_OrderBy {
   PoolGradedBlockNumber = 'pool__gradedBlockNumber',
   PoolGradedBlockTimestamp = 'pool__gradedBlockTimestamp',
   PoolGradedTransactionHash = 'pool__gradedTransactionHash',
-  PoolId = 'pool__id',
   PoolIsDraw = 'pool__isDraw',
   PoolLastUpdatedBlockNumber = 'pool__lastUpdatedBlockNumber',
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
@@ -2129,6 +2129,7 @@ export type GetPoolsQuery = {
     pointsBetTotals: Array<any>;
     usdcVolume: any;
     pointsVolume: any;
+    originalTruthSocialPostId: string;
   }>;
 };
 
@@ -2392,6 +2393,7 @@ export const GetPoolsDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'pointsBetTotals' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'usdcVolume' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'pointsVolume' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'originalTruthSocialPostId' } },
               ],
             },
           },

@@ -37,6 +37,7 @@ export const GET_POOLS = gql(`
         pointsBetTotals
         usdcVolume
         pointsVolume
+        originalTruthSocialPostId
     }
   }
 `);
