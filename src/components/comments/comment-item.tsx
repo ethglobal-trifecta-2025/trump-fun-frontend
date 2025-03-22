@@ -54,15 +54,19 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         return;
       }
 
-      // Optimistic update
+      // Determine action without updating state yet
       const newIsLiked = !isLiked;
-      const newUpvotes = newIsLiked ? upvotes + 1 : Math.max(0, upvotes - 1);
 
-      setIsLiked(newIsLiked);
-      setUpvotes(newUpvotes);
-
-      // Update localStorage to persist the like
-      saveCommentLike(comment.id, newIsLiked);
+      // Calculate the correct upvote count based on the current state
+      // and whether the user is liking or unliking
+      let newUpvotes = upvotes;
+      if (newIsLiked) {
+        // If user is liking and wasn't liked before
+        newUpvotes = upvotes + 1;
+      } else {
+        // If user is unliking and was liked before
+        newUpvotes = Math.max(0, upvotes - 1);
+      }
 
       const messageObj = {
         action: 'toggle_like',
@@ -86,26 +90,37 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         }
       );
 
-      // No need to await this call to avoid UI freezing
+      // Only update state after successful signature
+      setIsLiked(newIsLiked);
+      setUpvotes(newUpvotes);
+
+      // Update localStorage after successful signature
+      saveCommentLike(comment.id, newIsLiked);
+
+      // Call API after successful signature
       toggleLike(comment.id, newIsLiked ? 'like' : 'unlike', signature, messageStr)
         .then((result) => {
           if (!result.success) {
-            // Revert optimistic update on error
+            // Revert on API error
             setIsLiked(!newIsLiked);
-            setUpvotes(newIsLiked ? upvotes - 1 : upvotes + 1);
-            // Also update localStorage to revert
+            setUpvotes(newIsLiked ? newUpvotes - 1 : newUpvotes + 1); // Revert to previous count
             saveCommentLike(comment.id, !newIsLiked);
           }
         })
         .catch(() => {
-          // Silently handle errors after optimistic update
+          // Silently handle errors
         });
     } catch (error) {
-      // Revert optimistic update on error
-      const revertedLiked = !isLiked;
-      setIsLiked(revertedLiked);
-      setUpvotes(revertedLiked ? upvotes + 1 : upvotes - 1);
-      saveCommentLike(comment.id, revertedLiked);
+      // Don't need to revert since we only update after successful signature
+      // Only log errors that aren't user rejections
+      if (
+        error instanceof Error &&
+        !error.message.includes('rejected') &&
+        !error.message.includes('cancel') &&
+        !error.message.includes('user rejected')
+      ) {
+        console.error('Error handling comment FACTS:', error);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -133,11 +148,15 @@ const CommentItem = ({ comment }: CommentItemProps) => {
             <Button
               variant='ghost'
               size='sm'
-              className='h-9 gap-2 px-3 text-orange-500 hover:text-orange-500 focus:text-orange-500 active:text-orange-500'
+              className={`h-9 gap-2 px-3 ${
+                isLiked
+                  ? 'font-bold text-orange-500 hover:text-orange-600'
+                  : 'text-orange-500 hover:text-orange-500 focus:text-orange-500 active:text-orange-500'
+              }`}
               onClick={handleLike}
               disabled={isSubmitting}
             >
-              <span className='font-bold'>FACTS</span>
+              <span>FACTS</span>
               {isLiked && <span className='ml-1.5'>🦅</span>}
               <span className='ml-1.5'>{upvotes}</span>
             </Button>

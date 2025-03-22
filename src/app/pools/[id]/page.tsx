@@ -174,24 +174,14 @@ export default function PoolDetailPage() {
     setIsFactsProcessing(true);
 
     try {
-      // Optimistic update
-      const newIsFactsed = !hasFactsed;
-      setHasFactsed(newIsFactsed);
-
-      // Update facts count optimistically
-      const newFactsCount = newIsFactsed ? poolFacts + 1 : Math.max(5, poolFacts - 1);
-      setPoolFacts(newFactsCount);
-
-      // Temporary localStorage solution until Supabase is ready
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
-        localStorage.setItem(`pool_facts_liked_${id}`, newIsFactsed.toString());
-      }
-
       const wallet = wallets?.[0];
       if (!wallet || !wallet.address) {
+        setIsFactsProcessing(false);
         return;
       }
+
+      // Determine the action without updating state yet
+      const newIsFactsed = !hasFactsed;
 
       // Create message for signature
       const messageObj = {
@@ -217,6 +207,19 @@ export default function PoolDetailPage() {
         }
       );
 
+      // Only update after successful signature
+      setHasFactsed(newIsFactsed);
+
+      // Update facts count after signature is complete
+      const newFactsCount = newIsFactsed ? poolFacts + 1 : Math.max(5, poolFacts - 1);
+      setPoolFacts(newFactsCount);
+
+      // Temporary localStorage solution until Supabase is ready
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
+        localStorage.setItem(`pool_facts_liked_${id}`, newIsFactsed.toString());
+      }
+
       // FUTURE: When Supabase is ready, uncomment this code
       /*
       // Call the server action to update the database
@@ -233,15 +236,15 @@ export default function PoolDetailPage() {
       }
       */
     } catch (error) {
-      // Revert optimistic update on error
-      setHasFactsed(!hasFactsed);
-      const revertedFactsCount = hasFactsed ? poolFacts + 1 : Math.max(5, poolFacts - 1);
-      setPoolFacts(revertedFactsCount);
-
-      // Update localStorage to revert
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`pool_facts_${id}`, revertedFactsCount.toString());
-        localStorage.setItem(`pool_facts_liked_${id}`, (!hasFactsed).toString());
+      // No need to revert since we're only updating after successful signature
+      // Don't log errors when user rejects the request
+      if (
+        error instanceof Error &&
+        !error.message.includes('rejected') &&
+        !error.message.includes('cancel') &&
+        !error.message.includes('user rejected')
+      ) {
+        console.error('Error handling FACTS:', error);
       }
     } finally {
       setIsFactsProcessing(false);
@@ -632,13 +635,13 @@ export default function PoolDetailPage() {
                 </div>
 
                 <Button
-                  variant='outline'
+                  variant={hasFactsed ? 'default' : 'outline'}
                   size='sm'
                   className={cn(
-                    'h-10 gap-2 font-bold',
+                    'h-10 gap-2 font-medium',
                     hasFactsed
-                      ? 'border-orange-500 bg-orange-500/10 text-orange-500'
-                      : 'text-orange-500 hover:text-orange-500'
+                      ? 'bg-orange-500 text-black hover:bg-orange-600 hover:text-black dark:text-black'
+                      : 'border-orange-500 text-orange-500 hover:text-orange-500 dark:border-orange-500 dark:text-orange-500'
                   )}
                   onClick={handleFacts}
                   disabled={isFactsProcessing}
@@ -659,7 +662,7 @@ export default function PoolDetailPage() {
                 <Button
                   onClick={handleBet}
                   disabled={!betAmount || selectedOption === null || !authenticated || isPending}
-                  className='h-10 w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
+                  className='h-10 w-full bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black sm:w-auto dark:text-black'
                 >
                   {isPending ? 'Processing...' : 'Confirm Bet'}
                 </Button>

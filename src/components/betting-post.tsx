@@ -42,8 +42,20 @@ export function BettingPost({
   const [betAmount, setBetAmount] = useState('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showBetForm, setShowBetForm] = useState(false);
-  const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
-  const [hasFactsed, setHasFactsed] = useState(false);
+  const [factsCount, setFactsCount] = useState(() => {
+    // Use localStorage as temporary fallback until Supabase is set up
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem(`pool_facts_${id}`) || '0', 10) || 5;
+    }
+    return 5;
+  });
+  const [hasFactsed, setHasFactsed] = useState(() => {
+    // Use localStorage as temporary fallback until Supabase is set up
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`pool_facts_liked_${id}`) === 'true';
+    }
+    return false;
+  });
   const [sliderValue, setSliderValue] = useState([0]);
   const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,15 +116,7 @@ export function BettingPost({
         return;
       }
 
-      // Optimistically update UI
       const isAdding = !hasFactsed;
-      const newFactsCount = isAdding ? factsCount + 1 : factsCount - 1;
-
-      setHasFactsed(isAdding);
-      setFactsCount(newFactsCount);
-
-      // Update localStorage to persist the like
-      savePoolFacts(id, isAdding);
 
       const messageObj = {
         action: 'toggle_facts',
@@ -136,19 +140,39 @@ export function BettingPost({
         }
       );
 
+      // Only update the UI after successful signature
+      // Calculate new facts count
+      const newFactsCount = isAdding ? factsCount + 1 : factsCount - 1;
+
+      // Update UI
+      setHasFactsed(isAdding);
+      setFactsCount(newFactsCount);
+
+      // Update localStorage to persist the like
+      savePoolFacts(id, isAdding);
+
+      // Store facts count in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
+        localStorage.setItem(`pool_facts_liked_${id}`, isAdding.toString());
+      }
+
       // In the future, send this signature to your backend or smart contract
       // const result = await togglePoolFacts(id, isAdding, signature, messageStr);
 
       // For now just simulate a delay
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      // Revert optimistic update on error
-      const isAdding = !hasFactsed;
-      setHasFactsed(!isAdding);
-      setFactsCount(isAdding ? factsCount - 1 : factsCount + 1);
-
-      // Revert localStorage
-      savePoolFacts(id, !isAdding);
+      // No need to revert optimistic update since we're only updating after success
+      // Don't log errors when user rejects the request
+      if (
+        error instanceof Error &&
+        !error.message.includes('rejected') &&
+        !error.message.includes('cancel') &&
+        !error.message.includes('user rejected')
+      ) {
+        console.error('Failed to sign message:', error);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -286,8 +310,8 @@ export function BettingPost({
                         ? 'bg-orange-500'
                         : 'bg-orange-700'
                       : selectedOption === i
-                        ? 'bg-blue-500'
-                        : 'bg-blue-700'
+                        ? 'bg-orange-500'
+                        : 'bg-orange-700'
                   } px-3 py-1 text-sm font-medium ${selectedOption === i ? '' : 'opacity-70'}`}
                 >
                   {optionBets[i] || '0'}
@@ -307,12 +331,12 @@ export function BettingPost({
 
           <div className='flex items-center gap-2'>
             <Button
-              variant='outline'
+              variant={hasFactsed ? 'default' : 'outline'}
               size='sm'
-              className={`gap-1 border-orange-500 font-bold ${
+              className={`gap-1 font-medium ${
                 hasFactsed
-                  ? 'bg-orange-500/10 text-orange-500'
-                  : 'text-orange-500 hover:text-orange-500'
+                  ? 'bg-orange-500 text-black hover:bg-orange-600 hover:text-black dark:text-black'
+                  : 'border-orange-500 text-orange-500 hover:text-orange-500 dark:border-orange-500 dark:text-orange-500'
               }`}
               onClick={handleFacts}
               disabled={isSubmitting}
@@ -327,7 +351,7 @@ export function BettingPost({
 
             <Button
               size='sm'
-              className='bg-orange-500/40 text-orange-500 hover:bg-orange-500/50 hover:text-orange-500'
+              className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
               onClick={handleBetClick}
             >
               Bet
@@ -394,7 +418,7 @@ export function BettingPost({
                 }}
               />
               <Button
-                className='bg-orange-500 hover:bg-orange-600'
+                className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
                 onClick={placeBet}
                 disabled={!betAmount || selectedOption === null}
               >

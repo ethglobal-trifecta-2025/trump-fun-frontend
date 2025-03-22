@@ -3,8 +3,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNetwork } from '@/hooks/useNetwork';
-import { TokenSwitch } from './token-switch';
 import { cn } from '@/lib/utils';
+import { TokenSwitch } from './token-switch';
 
 export function NetworkIndicator() {
   const { networkInfo, switchNetwork, isHovering, setIsHovering, supportedNetworks } = useNetwork();
@@ -37,7 +37,7 @@ export function NetworkIndicator() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full bg-blue-600/10 text-xs text-blue-500 hover:text-blue-400'
+                    className='w-full bg-orange-600/10 text-xs text-orange-500 hover:text-orange-400'
                     onClick={() => switchNetwork(supportedNetworks.baseSepolia.id)}
                   >
                     Switch to Base Sepolia
@@ -45,7 +45,7 @@ export function NetworkIndicator() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full bg-blue-700/10 text-xs text-blue-600 hover:text-blue-500'
+                    className='w-full bg-orange-700/10 text-xs text-orange-600 hover:text-orange-500'
                     onClick={() => switchNetwork(supportedNetworks.base.id)}
                   >
                     Switch to Base
@@ -53,7 +53,7 @@ export function NetworkIndicator() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full bg-blue-500/10 text-xs text-blue-500 hover:text-blue-400'
+                    className='w-full bg-orange-500/10 text-xs text-orange-500 hover:text-orange-400'
                     onClick={() => switchNetwork(supportedNetworks.mainnet.id)}
                   >
                     Switch to Ethereum

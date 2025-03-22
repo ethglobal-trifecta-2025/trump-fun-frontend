@@ -29,14 +29,14 @@ export const useNetwork = () => {
       return {
         id,
         name: 'Base Sepolia',
-        color: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
+        color: 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20',
         isSupported: true,
       };
     } else if (id === base.id) {
       return {
         id,
         name: 'Base',
-        color: 'bg-blue-600/10 text-blue-600 hover:bg-blue-600/20',
+        color: 'bg-orange-600/10 text-orange-600 hover:bg-orange-600/20',
         isSupported: true,
       };
     } else if (id === sepolia.id) {
@@ -50,7 +50,7 @@ export const useNetwork = () => {
       return {
         id,
         name: 'Ethereum',
-        color: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
+        color: 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20',
         isSupported: true,
       };
     }
