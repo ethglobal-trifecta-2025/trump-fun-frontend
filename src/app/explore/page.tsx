@@ -102,7 +102,7 @@ export default function BettingPlatform() {
     <div className='flex h-[calc(100vh-4rem)] flex-col'>
       <div className='flex flex-1 overflow-hidden'>
         {/* Sidebar */}
-        <div className='hidden w-60 flex-col border-r border-gray-800 p-4 md:flex'>
+        <div className='hidden w-60 flex-col border-r border-gray-200 p-4 md:flex dark:border-gray-800'>
           <div className='mb-6 flex items-center gap-3'>
             <Avatar className='size-14 overflow-hidden rounded-full'>
               <AvatarImage src='/trump.jpeg' alt='Trump.fun' />
@@ -152,12 +152,12 @@ export default function BettingPlatform() {
               <div className='mb-4 md:hidden'>
                 <div className='relative'>
                   <Search
-                    className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400'
+                    className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 dark:text-gray-400'
                     size={18}
                   />
                   <Input
                     placeholder='Search pools...'
-                    className='border-gray-700 bg-gray-900 pl-10 text-white'
+                    className='border-gray-300 bg-white pl-10 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white'
                     value={searchQuery}
                     onChange={handleSearch}
                   />
@@ -172,19 +172,28 @@ export default function BettingPlatform() {
                   onValueChange={handleFilterChange}
                   className='w-full'
                 >
-                  <TabsList className='bg-gray-900'>
-                    <TabsTrigger value='newest' className='data-[state=active]:bg-gray-800'>
+                  <TabsList className='bg-gray-100 dark:bg-gray-900'>
+                    <TabsTrigger
+                      value='newest'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       Newest
                     </TabsTrigger>
-                    <TabsTrigger value='highest' className='data-[state=active]:bg-gray-800'>
+                    <TabsTrigger
+                      value='highest'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       Highest Vol.
                     </TabsTrigger>
-                    <TabsTrigger value='ending_soon' className='data-[state=active]:bg-gray-800'>
+                    <TabsTrigger
+                      value='ending_soon'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       Ending Soon
                     </TabsTrigger>
                     <TabsTrigger
                       value='recently_closed'
-                      className='data-[state=active]:bg-gray-800'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
                     >
                       Recent
                     </TabsTrigger>
@@ -219,17 +228,17 @@ export default function BettingPlatform() {
         </main>
 
         {/* Right Sidebar */}
-        <div className='hidden w-80 overflow-y-auto border-l border-gray-800 p-4 md:block'>
+        <div className='hidden w-80 overflow-y-auto border-l border-gray-200 p-4 md:block dark:border-gray-800'>
           {/* Search */}
           <div className='mb-6'>
             <div className='relative'>
               <Search
-                className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400'
+                className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 dark:text-gray-400'
                 size={18}
               />
               <Input
                 placeholder='Search pools...'
-                className='bg-background border-gray-700 pl-10 text-white'
+                className='border-gray-300 bg-white pl-10 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white'
                 value={searchQuery}
                 onChange={handleSearch}
               />

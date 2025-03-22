@@ -1,6 +1,5 @@
 'use client';
 
-import { BettingPost } from '@/components/betting-post';
 import { EndingSoon } from '@/components/ending-soon';
 import { HighestVolume } from '@/components/highest-volume';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,12 +10,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowDownToLine, ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
 
 import { GET_BETS } from '@/app/queries';
+import { UserBettingPost } from '@/components/user-betting-post';
 import { useNetwork } from '@/hooks/useNetwork';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
 import { Bet_Filter, Bet_OrderBy, OrderDirection } from '@/lib/__generated__/graphql';
-import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
+import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState } from 'react';
 export default function ProfilePage() {
@@ -307,20 +307,22 @@ export default function ProfilePage() {
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
                 {filteredPools.map((bet) => (
-                  <BettingPost
+                  <UserBettingPost
                     key={bet.id}
-                    id={bet.pool.id}
+                    id={bet.id}
                     avatar='/trump.jpeg'
                     username='realDonaldTrump'
                     time={bet.pool.createdAt}
                     question={bet.pool.question}
                     options={bet.pool.options}
-                    commentCount={0}
-                    volume={calculateVolume(bet.pool, tokenType)}
-                    optionBets={bet.pool.options.map((_: string, index: number) =>
-                      getBetTotals(bet.pool, tokenType, index)
-                    )}
+                    selectedOption={bet.option}
                     truthSocialId={bet.pool.originalTruthSocialPostId}
+                    volume={calculateVolume(bet.pool, bet.tokenType)}
+                    userBet={{
+                      amount: bet.amount,
+                      selectedOption: bet.pool.options,
+                    }}
+                    tokenType={bet.tokenType}
                   />
                 ))}
                 {filteredPools.length === 0 && (

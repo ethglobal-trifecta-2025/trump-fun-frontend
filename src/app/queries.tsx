@@ -116,6 +116,8 @@ export const GET_BETS = gql(`
       blockNumber
       blockTimestamp
       transactionHash
+      tokenType
+      isWithdrawn
       pool {
         id
         poolId
@@ -125,6 +127,11 @@ export const GET_BETS = gql(`
         chainId
         chainName
         createdAt
+        pointsVolume
+        usdcVolume
+        usdcBetTotals
+        pointsBetTotals
+        originalTruthSocialPostId
       }
     }
   }

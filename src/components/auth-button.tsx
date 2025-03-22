@@ -1,19 +1,16 @@
 'use client';
 
-import { usePrivy } from '@privy-io/react-auth';
-import { useWallets } from '@privy-io/react-auth';
-import { useLoginWithPasskey } from '@privy-io/react-auth';
 import { Button } from '@/components/ui/button';
-import { Wallet, Plus, LogOut, Key, Compass } from 'lucide-react';
-import { useAccount } from 'wagmi';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
+import { useLoginWithPasskey, usePrivy, useWallets } from '@privy-io/react-auth';
+import { Key, LogOut, Plus, Wallet } from 'lucide-react';
+import { useAccount } from 'wagmi';
 
 export function AuthButton() {
   const { login, authenticated, ready: authReady, createWallet, logout } = usePrivy();
@@ -88,13 +85,6 @@ export function AuthButton() {
   // If authenticated and has wallets, show wallet menu and explore button
   return (
     <div className='flex gap-2'>
-      <Button variant='default' className='bg-orange-500 hover:bg-orange-600' asChild>
-        <Link href='/explore'>
-          <Compass className='mr-2 h-4 w-4' />
-          Explore
-        </Link>
-      </Button>
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
