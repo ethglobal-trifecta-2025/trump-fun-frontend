@@ -55,6 +55,13 @@ export const getBetTotals = (
   if (!pool) return tokenType === TokenType.USDC ? '$0' : '0';
 
   const betTotals = tokenType === TokenType.USDC ? pool.usdcBetTotals : pool.pointsBetTotals;
+
+  // Check if betTotals is undefined
+  if (!betTotals) {
+    console.error('Bet totals are undefined', { pool, tokenType });
+    return tokenType === TokenType.USDC ? '$0' : '0';
+  }
+
   const amount = betTotals[optionIndex] || '0';
   const decimals = tokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
   const value = Number(amount) / Math.pow(10, decimals);

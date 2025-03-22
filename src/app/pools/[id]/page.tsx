@@ -356,14 +356,6 @@ export default function PoolDetailPage() {
   const isActive = pool.status === PoolStatus.Pending || pool.status === PoolStatus.None;
   const { yesPercentage, noPercentage } = calculatePercentages(pool.usdcBetTotals);
   const totalVolume = formatters.poolVolume(pool);
-  // Add debug logging to troubleshoot NaN issue
-  console.log('Pool data:', {
-    id: pool.id,
-    usdcVolume: pool.usdcVolume,
-    pointsVolume: pool.pointsVolume,
-    tokenType: currentTokenType,
-    calculatedVolume: totalVolume,
-  });
 
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>

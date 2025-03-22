@@ -69,6 +69,31 @@ export const GET_POOLS_SUBSCRIPTION = gql(`
   }
 `);
 
+export const GET_BET_PLACED = gql(`
+  query GetBetPlaced(
+    $first: Int = 10
+    $filter: BetPlaced_filter!
+    $orderBy: BetPlaced_orderBy!
+    $orderDirection: OrderDirection!
+  ) {
+    betPlaceds(
+      first: $first
+      where: $filter
+      orderBy: $orderBy
+      orderDirection: $orderDirection
+    ) {
+      id
+      betId
+      optionIndex
+      amount
+      poolId
+      blockNumber
+      blockTimestamp
+      transactionHash
+    }
+  }
+`);
+
 export const GET_BETS = gql(`
   query GetBets(
     $first: Int = 10

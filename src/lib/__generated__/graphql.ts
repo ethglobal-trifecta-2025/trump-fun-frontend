@@ -522,7 +522,6 @@ export enum Bet_OrderBy {
   IsWithdrawn = 'isWithdrawn',
   Option = 'option',
   Pool = 'pool',
-  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
@@ -535,6 +534,7 @@ export enum Bet_OrderBy {
   PoolGradedBlockNumber = 'pool__gradedBlockNumber',
   PoolGradedBlockTimestamp = 'pool__gradedBlockTimestamp',
   PoolGradedTransactionHash = 'pool__gradedTransactionHash',
+  PoolId = 'pool__id',
   PoolIsDraw = 'pool__isDraw',
   PoolLastUpdatedBlockNumber = 'pool__lastUpdatedBlockNumber',
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
@@ -857,7 +857,6 @@ export type PayoutClaimed_Filter = {
 export enum PayoutClaimed_OrderBy {
   Amount = 'amount',
   Bet = 'bet',
-  BetId = 'betId',
   BetAmount = 'bet__amount',
   BetBetId = 'bet__betId',
   BetBlockNumber = 'bet__blockNumber',
@@ -865,6 +864,7 @@ export enum PayoutClaimed_OrderBy {
   BetChainId = 'bet__chainId',
   BetChainName = 'bet__chainName',
   BetCreatedAt = 'bet__createdAt',
+  BetId = 'bet__id',
   BetIsWithdrawn = 'bet__isWithdrawn',
   BetOption = 'bet__option',
   BetPoolId = 'bet__poolId',
@@ -878,7 +878,6 @@ export enum PayoutClaimed_OrderBy {
   ChainName = 'chainName',
   Id = 'id',
   Pool = 'pool',
-  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
@@ -891,6 +890,7 @@ export enum PayoutClaimed_OrderBy {
   PoolGradedBlockNumber = 'pool__gradedBlockNumber',
   PoolGradedBlockTimestamp = 'pool__gradedBlockTimestamp',
   PoolGradedTransactionHash = 'pool__gradedTransactionHash',
+  PoolId = 'pool__id',
   PoolIsDraw = 'pool__isDraw',
   PoolLastUpdatedBlockNumber = 'pool__lastUpdatedBlockNumber',
   PoolLastUpdatedBlockTimestamp = 'pool__lastUpdatedBlockTimestamp',
@@ -2160,6 +2160,28 @@ export type GetPoolsSubscriptionSubscription = {
   }>;
 };
 
+export type GetBetPlacedQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  filter: BetPlaced_Filter;
+  orderBy: BetPlaced_OrderBy;
+  orderDirection: OrderDirection;
+}>;
+
+export type GetBetPlacedQuery = {
+  __typename?: 'Query';
+  betPlaceds: Array<{
+    __typename?: 'BetPlaced';
+    id: any;
+    betId: any;
+    optionIndex: any;
+    amount: any;
+    poolId: any;
+    blockNumber: any;
+    blockTimestamp: any;
+    transactionHash: any;
+  }>;
+};
+
 export type GetBetsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
   filter: Bet_Filter;
@@ -2439,6 +2461,92 @@ export const GetPoolsSubscriptionDocument = {
   GetPoolsSubscriptionSubscription,
   GetPoolsSubscriptionSubscriptionVariables
 >;
+export const GetBetPlacedDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetBetPlaced' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '10' },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'BetPlaced_filter' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'orderBy' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'BetPlaced_orderBy' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'orderDirection' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'OrderDirection' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'betPlaceds' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'where' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'orderBy' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'orderBy' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'orderDirection' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'orderDirection' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'betId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'optionIndex' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'poolId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'blockNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'blockTimestamp' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'transactionHash' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetBetPlacedQuery, GetBetPlacedQueryVariables>;
 export const GetBetsDocument = {
   kind: 'Document',
   definitions: [

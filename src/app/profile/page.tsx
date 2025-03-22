@@ -7,58 +7,87 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Wallet, Trophy, History, Settings } from 'lucide-react';
+import { History, Search, Settings, Trophy, Wallet } from 'lucide-react';
+import { BettingPost } from '@/components/betting-post';
 
-// import { GET_USER_POOLS } from '@/app/queries';
-import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
-import { useMemo, useState } from 'react';
+import { GET_BETS } from '@/app/queries';
 import { useTokenContext } from '@/hooks/useTokenContext';
+import { OrderDirection, Bet_OrderBy, PoolStatus, Bet_Filter } from '@/lib/__generated__/graphql';
+import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
+import { useQuery } from '@apollo/client';
+import { useMemo, useState } from 'react';
+import { useAccount } from 'wagmi';
 
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
+  const { address } = useAccount();
 
   const filterConfigs = useMemo(
     () => ({
       active: {
-        orderBy: Pool_OrderBy.CreatedAt,
+        orderBy: Bet_OrderBy.UpdatedAt,
         orderDirection: OrderDirection.Desc,
-        filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+        filter: {
+          user: address,
+          pool_: {
+            status: 'PENDING',
+          },
+        },
       },
       won: {
-        orderBy: Pool_OrderBy.CreatedAt,
+        orderBy: Bet_OrderBy.UpdatedAt,
         orderDirection: OrderDirection.Desc,
-        filter: { status: PoolStatus.Graded },
+        filter: {
+          pool_: {
+            status_eq: PoolStatus.Graded,
+          },
+          winner_: {
+            id_eq: address,
+          },
+        },
       },
       lost: {
-        orderBy: Pool_OrderBy.CreatedAt,
+        orderBy: Bet_OrderBy.UpdatedAt,
         orderDirection: OrderDirection.Desc,
-        filter: { status: PoolStatus.Graded },
+        filter: {
+          pool_: {
+            status_eq: PoolStatus.Graded,
+          },
+          loser_: {
+            id_eq: address,
+          },
+        },
       },
       all: {
-        orderBy: Pool_OrderBy.CreatedAt,
+        orderBy: Bet_OrderBy.UpdatedAt,
         orderDirection: OrderDirection.Desc,
-        filter: {},
+        filter: {
+          user: address,
+        },
       },
     }),
     []
   );
 
-  //   const { orderBy, orderDirection, filter } = useMemo(
-  //     () => filterConfigs[activeFilter as keyof typeof filterConfigs],
-  //     [activeFilter, filterConfigs]
-  //   );
+  const { orderBy, orderDirection, filter } = useMemo(
+    () => filterConfigs[activeFilter as keyof typeof filterConfigs],
+    [activeFilter, filterConfigs]
+  );
 
-  //   const { data: userPools } = useQuery(GET_USER_POOLS, {
-  //     variables: {
-  //       filter,
-  //       orderBy,
-  //       orderDirection,
-  //     },
-  //     context: { name: 'userBets' },
-  //     notifyOnNetworkStatusChange: true,
-  //   });
+  const { data: userBets } = useQuery<{ bets: any[] }>(GET_BETS, {
+    variables: {
+      filter: filter as Bet_Filter,
+      orderBy,
+      orderDirection,
+    },
+    context: { name: 'userBets' },
+    notifyOnNetworkStatusChange: true,
+    skip: !address,
+  });
+
+  console.log('userBets', userBets);
 
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
@@ -68,15 +97,13 @@ export default function ProfilePage() {
     setSearchQuery(e.target.value);
   };
 
-  //   const filteredPools = useMemo(() => {
-  //     if (!userPools?.pools) return [];
-  //     if (!searchQuery.trim()) return userPools.pools;
+  const filteredPools = useMemo(() => {
+    if (!userBets?.bets) return [];
+    if (!searchQuery.trim()) return userBets.bets;
 
-  //     const query = searchQuery.toLowerCase().trim();
-  //     return userPools.pools.filter((pool) =>
-  //       pool.question.toLowerCase().includes(query)
-  //     );
-  //   }, [userPools?.pools, searchQuery]);
+    const query = searchQuery.toLowerCase().trim();
+    return userBets.bets.filter((bet) => bet.pool.question.toLowerCase().includes(query));
+  }, [userBets?.bets, searchQuery]);
 
   const renderFilterButton = (value: string, label: string, icon: React.ReactNode) => (
     <Button
@@ -95,7 +122,7 @@ export default function ProfilePage() {
         {/* Sidebar */}
         <div className='hidden w-60 flex-col border-r border-gray-800 p-4 md:flex'>
           <div className='mb-6 flex flex-col items-center gap-3'>
-            <Avatar className='size-20 overflow-hidden rounded-full'>
+            <Avatar className='h-20 w-20 overflow-hidden rounded-full'>
               <AvatarImage src='/trump.jpeg' alt='Profile' />
               <AvatarFallback>
                 <span className='text-2xl font-bold text-orange-500'>U</span>
@@ -135,7 +162,7 @@ export default function ProfilePage() {
         {/* Main Content */}
         <main className='flex flex-1 flex-col overflow-y-hidden md:flex-row'>
           {/* Feed */}
-          <div className='scrollbar-hide scroll-hide flex flex-1 justify-center overflow-y-auto p-4'>
+          <div className='scrollbar-hide flex flex-1 justify-center overflow-y-auto p-4'>
             <div className='w-full max-w-2xl'>
               {/* Mobile Search */}
               <div className='mb-4 md:hidden'>
@@ -154,7 +181,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Mobile Tabs */}
-              <div className='scrollbar-hide scroll-hide mb-4 overflow-x-auto md:hidden'>
+              <div className='scrollbar-hide mb-4 overflow-x-auto md:hidden'>
                 <Tabs
                   defaultValue='active'
                   value={activeFilter}
@@ -179,20 +206,20 @@ export default function ProfilePage() {
               </div>
 
               {/* Betting Posts */}
-              {/* <div className='flex-1 space-y-4'>
-                {filteredPools.map((pool) => (
+              <div className='flex-1 space-y-4'>
+                {filteredPools.map((bet) => (
                   <BettingPost
-                    key={pool.id}
-                    id={pool.id}
+                    key={bet.id}
+                    id={bet.pool.id}
                     avatar='/trump.jpeg'
                     username='realDonaldTrump'
-                    time={pool.createdAt}
-                    question={pool.question}
-                    options={pool.options}
+                    time={bet.pool.createdAt}
+                    question={bet.pool.question}
+                    options={bet.pool.options}
                     commentCount={0}
-                    volume={calculateVolume(pool as any, tokenType)}
-                    optionBets={pool.options.map((_, index) =>
-                      getBetTotals(pool as any, tokenType, index)
+                    volume={calculateVolume(bet.pool, tokenType)}
+                    optionBets={bet.pool.options.map((_: string, index: number) =>
+                      getBetTotals(bet.pool, tokenType, index)
                     )}
                   />
                 ))}
@@ -201,7 +228,7 @@ export default function ProfilePage() {
                     No bets found for this filter
                   </div>
                 )}
-              </div> */}
+              </div>
             </div>
           </div>
         </main>
