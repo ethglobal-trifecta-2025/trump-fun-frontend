@@ -65,13 +65,15 @@ const setRateLimit = async (walletAddress: string): Promise<void> => {
   const supabase = getSupabaseClient();
   try {
     // Upsert the record with current timestamp
-    const { error } = await supabase.from('user_bonuses').upsert([
+    const { error, data } = await supabase.from('trump_users').upsert([
       {
         id: walletAddress.toLowerCase(),
         name: '', // Unused as mentioned
         last_login_bonus: new Date().toISOString(),
       },
     ]);
+
+    console.log('Rate limit set for wallet:', walletAddress, 'Data:', data);
 
     if (error) {
       console.error('Supabase error when setting rate limit:', error);
@@ -136,6 +138,21 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('Error in minting points:', error);
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      error.message.includes('already known')
+    ) {
+      return NextResponse.json<TopUpBalanceResponse>({
+        success: true,
+        message: 'Transaction already submitted to the network',
+        amountMinted: '0', // Cannot access amountToAdd here
+      });
+    }
+
     return NextResponse.json<TopUpBalanceResponse>(
       {
         success: false,
