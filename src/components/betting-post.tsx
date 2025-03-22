@@ -42,8 +42,20 @@ export function BettingPost({
   const [betAmount, setBetAmount] = useState('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showBetForm, setShowBetForm] = useState(false);
-  const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
-  const [hasFactsed, setHasFactsed] = useState(false);
+  const [factsCount, setFactsCount] = useState(() => {
+    // Use localStorage as temporary fallback until Supabase is set up
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem(`pool_facts_${id}`) || '0', 10) || 5;
+    }
+    return 5;
+  });
+  const [hasFactsed, setHasFactsed] = useState(() => {
+    // Use localStorage as temporary fallback until Supabase is set up
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`pool_facts_liked_${id}`) === 'true';
+    }
+    return false;
+  });
   const [sliderValue, setSliderValue] = useState([0]);
   const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,15 +116,7 @@ export function BettingPost({
         return;
       }
 
-      // Optimistically update UI
       const isAdding = !hasFactsed;
-      const newFactsCount = isAdding ? factsCount + 1 : factsCount - 1;
-
-      setHasFactsed(isAdding);
-      setFactsCount(newFactsCount);
-
-      // Update localStorage to persist the like
-      savePoolFacts(id, isAdding);
 
       const messageObj = {
         action: 'toggle_facts',
@@ -136,19 +140,39 @@ export function BettingPost({
         }
       );
 
+      // Only update the UI after successful signature
+      // Calculate new facts count
+      const newFactsCount = isAdding ? factsCount + 1 : factsCount - 1;
+
+      // Update UI
+      setHasFactsed(isAdding);
+      setFactsCount(newFactsCount);
+
+      // Update localStorage to persist the like
+      savePoolFacts(id, isAdding);
+
+      // Store facts count in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
+        localStorage.setItem(`pool_facts_liked_${id}`, isAdding.toString());
+      }
+
       // In the future, send this signature to your backend or smart contract
       // const result = await togglePoolFacts(id, isAdding, signature, messageStr);
 
       // For now just simulate a delay
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      // Revert optimistic update on error
-      const isAdding = !hasFactsed;
-      setHasFactsed(!isAdding);
-      setFactsCount(isAdding ? factsCount - 1 : factsCount + 1);
-
-      // Revert localStorage
-      savePoolFacts(id, !isAdding);
+      // No need to revert optimistic update since we're only updating after success
+      // Don't log errors when user rejects the request
+      if (
+        error instanceof Error &&
+        !error.message.includes('rejected') &&
+        !error.message.includes('cancel') &&
+        !error.message.includes('user rejected')
+      ) {
+        console.error('Failed to sign message:', error);
+      }
     } finally {
       setIsSubmitting(false);
     }
