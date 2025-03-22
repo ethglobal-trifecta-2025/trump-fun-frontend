@@ -16,13 +16,7 @@ import {
 import Link from 'next/link';
 
 export function AuthButton() {
-  const {
-    login,
-    authenticated,
-    ready: authReady,
-    createWallet,
-    logout,
-  } = usePrivy();
+  const { login, authenticated, ready: authReady, createWallet, logout } = usePrivy();
   const { loginWithPasskey } = useLoginWithPasskey();
   const { wallets, ready: walletsReady } = useWallets();
   const { address } = useAccount();
@@ -41,7 +35,7 @@ export function AuthButton() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className='bg-orange-600 hover:bg-orange-700'>Connect</Button>
+          <Button className='bg-orange-500 hover:bg-orange-700'>Connect</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-56'>
           <DropdownMenuItem
@@ -63,10 +57,7 @@ export function AuthButton() {
             <Wallet className='mr-2 h-4 w-4' />
             Login with Social/Email
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className='cursor-pointer'
-            onClick={() => loginWithPasskey()}
-          >
+          <DropdownMenuItem className='cursor-pointer' onClick={() => loginWithPasskey()}>
             <Key className='mr-2 h-4 w-4' />
             Login with Passkey
           </DropdownMenuItem>
@@ -87,10 +78,7 @@ export function AuthButton() {
   // If authenticated and wallets are ready, but no wallets exist
   if (wallets.length === 0) {
     return (
-      <Button
-        onClick={() => createWallet()}
-        className='bg-orange-600 hover:bg-orange-700'
-      >
+      <Button onClick={() => createWallet()} className='bg-orange-500 hover:bg-orange-600'>
         <Plus className='mr-2 h-4 w-4' />
         Create Wallet with Passkey
       </Button>
@@ -100,11 +88,7 @@ export function AuthButton() {
   // If authenticated and has wallets, show wallet menu and explore button
   return (
     <div className='flex gap-2'>
-      <Button
-        variant='default'
-        className='bg-orange-600 hover:bg-orange-700'
-        asChild
-      >
+      <Button variant='default' className='bg-orange-500 hover:bg-orange-600' asChild>
         <Link href='/explore'>
           <Compass className='mr-2 h-4 w-4' />
           Explore
@@ -115,12 +99,10 @@ export function AuthButton() {
         <DropdownMenuTrigger asChild>
           <Button
             variant='outline'
-            className='border-orange-600 text-orange-600 hover:bg-orange-50'
+            className='border-orange-500 text-orange-500 hover:bg-orange-50'
           >
             <Wallet className='mr-2 h-4 w-4' />
-            {address
-              ? `${address.slice(0, 6)}...${address.slice(-4)}`
-              : 'Wallet'}
+            {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Wallet'}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-56'>
@@ -128,16 +110,11 @@ export function AuthButton() {
             <DropdownMenuItem key={wallet.address} className='cursor-pointer'>
               {wallet.address.slice(0, 6)}...
               {wallet.address.slice(-4)}
-              {wallet.walletClientType === 'privy'
-                ? ' (Embedded)'
-                : ' (External)'}
+              {wallet.walletClientType === 'privy' ? ' (Embedded)' : ' (External)'}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className='cursor-pointer text-red-500'
-            onClick={logout}
-          >
+          <DropdownMenuItem className='cursor-pointer text-red-500' onClick={logout}>
             <LogOut className='mr-2 h-4 w-4' />
             Disconnect
           </DropdownMenuItem>

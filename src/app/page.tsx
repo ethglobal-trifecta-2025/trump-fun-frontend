@@ -14,8 +14,8 @@ export default function Home() {
                 Predict Trump&apos;s Next Moves
               </h1>
               <p className='text-muted-foreground max-w-[700px] md:text-xl'>
-                Place bets on what Trump will say or do next and win big when
-                your predictions come true.
+                Place bets on what Trump will say or do next and win big when your predictions come
+                true.
               </p>
               <div className='flex flex-col gap-2 min-[400px]:flex-row'>
                 <AuthButton />
@@ -36,7 +36,7 @@ export default function Home() {
               <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                 <div className='rounded-full bg-orange-100 p-4'>
                   <svg
-                    className='h-6 w-6 text-orange-600'
+                    className='h-6 w-6 text-orange-500'
                     fill='none'
                     stroke='currentColor'
                     viewBox='0 0 24 24'
@@ -58,7 +58,7 @@ export default function Home() {
               <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                 <div className='rounded-full bg-orange-100 p-4'>
                   <svg
-                    className='h-6 w-6 text-orange-600'
+                    className='h-6 w-6 text-orange-500'
                     fill='none'
                     stroke='currentColor'
                     viewBox='0 0 24 24'
@@ -73,14 +73,12 @@ export default function Home() {
                   </svg>
                 </div>
                 <h3 className='text-xl font-bold'>Earn</h3>
-                <p className='text-muted-foreground'>
-                  Win big when your predictions come true.
-                </p>
+                <p className='text-muted-foreground'>Win big when your predictions come true.</p>
               </div>
               <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                 <div className='rounded-full bg-orange-100 p-4'>
                   <svg
-                    className='h-6 w-6 text-orange-600'
+                    className='h-6 w-6 text-orange-500'
                     fill='none'
                     stroke='currentColor'
                     viewBox='0 0 24 24'

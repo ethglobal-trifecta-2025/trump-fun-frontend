@@ -25,7 +25,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
               <span>NO 50%</span>
             </div>
             <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200'>
-              <div className='h-full bg-orange-600' style={{ width: '50%' }} />
+              <div className='h-full bg-orange-500' style={{ width: '50%' }} />
             </div>
           </div>
           <div className='flex items-center justify-between'>
@@ -35,7 +35,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
             <div className='text-sm font-medium'>Volume: 0</div>
           </div>
           <div className='mt-4'>
-            <Button className='w-full bg-orange-600 hover:bg-orange-700'>
+            <Button className='w-full bg-orange-500 hover:bg-orange-600'>
               View Details
             </Button>
           </div>
