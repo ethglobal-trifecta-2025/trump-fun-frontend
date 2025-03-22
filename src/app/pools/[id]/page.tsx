@@ -157,6 +157,7 @@ export default function PoolDetailPage() {
   // Log approvedAmount when it changes
   useEffect(() => {
     console.log(`Approved amount: ${approvedAmount}`);
+    setApprovedAmount(approvedAmount);
   }, [approvedAmount]);
 
   // Handle percentage button clicks
@@ -367,8 +368,8 @@ export default function PoolDetailPage() {
     return { yesPercentage, noPercentage };
   };
 
-  // Calculate the number of unique participants based on pool data
-  const calculateParticipants = (pool: Pool) => {
+  // Calculate the number of unique betters based on pool data
+  const calculateBetters = (pool: Pool) => {
     if (!pool) return 0;
 
     // If we have bet data, use real data
@@ -389,7 +390,7 @@ export default function PoolDetailPage() {
 
     // Fallback to a determined value based on pool ID to ensure consistency
     const poolIdSeed = parseInt(pool.id, 16) || pool.poolId || 0;
-    return Math.max(5, poolIdSeed % 100); // Between 5 and 104 participants
+    return Math.max(5, poolIdSeed % 100); // Between 5 and 104 betters
   };
 
   // Formatters for display
@@ -582,8 +583,8 @@ export default function PoolDetailPage() {
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Participants</p>
-              <p className='font-bold'>{calculateParticipants(pool)}</p>
+              <p className='text-muted-foreground text-sm'>Betters</p>
+              <p className='font-bold'>{calculateBetters(pool)}</p>
             </div>
           </div>
 

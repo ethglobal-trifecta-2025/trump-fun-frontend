@@ -227,7 +227,7 @@ export type Database = {
           id: number;
           image_url: string | null;
           name: string;
-          participants: number;
+          betters: number;
           room_config: Json | null;
           type_id: number;
           updated_at: string;
@@ -244,7 +244,7 @@ export type Database = {
           id?: number;
           image_url?: string | null;
           name: string;
-          participants?: number;
+          betters?: number;
           room_config?: Json | null;
           type_id: number;
           updated_at?: string;
@@ -261,7 +261,7 @@ export type Database = {
           id?: number;
           image_url?: string | null;
           name?: string;
-          participants?: number;
+          betters?: number;
           room_config?: Json | null;
           type_id?: number;
           updated_at?: string;

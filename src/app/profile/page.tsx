@@ -7,18 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@apollo/client';
 import { ArrowDownToLine, ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
+import { useState } from 'react';
+import { usePublicClient, useWriteContract } from 'wagmi';
 
 import { GET_BETS } from '@/app/queries';
 import { UserBettingPost } from '@/components/user-betting-post';
+import { APP_ADDRESS } from '@/consts/addresses';
 import { useNetwork } from '@/hooks/useNetwork';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { useTokenContext } from '@/hooks/useTokenContext';
+import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
 import { Bet_Filter, Bet_OrderBy, OrderDirection } from '@/lib/__generated__/graphql';
+import { bettingContractAbi } from '@/lib/contract.types';
 import { calculateVolume } from '@/utils/betsInfo';
-import { useQuery } from '@apollo/client';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useReadContract } from 'wagmi';
+
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +32,17 @@ export default function ProfilePage() {
   const { address } = useWalletAddress();
   const { formattedBalance, tokenTextLogo } = useTokenBalance();
   const { networkInfo } = useNetwork();
+  const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
+  const { data: hash, isPending, writeContract } = useWriteContract();
+  const [withdrawAmount, setWithdrawAmount] = useState(0);
+
+  const { data: balance } = useReadContract({
+    address: APP_ADDRESS,
+    abi: bettingContractAbi,
+    functionName: 'userBalances',
+    args: [address, tokenTypeC],
+  });
+  const publicClient = usePublicClient();
 
   const filterConfigs = useMemo(
     () => ({
@@ -90,8 +107,6 @@ export default function ProfilePage() {
     skip: !address,
   });
 
-  console.log('userBets', userBets);
-
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
   };
@@ -122,6 +137,42 @@ export default function ProfilePage() {
   // Memoize the sidebar components to prevent re-rendering when filter changes
   const memoizedHighestVolume = useMemo(() => <HighestVolume />, []);
   const memoizedEndingSoon = useMemo(() => <EndingSoon />, []);
+
+  const formattedWithdrawableBalance = useMemo((): number => {
+    if (!balance) return 0;
+    return tokenType === TokenType.USDC
+      ? Number(balance) / 1000000
+      : Number(balance) / 1000000000000000000;
+  }, [balance, tokenType]);
+
+  const handleWithdraw = async () => {
+    if (!address || !publicClient) return;
+
+    if (withdrawAmount <= formattedWithdrawableBalance && withdrawAmount > 0) {
+      try {
+        // Convert the withdrawal amount to the correct format based on token type
+        const tokenAmount = BigInt(
+          Math.floor(
+            withdrawAmount * (tokenType === TokenType.USDC ? 1000000 : 1000000000000000000)
+          )
+        );
+
+        const { request } = await publicClient.simulateContract({
+          abi: bettingContractAbi,
+          address: APP_ADDRESS,
+          functionName: 'withdraw',
+          account: address as `0x${string}`,
+          args: [tokenTypeC, tokenAmount],
+        });
+
+        writeContract(request);
+      } catch (error) {
+        console.error('Error withdrawing tokens:', error);
+      }
+    } else {
+      console.error('Invalid withdrawal amount or insufficient balance');
+    }
+  };
 
   return (
     <div className='flex h-[calc(100vh-4rem)] flex-col'>
@@ -157,11 +208,18 @@ export default function ProfilePage() {
             <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
               Token Actions
             </div>
+
+            <p>
+              Withdrawable Balance: {formattedWithdrawableBalance} {tokenTextLogo}
+            </p>
+
             <div className='mb-2'>
               <Input
                 type='number'
                 placeholder='Enter amount'
                 className='w-full border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(Number(e.target.value))}
               />
             </div>
             <div className='grid grid-cols-2 gap-2'>
@@ -175,6 +233,8 @@ export default function ProfilePage() {
               <Button
                 variant='outline'
                 className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
+                onClick={handleWithdraw}
+                disabled={isPending}
               >
                 <ArrowUpFromLine className='h-4 w-4' />
                 <span>Withdraw</span>
