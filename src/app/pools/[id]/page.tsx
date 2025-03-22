@@ -635,13 +635,13 @@ export default function PoolDetailPage() {
                 </div>
 
                 <Button
-                  variant='outline'
+                  variant={hasFactsed ? 'default' : 'outline'}
                   size='sm'
                   className={cn(
-                    'h-10 gap-2 font-bold',
+                    'h-10 gap-2 font-medium',
                     hasFactsed
-                      ? 'border-orange-500 bg-orange-500/10 text-orange-500'
-                      : 'text-orange-500 hover:text-orange-500'
+                      ? 'bg-orange-500 text-black hover:bg-orange-600 hover:text-black dark:text-black'
+                      : 'border-orange-500 text-orange-500 hover:text-orange-500 dark:border-orange-500 dark:text-orange-500'
                   )}
                   onClick={handleFacts}
                   disabled={isFactsProcessing}
@@ -662,7 +662,7 @@ export default function PoolDetailPage() {
                 <Button
                   onClick={handleBet}
                   disabled={!betAmount || selectedOption === null || !authenticated || isPending}
-                  className='h-10 w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
+                  className='h-10 w-full bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black sm:w-auto dark:text-black'
                 >
                   {isPending ? 'Processing...' : 'Confirm Bet'}
                 </Button>

@@ -331,12 +331,12 @@ export function BettingPost({
 
           <div className='flex items-center gap-2'>
             <Button
-              variant='outline'
+              variant={hasFactsed ? 'default' : 'outline'}
               size='sm'
-              className={`gap-1 border-orange-500 font-bold ${
+              className={`gap-1 font-medium ${
                 hasFactsed
-                  ? 'bg-orange-500/10 text-orange-500'
-                  : 'text-orange-500 hover:text-orange-500'
+                  ? 'bg-orange-500 text-black hover:bg-orange-600 hover:text-black dark:text-black'
+                  : 'border-orange-500 text-orange-500 hover:text-orange-500 dark:border-orange-500 dark:text-orange-500'
               }`}
               onClick={handleFacts}
               disabled={isSubmitting}
@@ -351,7 +351,7 @@ export function BettingPost({
 
             <Button
               size='sm'
-              className='bg-orange-500/40 text-orange-500 hover:bg-orange-500/50 hover:text-orange-500'
+              className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
               onClick={handleBetClick}
             >
               Bet
@@ -418,7 +418,7 @@ export function BettingPost({
                 }}
               />
               <Button
-                className='bg-orange-500 hover:bg-orange-600'
+                className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
                 onClick={placeBet}
                 disabled={!betAmount || selectedOption === null}
               >
