@@ -19,8 +19,8 @@ export type TopUpBalanceResponse = {
 };
 
 const getSupabaseClient = () => {
-  const supabaseUrl = process.env.SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || '';
 
   return createClient(supabaseUrl, supabaseKey);
 };
@@ -30,7 +30,7 @@ const checkRateLimit = async (walletAddress: string): Promise<boolean> => {
   try {
     // Query for the user record
     const { data, error } = await supabase
-      .from('user_bonuses')
+      .from('trump_users')
       .select('id, last_login_bonus')
       .eq('id', walletAddress.toLowerCase())
       .single();
