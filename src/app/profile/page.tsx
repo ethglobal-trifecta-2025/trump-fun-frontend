@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@apollo/client';
-import { ArrowDownToLine, ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
+import { ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { usePublicClient, useWriteContract } from 'wagmi';
 
@@ -222,17 +222,10 @@ export default function ProfilePage() {
                 onChange={(e) => setWithdrawAmount(Number(e.target.value))}
               />
             </div>
-            <div className='grid grid-cols-2 gap-2'>
+            <div className='flex w-full'>
               <Button
                 variant='outline'
-                className='flex items-center justify-center gap-1 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30 dark:hover:text-green-400'
-              >
-                <ArrowDownToLine className='h-4 w-4' />
-                <span>Deposit</span>
-              </Button>
-              <Button
-                variant='outline'
-                className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
+                className='flex w-full items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
                 onClick={handleWithdraw}
                 disabled={isPending}
               >
@@ -298,7 +291,7 @@ export default function ProfilePage() {
                       className='w-full border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
                     />
                   </div>
-                  <div className='grid grid-cols-2 gap-2'>
+                  <div className='flex'>
                     <Button
                       variant='outline'
                       className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
