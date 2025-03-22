@@ -9,7 +9,7 @@ export const saveCommentLike = (commentId: number, liked: boolean) => {
     // Get current liked comments
     const currentLikedStr = localStorage.getItem(LIKED_COMMENTS_KEY);
     let likedComments: Record<number, boolean> = {};
-    
+
     if (currentLikedStr) {
       try {
         likedComments = JSON.parse(currentLikedStr);
@@ -17,14 +17,14 @@ export const saveCommentLike = (commentId: number, liked: boolean) => {
         console.error('Error parsing liked comments from localStorage:', e);
       }
     }
-    
+
     // Update the like status
     if (liked) {
       likedComments[commentId] = true;
     } else {
       delete likedComments[commentId];
     }
-    
+
     // Save back to localStorage
     localStorage.setItem(LIKED_COMMENTS_KEY, JSON.stringify(likedComments));
     return true;
@@ -39,7 +39,7 @@ export const isCommentLiked = (commentId: number): boolean => {
   try {
     const currentLikedStr = localStorage.getItem(LIKED_COMMENTS_KEY);
     if (!currentLikedStr) return false;
-    
+
     const likedComments = JSON.parse(currentLikedStr);
     return Boolean(likedComments[commentId]);
   } catch (e) {
@@ -53,10 +53,10 @@ export const getAllLikedComments = (): Record<number, boolean> => {
   try {
     const currentLikedStr = localStorage.getItem(LIKED_COMMENTS_KEY);
     if (!currentLikedStr) return {};
-    
+
     return JSON.parse(currentLikedStr);
   } catch (e) {
     console.error('Error getting all liked comments from localStorage:', e);
     return {};
   }
-}; 
+};

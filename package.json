@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "codegen": "graphql-codegen",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky",
+    "lint-staged": "lint-staged",
+    "fix:unused": "eslint --fix --ext .ts,.tsx ."
   },
   "dependencies": {
     "@apollo/client": "^3.13.5",
@@ -58,7 +61,10 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.3",
-    "prettier": "^3.5.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
+    "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4",
     "typescript": "^5"

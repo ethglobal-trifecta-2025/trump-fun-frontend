@@ -1,92 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Progress } from '@/components/Progress';
+import { useQuery as useQueryA } from '@apollo/client';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Clock, MessageCircle, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { useQuery as useQueryA } from '@apollo/client';
-import { useQuery } from '@tanstack/react-query';
-import {
-  useAccount,
-  usePublicClient,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from 'wagmi';
-import {
-  ArrowLeft,
-  Clock,
-  MessageCircle,
-  TrendingUp,
-  Users,
-} from 'lucide-react';
-import { gql } from '@apollo/client';
-
+import { useEffect, useState } from 'react';
+import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 // Import ABIs and types
-import betAbi from '@/abi/bet.json';
-import erc20ABI from '@/abi/erc20.json';
-import { GET_POOLS } from '@/app/queries';
 import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
+import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 import { Comment } from '@/types';
-
 // Import hooks
 import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
-import { TokenType } from '@/hooks/useTokenContext';
-import { useTokenContext } from '@/hooks/useTokenContext';
 
 // Import components
 import CommentSectionWrapper from '@/components/comments/comment-section-wrapper';
-import { Progress } from '@/components/Progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Import utils
-import { cn } from '@/lib/utils';
+import { GET_POOL } from '@/app/queries';
+import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS, POINTS_ADDRESS } from '@/consts/addresses';
+import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-
-// Contract constants
-
-const TOKEN_DECIMALS = 6; // USDC has 6 decimals
-
-// Add a properly formatted GET_POOL query definition using the gql tag
-const GET_POOL = gql`
-  query GetPool($poolId: ID!) {
-    pool(id: $poolId) {
-      id
-      poolId
-      question
-      options
-      status
-      chainId
-      chainName
-      createdAt
-      createdBlockNumber
-      createdBlockTimestamp
-      createdTransactionHash
-      gradedBlockNumber
-      gradedBlockTimestamp
-      gradedTransactionHash
-      betsCloseAt
-      usdcBetTotals
-      pointsBetTotals
-      usdcVolume
-      pointsVolume
-      winningOption
-    }
-  }
-`;
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -101,9 +48,7 @@ export default function PoolDetailPage() {
   const [betAmount, setBetAmount] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [sliderValue, setSliderValue] = useState([0]);
-  const [poolFacts, setPoolFacts] = useState(
-    () => Math.floor(Math.random() * 50) + 5
-  );
+  const [poolFacts, setPoolFacts] = useState(() => Math.floor(Math.random() * 50) + 5);
   const [hasFactsed, setHasFactsed] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('0');
 
@@ -118,8 +63,7 @@ export default function PoolDetailPage() {
   };
 
   // Use our custom hook for token balance
-  const { balance, formattedBalance, symbol, tokenTextLogo } =
-    useTokenBalance();
+  const { balance, formattedBalance, symbol, tokenTextLogo } = useTokenBalance();
 
   // Pool data fetching
   const {
@@ -135,7 +79,6 @@ export default function PoolDetailPage() {
   const {
     data: commentsData,
     isLoading: isCommentsLoading,
-    error: commentsError,
     refetch: refetchComments,
   } = useQuery({
     queryKey: ['comments', id],
@@ -179,14 +122,14 @@ export default function PoolDetailPage() {
 
       try {
         const allowance = await publicClient.readContract({
-          abi: erc20ABI,
+          abi: pointsTokenAbi,
           address: POINTS_ADDRESS as `0x${string}`,
           functionName: 'allowance',
           args: [account.address, APP_ADDRESS],
         });
 
         // Format the allowance (divide by 10^TOKEN_DECIMALS for USDC)
-        const formattedAllowance = Number(allowance) / 10 ** TOKEN_DECIMALS;
+        const formattedAllowance = Number(allowance) / 10 ** USDC_DECIMALS;
         setApprovedAmount(formattedAllowance.toString());
       } catch (error) {
         console.error('Error fetching allowance:', error);
@@ -211,9 +154,9 @@ export default function PoolDetailPage() {
     // Toggle facts state
     const newHasFactsed = !hasFactsed;
     setHasFactsed(newHasFactsed);
-    
+
     // Update count based on toggle (increment or decrement)
-    setPoolFacts((prevCount) => newHasFactsed ? prevCount + 1 : Math.max(5, prevCount - 1));
+    setPoolFacts((prevCount) => (newHasFactsed ? prevCount + 1 : Math.max(5, prevCount - 1)));
 
     // If the user is logged in, refetch comments to show the updated FACTS comment
     if (isConnected && authenticated) {
@@ -233,13 +176,23 @@ export default function PoolDetailPage() {
       return;
     }
 
+    if (!account.address) {
+      console.error('Account address is not available');
+      return;
+    }
+
+    if (!data?.pool.id) {
+      console.error('Pool ID is not available');
+      return;
+    }
+
     try {
       // Convert amount to token units with proper decimals
-      const tokenAmount = BigInt(Math.floor(betAmount * 10 ** TOKEN_DECIMALS));
+      const tokenAmount = BigInt(Math.floor(betAmount * 10 ** USDC_DECIMALS));
 
       // First approve tokens to be spent
       const { request: approveRequest } = await publicClient.simulateContract({
-        abi: erc20ABI,
+        abi: pointsTokenAbi,
         address: POINTS_ADDRESS as `0x${string}`,
         functionName: 'approve',
         account: account.address as `0x${string}`,
@@ -252,13 +205,13 @@ export default function PoolDetailPage() {
       if (isConfirmed) {
         // Now place the bet
         const { request } = await publicClient.simulateContract({
-          abi: betAbi,
+          abi: bettingContractAbi,
           address: APP_ADDRESS,
           functionName: 'placeBet',
           account: account.address as `0x${string}`,
           args: [
-            data?.pool.id,
-            selectedOption,
+            BigInt(data?.pool.id),
+            BigInt(selectedOption),
             tokenAmount,
             account.address,
             tokenType.POINTS,
@@ -278,15 +231,15 @@ export default function PoolDetailPage() {
       // If betsCloseAt is missing, use createdAt + 7 days as default
       if (data?.pool?.createdAt) {
         const createdTimestamp = Number(data.pool.createdAt) * 1000;
-        const defaultEndTime = createdTimestamp + (7 * 24 * 60 * 60 * 1000); // 7 days
+        const defaultEndTime = createdTimestamp + 7 * 24 * 60 * 60 * 1000; // 7 days
         const now = new Date().getTime();
         const diff = defaultEndTime - now;
-        
+
         if (diff <= 0) return 'Ended';
-        
+
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        
+
         return `${days}d ${hours}h remaining`;
       }
       return 'Time not specified';
@@ -324,23 +277,23 @@ export default function PoolDetailPage() {
   // Calculate the number of unique participants based on pool data
   const calculateParticipants = (pool: Pool) => {
     if (!pool) return 0;
-    
+
     // If we have bet data, use real data
     if (pool.bets && pool.bets.length > 0) {
       // Create a Set to track unique addresses
       const uniqueAddresses = new Set();
-      
+
       // Add each bettor's address to the Set
-      pool.bets.forEach(bet => {
+      pool.bets.forEach((bet) => {
         if (bet.user) {
           uniqueAddresses.add(bet.user);
         }
       });
-      
+
       // Return the size of the Set, which is the number of unique addresses
       return uniqueAddresses.size;
     }
-    
+
     // Fallback to a determined value based on pool ID to ensure consistency
     const poolIdSeed = parseInt(pool.id, 16) || pool.poolId || 0;
     return Math.max(5, poolIdSeed % 100); // Between 5 and 104 participants
@@ -351,17 +304,17 @@ export default function PoolDetailPage() {
     // Formatting functions for different pool properties
     poolVolume: (pool: Pool) => {
       const volume = calculateVolume(pool, currentTokenType);
-      
+
       // Extra safety check to prevent NaN from ever being displayed
       if (volume === 'NaN' || volume === '$NaN' || volume.includes('NaN')) {
         console.error('NaN detected in volume calculation:', {
           pool,
           currentTokenType,
-          volume
+          volume,
         });
         return currentTokenType === TokenType.USDC ? '$0' : '0 pts';
       }
-      
+
       return volume;
     },
     // Other formatters...
@@ -371,19 +324,14 @@ export default function PoolDetailPage() {
 
   // Loading state
   if (isPoolLoading) {
-    return (
-      <div className='container mx-auto max-w-4xl px-4 py-8'>Loading...</div>
-    );
+    return <div className='container mx-auto max-w-4xl px-4 py-8'>Loading...</div>;
   }
 
   // Error state
   if (poolError || !data?.pool) {
     return (
       <div className='container mx-auto max-w-4xl px-4 py-8'>
-        <Link
-          href='/explore'
-          className='text-muted-foreground mb-6 flex items-center'
-        >
+        <Link href='/explore' className='text-muted-foreground mb-6 flex items-center'>
           <ArrowLeft className='mr-2' size={16} />
           Back to Predictions
         </Link>
@@ -392,8 +340,7 @@ export default function PoolDetailPage() {
             <div className='py-12 text-center'>
               <h2 className='mb-2 text-2xl font-bold'>Pool Not Found</h2>
               <p className='text-muted-foreground'>
-                The prediction you&apos;re looking for doesn&apos;t exist or has
-                been removed.
+                The prediction you&apos;re looking for doesn&apos;t exist or has been removed.
               </p>
               <Button className='mt-6' asChild>
                 <Link href='/explore'>View All Predictions</Link>
@@ -406,11 +353,8 @@ export default function PoolDetailPage() {
   }
 
   const { pool } = data;
-  const isActive =
-    pool.status === PoolStatus.Pending || pool.status === PoolStatus.None;
-  const { yesPercentage, noPercentage } = calculatePercentages(
-    pool.usdcBetTotals
-  );
+  const isActive = pool.status === PoolStatus.Pending || pool.status === PoolStatus.None;
+  const { yesPercentage, noPercentage } = calculatePercentages(pool.usdcBetTotals);
   const totalVolume = formatters.poolVolume(pool);
   // Add debug logging to troubleshoot NaN issue
   console.log('Pool data:', {
@@ -418,15 +362,12 @@ export default function PoolDetailPage() {
     usdcVolume: pool.usdcVolume,
     pointsVolume: pool.pointsVolume,
     tokenType: currentTokenType,
-    calculatedVolume: totalVolume
+    calculatedVolume: totalVolume,
   });
 
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
-      <Link
-        href='/explore'
-        className='text-muted-foreground mb-6 flex items-center'
-      >
+      <Link href='/explore' className='text-muted-foreground mb-6 flex items-center'>
         <ArrowLeft className='mr-2' size={16} />
         Back to Predictions
       </Link>
@@ -437,9 +378,7 @@ export default function PoolDetailPage() {
             <div className='flex items-center'>
               <Avatar className='mr-2 h-8 w-8'>
                 <AvatarImage
-                  src={
-                    'https://ui-avatars.com/api/?name=Agent&background=orange&color=fff'
-                  }
+                  src={'https://ui-avatars.com/api/?name=Agent&background=orange&color=fff'}
                   alt='Agent'
                 />
                 <AvatarFallback>AG</AvatarFallback>
@@ -459,9 +398,7 @@ export default function PoolDetailPage() {
             </Badge>
           </div>
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
-          <CardDescription className='mt-2'>
-            {pool.options.join(' vs. ')}
-          </CardDescription>
+          <CardDescription className='mt-2'>{pool.options.join(' vs. ')}</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -489,9 +426,7 @@ export default function PoolDetailPage() {
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Users className='mx-auto mb-2 text-orange-500' size={24} />
               <p className='text-muted-foreground text-sm'>Participants</p>
-              <p className='font-bold'>
-                {calculateParticipants(pool)}
-              </p>
+              <p className='font-bold'>{calculateParticipants(pool)}</p>
             </div>
           </div>
 
@@ -522,12 +457,12 @@ export default function PoolDetailPage() {
               {balance && (
                 <div className='mb-2 text-xs text-gray-400'>
                   <div>
-                    Balance: {formattedBalance}{' '}
-                    <span className='ml-1'>{tokenTextLogo}</span> {symbol}
+                    Balance: {formattedBalance} <span className='ml-1'>{tokenTextLogo}</span>{' '}
+                    {symbol}
                   </div>
                   <div>
-                    Approved: {approvedAmount}{' '}
-                    <span className='ml-1'>{tokenTextLogo}</span> {symbol}
+                    Approved: {approvedAmount} <span className='ml-1'>{tokenTextLogo}</span>{' '}
+                    {symbol}
                   </div>
                 </div>
               )}
@@ -578,10 +513,7 @@ export default function PoolDetailPage() {
                       // Update slider based on value
                       if (balance && value > 0) {
                         const maxAmount = parseFloat(balance.formatted);
-                        const percentage = Math.min(
-                          100,
-                          (value / maxAmount) * 100
-                        );
+                        const percentage = Math.min(100, (value / maxAmount) * 100);
                         setSliderValue([percentage]);
                       } else {
                         setSliderValue([0]);
@@ -593,7 +525,7 @@ export default function PoolDetailPage() {
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
                   </div>
                 </div>
-                
+
                 <Button
                   variant='outline'
                   size='sm'
@@ -608,15 +540,10 @@ export default function PoolDetailPage() {
                   FACTS
                   <span className='ml-1'>{poolFacts}</span>
                 </Button>
-                
+
                 <Button
                   onClick={handleBet}
-                  disabled={
-                    !betAmount ||
-                    selectedOption === null ||
-                    !authenticated ||
-                    isPending
-                  }
+                  disabled={!betAmount || selectedOption === null || !authenticated || isPending}
                   className='h-10 w-full bg-orange-500 text-white hover:bg-orange-600 sm:w-auto'
                 >
                   {isPending ? 'Processing...' : 'Confirm Bet'}
@@ -625,9 +552,8 @@ export default function PoolDetailPage() {
 
               {selectedOption !== null && (
                 <p className='mb-4 text-xs text-gray-400'>
-                  You are betting {betAmount || '0'}{' '}
-                  <span className='mx-1'>{tokenTextLogo}</span> {symbol} on
-                  &quot;{pool.options[selectedOption]}&quot;
+                  You are betting {betAmount || '0'} <span className='mx-1'>{tokenTextLogo}</span>{' '}
+                  {symbol} on &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
             </div>
@@ -665,15 +591,12 @@ export default function PoolDetailPage() {
                 <div>
                   <h4 className='font-medium'>Closure Criteria</h4>
                   <p className='text-muted-foreground'>
-                    The result will be determined based on official sources when
-                    available.
+                    The result will be determined based on official sources when available.
                   </p>
                 </div>
                 <div>
                   <h4 className='font-medium'>Pool ID</h4>
-                  <p className='text-muted-foreground font-mono text-sm'>
-                    {pool.id}
-                  </p>
+                  <p className='text-muted-foreground font-mono text-sm'>{pool.id}</p>
                 </div>
                 <div>
                   <h4 className='font-medium'>Status</h4>

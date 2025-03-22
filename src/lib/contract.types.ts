@@ -612,7 +612,7 @@ export const bettingContractAbi = [
     name: 'TokenTypeMismatch',
   },
   { type: 'error', inputs: [], name: 'ZeroAmount' },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ERC20
@@ -773,7 +773,7 @@ export const erc20Abi = [
     inputs: [{ name: 'spender', internalType: 'address', type: 'address' }],
     name: 'ERC20InvalidSpender',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IERC1155Errors
@@ -826,7 +826,7 @@ export const ierc1155ErrorsAbi = [
     ],
     name: 'ERC1155MissingApprovalForAll',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IERC20Errors
@@ -871,7 +871,7 @@ export const ierc20ErrorsAbi = [
     inputs: [{ name: 'spender', internalType: 'address', type: 'address' }],
     name: 'ERC20InvalidSpender',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IERC20Metadata
@@ -994,7 +994,7 @@ export const ierc20MetadataAbi = [
     ],
     name: 'Transfer',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IERC721Errors
@@ -1048,7 +1048,7 @@ export const ierc721ErrorsAbi = [
     inputs: [{ name: 'tokenId', internalType: 'uint256', type: 'uint256' }],
     name: 'ERC721NonexistentToken',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IMulticall3
@@ -1179,9 +1179,7 @@ export const iMulticall3Abi = [
     type: 'function',
     inputs: [],
     name: 'getBlockNumber',
-    outputs: [
-      { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-    ],
+    outputs: [{ name: 'blockNumber', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
   },
   {
@@ -1291,7 +1289,7 @@ export const iMulticall3Abi = [
     ],
     stateMutability: 'payable',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Ownable
@@ -1348,7 +1346,7 @@ export const ownableAbi = [
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'OwnableUnauthorizedAccount',
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PointsToken
@@ -1579,4 +1577,4 @@ export const pointsTokenAbi = [
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'OwnableUnauthorizedAccount',
   },
-] as const
+] as const;

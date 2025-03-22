@@ -1,6 +1,5 @@
 'use client';
 
-import { BettingPost } from '@/components/betting-post';
 import { EndingSoon } from '@/components/ending-soon';
 import { HighestVolume } from '@/components/highest-volume';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,18 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Wallet, Trophy, History, Settings } from 'lucide-react';
-import Link from 'next/link';
 
 // import { GET_USER_POOLS } from '@/app/queries';
-import {
-  OrderDirection,
-  Pool_OrderBy,
-  PoolStatus,
-} from '@/lib/__generated__/graphql';
-import { useQuery } from '@apollo/client';
+import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { useMemo, useState } from 'react';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
@@ -53,20 +45,20 @@ export default function ProfilePage() {
     []
   );
 
-//   const { orderBy, orderDirection, filter } = useMemo(
-//     () => filterConfigs[activeFilter as keyof typeof filterConfigs],
-//     [activeFilter, filterConfigs]
-//   );
+  //   const { orderBy, orderDirection, filter } = useMemo(
+  //     () => filterConfigs[activeFilter as keyof typeof filterConfigs],
+  //     [activeFilter, filterConfigs]
+  //   );
 
-//   const { data: userPools } = useQuery(GET_USER_POOLS, {
-//     variables: {
-//       filter,
-//       orderBy,
-//       orderDirection,
-//     },
-//     context: { name: 'userBets' },
-//     notifyOnNetworkStatusChange: true,
-//   });
+  //   const { data: userPools } = useQuery(GET_USER_POOLS, {
+  //     variables: {
+  //       filter,
+  //       orderBy,
+  //       orderDirection,
+  //     },
+  //     context: { name: 'userBets' },
+  //     notifyOnNetworkStatusChange: true,
+  //   });
 
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
@@ -76,21 +68,17 @@ export default function ProfilePage() {
     setSearchQuery(e.target.value);
   };
 
-//   const filteredPools = useMemo(() => {
-//     if (!userPools?.pools) return [];
-//     if (!searchQuery.trim()) return userPools.pools;
+  //   const filteredPools = useMemo(() => {
+  //     if (!userPools?.pools) return [];
+  //     if (!searchQuery.trim()) return userPools.pools;
 
-//     const query = searchQuery.toLowerCase().trim();
-//     return userPools.pools.filter((pool) =>
-//       pool.question.toLowerCase().includes(query)
-//     );
-//   }, [userPools?.pools, searchQuery]);
+  //     const query = searchQuery.toLowerCase().trim();
+  //     return userPools.pools.filter((pool) =>
+  //       pool.question.toLowerCase().includes(query)
+  //     );
+  //   }, [userPools?.pools, searchQuery]);
 
-  const renderFilterButton = (
-    value: string,
-    label: string,
-    icon: React.ReactNode
-  ) => (
+  const renderFilterButton = (value: string, label: string, icon: React.ReactNode) => (
     <Button
       variant={activeFilter === value ? 'default' : 'ghost'}
       className='w-full justify-start gap-2 font-medium'
@@ -132,31 +120,12 @@ export default function ProfilePage() {
           <Separator className='my-4' />
 
           <nav className='space-y-1'>
-            {renderFilterButton(
-              'active',
-              'Active Bets',
-              <History className='h-4 w-4' />
-            )}
-            {renderFilterButton(
-              'won',
-              'Won Bets',
-              <Trophy className='h-4 w-4' />
-            )}
-            {renderFilterButton(
-              'lost',
-              'Lost Bets',
-              <Wallet className='h-4 w-4' />
-            )}
-            {renderFilterButton(
-              'all',
-              'All Bets',
-              <History className='h-4 w-4' />
-            )}
+            {renderFilterButton('active', 'Active Bets', <History className='h-4 w-4' />)}
+            {renderFilterButton('won', 'Won Bets', <Trophy className='h-4 w-4' />)}
+            {renderFilterButton('lost', 'Lost Bets', <Wallet className='h-4 w-4' />)}
+            {renderFilterButton('all', 'All Bets', <History className='h-4 w-4' />)}
             <Separator className='my-2' />
-            <Button
-              variant='ghost'
-              className='w-full justify-start gap-2 font-medium'
-            >
+            <Button variant='ghost' className='w-full justify-start gap-2 font-medium'>
               <Settings className='h-4 w-4' />
               Settings
             </Button>
@@ -193,28 +162,16 @@ export default function ProfilePage() {
                   className='w-full'
                 >
                   <TabsList className='bg-gray-900'>
-                    <TabsTrigger
-                      value='active'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='active' className='data-[state=active]:bg-gray-800'>
                       Active
                     </TabsTrigger>
-                    <TabsTrigger
-                      value='won'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='won' className='data-[state=active]:bg-gray-800'>
                       Won
                     </TabsTrigger>
-                    <TabsTrigger
-                      value='lost'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='lost' className='data-[state=active]:bg-gray-800'>
                       Lost
                     </TabsTrigger>
-                    <TabsTrigger
-                      value='all'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='all' className='data-[state=active]:bg-gray-800'>
                       All
                     </TabsTrigger>
                   </TabsList>

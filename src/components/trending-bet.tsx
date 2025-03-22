@@ -10,9 +10,12 @@ interface TrendingBetProps {
 
 export function TrendingBet({ question, volume, progress, poolId }: TrendingBetProps) {
   return (
-    <Link href={`/pools/${poolId}`} className="block hover:bg-gray-900 rounded-md p-2 -m-2 transition-colors">
+    <Link
+      href={`/pools/${poolId}`}
+      className='-m-2 block rounded-md p-2 transition-colors hover:bg-gray-900'
+    >
       <div>
-        <p className='mb-2 font-medium line-clamp-3'>{question}</p>
+        <p className='mb-2 line-clamp-3 font-medium'>{question}</p>
         <div className='mb-2 flex items-center gap-2'>
           <div className='h-1 flex-1 overflow-hidden rounded-full bg-gray-800'>
             <div

@@ -11,10 +11,7 @@ type SignedLikeMessage = {
   account: string;
 };
 
-const verifySignature = (
-  messageStr: string,
-  signature: string
-): string | null => {
+const verifySignature = (messageStr: string, signature: string): string | null => {
   try {
     // Validate the message format
     JSON.parse(messageStr);
@@ -62,18 +59,18 @@ export async function toggleLike(
       .select('upvotes')
       .eq('id', commentId)
       .single();
-    
+
     if (fetchError) {
-      return { 
-        success: false, 
-        error: `Failed to fetch comment: ${fetchError.message}` 
+      return {
+        success: false,
+        error: `Failed to fetch comment: ${fetchError.message}`,
       };
     }
-    
+
     // Calculate new upvotes count
     const currentUpvotes = comment?.upvotes || 0;
     const newUpvotes = operation === 'like' ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1);
-    
+
     // Update the upvotes count
     const { error: updateError } = await supabase
       .from('comments')
@@ -86,9 +83,8 @@ export async function toggleLike(
 
     return { success: true, upvotes: newUpvotes };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     return { success: false, error: `Failed to toggle like: ${errorMessage}` };
   }
-} 
+}

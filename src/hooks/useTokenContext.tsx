@@ -8,36 +8,19 @@ import { POINTS_ADDRESS, USDC_ADDRESS } from '@/consts/addresses';
 // Define token types as enum for better type safety
 export enum TokenType {
   USDC = 'USDC',
-  POINTS = 'POINTS'
+  POINTS = 'POINTS',
 }
 
 // Token logos/symbols
-export const TOKEN_SYMBOLS: Record<
-  TokenType,
-  { symbol: string; logo: React.ReactNode }
-> = {
+export const TOKEN_SYMBOLS: Record<TokenType, { symbol: string; logo: React.ReactNode }> = {
   [TokenType.USDC]: {
     symbol: 'USDC',
-    logo: (
-      <Image
-        src='/usdc.svg'
-        alt='USDC'
-        width={16}
-        height={16}
-        style={{ display: 'inline' }}
-      />
-    ),
+    logo: <Image src='/usdc.svg' alt='USDC' width={16} height={16} style={{ display: 'inline' }} />,
   },
   [TokenType.POINTS]: {
     symbol: 'FREEDOM',
     logo: (
-      <Image
-        src='/points.svg'
-        alt='POINTS'
-        width={16}
-        height={16}
-        style={{ display: 'inline' }}
-      />
+      <Image src='/points.svg' alt='POINTS' width={16} height={16} style={{ display: 'inline' }} />
     ),
   },
 };
@@ -109,9 +92,7 @@ export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
     tokenTextLogo,
   };
 
-  return (
-    <TokenContext.Provider value={value}>{children}</TokenContext.Provider>
-  );
+  return <TokenContext.Provider value={value}>{children}</TokenContext.Provider>;
 };
 
 // Hook for consuming the context

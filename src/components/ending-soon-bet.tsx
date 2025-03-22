@@ -11,13 +11,7 @@ interface EndingSoonBetProps {
   poolId: string;
 }
 
-export function EndingSoonBet({
-  avatar,
-  question,
-  volume,
-  timeLeft,
-  poolId,
-}: EndingSoonBetProps) {
+export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: EndingSoonBetProps) {
   const [remainingTime, setRemainingTime] = useState('');
 
   useEffect(() => {
@@ -52,7 +46,10 @@ export function EndingSoonBet({
   }, [timeLeft]);
 
   return (
-    <Link href={`/pools/${poolId}`} className="block hover:bg-gray-900 rounded-md p-2 -m-2 transition-colors">
+    <Link
+      href={`/pools/${poolId}`}
+      className='-m-2 block rounded-md p-2 transition-colors hover:bg-gray-900'
+    >
       <div className='flex gap-3'>
         <Avatar className='h-8 w-8 overflow-hidden rounded-full'>
           <AvatarImage src={avatar} alt='User' />

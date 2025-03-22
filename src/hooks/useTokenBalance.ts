@@ -1,11 +1,12 @@
 'use client';
 
-import { useBalance } from 'wagmi';
-import { useWalletAddress } from './useWalletAddress';
-import { type Address } from 'viem';
-import { useState, useEffect } from 'react';
-import { useTokenContext } from './useTokenContext';
 import { POINTS_ADDRESS } from '@/consts/addresses';
+import { useEffect, useState } from 'react';
+import { type Address } from 'viem';
+import { useBalance } from 'wagmi';
+import { GetBalanceData } from 'wagmi/query';
+import { useTokenContext } from './useTokenContext';
+import { useWalletAddress } from './useWalletAddress';
 
 interface UseTokenBalanceOptions {
   /** Whether to enable the balance query */
@@ -15,17 +16,13 @@ interface UseTokenBalanceOptions {
 /**
  * A custom hook to fetch token balances using wagmi with Privy integration
  */
-export const useTokenBalance = (
-  tokenAddress?: Address,
-  options: UseTokenBalanceOptions = {}
-) => {
+export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalanceOptions = {}) => {
   const { address, isConnected, chainId } = useWalletAddress();
-  const { tokenType, getTokenAddress, tokenSymbol, tokenLogo, tokenTextLogo } =
-    useTokenContext();
+  const { tokenType, getTokenAddress, tokenSymbol, tokenLogo, tokenTextLogo } = useTokenContext();
 
   // Store separate balances for each token type to avoid mixing them up
-  const [usdcBalance, setUsdcBalance] = useState<any>(null);
-  const [nativeBalance, setNativeBalance] = useState<any>(null);
+  const [usdcBalance, setUsdcBalance] = useState<GetBalanceData>();
+  const [nativeBalance, setNativeBalance] = useState<GetBalanceData>();
 
   // Track last token type to detect changes
   const [lastTokenType, setLastTokenType] = useState<string | null>(null);
@@ -37,14 +34,11 @@ export const useTokenBalance = (
     finalTokenAddress = POINTS_ADDRESS;
   } else {
     // For USDC, use provided address or look it up from the token context
-    finalTokenAddress =
-      tokenAddress || (chainId ? getTokenAddress() || undefined : undefined);
+    finalTokenAddress = tokenAddress || (chainId ? getTokenAddress() || undefined : undefined);
   }
 
   // Only fetch if wallet is connected
-  const shouldFetch = Boolean(
-    isConnected && address && options.enabled !== false
-  );
+  const shouldFetch = Boolean(isConnected && address && options.enabled !== false);
 
   // Get USDC balance
   const usdcBalanceResult = useBalance({
@@ -56,8 +50,7 @@ export const useTokenBalance = (
   // Get native token balance (ETH/POINTS)
   const nativeBalanceResult = useBalance({
     address: shouldFetch && tokenType === 'POINTS' ? address : undefined,
-    token:
-      shouldFetch && tokenType === 'POINTS' ? finalTokenAddress : undefined,
+    token: shouldFetch && tokenType === 'POINTS' ? finalTokenAddress : undefined,
     chainId: shouldFetch ? chainId : undefined,
   });
 
@@ -83,8 +76,7 @@ export const useTokenBalance = (
   }, [nativeBalanceResult.isSuccess, nativeBalanceResult.data]);
 
   // Get the appropriate balance object based on token type
-  const activeResult =
-    tokenType === 'POINTS' ? nativeBalanceResult : usdcBalanceResult;
+  const activeResult = tokenType === 'POINTS' ? nativeBalanceResult : usdcBalanceResult;
   const cachedBalance = tokenType === 'POINTS' ? nativeBalance : usdcBalance;
 
   // Choose current balance or fallback to cached

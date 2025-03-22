@@ -38,9 +38,7 @@ export function BettingPost({
   const [betAmount, setBetAmount] = useState('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showBetForm, setShowBetForm] = useState(false);
-  const [factsCount, setFactsCount] = useState(
-    Math.floor(Math.random() * 50) + 5
-  );
+  const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
   const [hasFactsed, setHasFactsed] = useState(false);
   const [sliderValue, setSliderValue] = useState([0]);
   const { authenticated, login } = usePrivy();
@@ -102,9 +100,7 @@ export function BettingPost({
     if (!betAmount || selectedOption === null) return;
 
     // Here you would connect to the smart contract
-    alert(
-      `Placing ${betAmount} ${tokenType} bet on "${options[selectedOption]}"`
-    );
+    alert(`Placing ${betAmount} ${tokenType} bet on "${options[selectedOption]}"`);
 
     // Reset form
     setBetAmount('');
@@ -124,9 +120,7 @@ export function BettingPost({
             <div className='font-bold'>{username}</div>
           </div>
           <div className='flex items-center gap-2 text-sm text-gray-400'>
-            <span>
-              {formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}
-            </span>
+            <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
             <X size={16} />
           </div>
         </div>
@@ -151,11 +145,11 @@ export function BettingPost({
                     const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
                     const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
                     const total = yes + no;
-                    
+
                     // Default to 50/50 if no bets
                     const yesPercent = total > 0 ? (yes / total) * 100 : 50;
                     const noPercent = total > 0 ? (no / total) * 100 : 50;
-                    
+
                     return (
                       <>
                         <div
@@ -171,12 +165,10 @@ export function BettingPost({
                   })()}
                 </div>
               </div>
-              
+
               {/* Show total volume */}
               <div className='mt-1 flex justify-end'>
-                <div className={`text-sm font-medium text-gray-400`}>
-                  {volume} vol.
-                </div>
+                <div className={`text-sm font-medium text-gray-400`}>{volume} vol.</div>
               </div>
             </div>
           )}
@@ -188,12 +180,11 @@ export function BettingPost({
             const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
             const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
             const total = yes + no;
-            
+
             // Calculate percentage for this option
-            const percent = total > 0 
-              ? Math.round(((i === 0 ? yes : no) / total) * 100) 
-              : (i === 0 ? 50 : 50);
-            
+            const percent =
+              total > 0 ? Math.round(((i === 0 ? yes : no) / total) * 100) : i === 0 ? 50 : 50;
+
             return (
               <div
                 key={i}
@@ -202,7 +193,7 @@ export function BettingPost({
                 } cursor-pointer`}
                 onClick={() => setSelectedOption(i)}
               >
-                <span className="font-medium text-white">
+                <span className='font-medium text-white'>
                   {i === 0 ? 'YES' : 'NO'} {percent}%
                 </span>
                 <div
@@ -218,12 +209,7 @@ export function BettingPost({
         </div>
 
         <div className='flex items-center justify-between'>
-          <Button
-            variant='ghost'
-            size='sm'
-            className='text-gray-400 hover:text-gray-300'
-            asChild
-          >
+          <Button variant='ghost' size='sm' className='text-gray-400 hover:text-gray-300' asChild>
             <Link href={`/pools/${id}`}>
               <MessageCircle size={18} className='mr-1' />
               {commentCount > 0 ? commentCount : 'Comment'}

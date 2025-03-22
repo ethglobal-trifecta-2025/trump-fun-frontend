@@ -1,28 +1,22 @@
 'use client';
 
 import { BettingPost } from '@/components/betting-post';
-import { EndingSoonBet } from '@/components/ending-soon-bet';
-import { TrendingBet } from '@/components/trending-bet';
+import { EndingSoon } from '@/components/ending-soon';
+import { HighestVolume } from '@/components/highest-volume';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Search, TrendingUp } from 'lucide-react';
+import { Search } from 'lucide-react';
 import Link from 'next/link';
-import { HighestVolume } from '@/components/highest-volume';
-import { EndingSoon } from '@/components/ending-soon';
 
 import { GET_POOLS } from '@/app/queries';
-import {
-  OrderDirection,
-  Pool_OrderBy,
-  PoolStatus,
-} from '@/lib/__generated__/graphql';
+import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
+import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
-import { useMemo, useState, useEffect } from 'react';
-import { useTokenContext, TokenType } from '@/hooks/useTokenContext';
-import { calculateVolume, getBetTotals, safeCastPool } from '@/utils/betsInfo';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
@@ -35,7 +29,7 @@ export default function BettingPlatform() {
     if (activeFilter !== 'newest') {
       setActiveFilter('newest');
     }
-  }, [tokenType]);
+  }, [activeFilter, tokenType]);
 
   const filterConfigs = useMemo(
     () => ({
@@ -45,11 +39,9 @@ export default function BettingPlatform() {
         filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
       },
       highest: {
-        orderBy: tokenType === TokenType.USDC 
-          ? Pool_OrderBy.UsdcVolume 
-          : Pool_OrderBy.PointsVolume,
+        orderBy: tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
         orderDirection: OrderDirection.Desc,
-        filter: { },
+        filter: {},
       },
       ending_soon: {
         orderBy: Pool_OrderBy.BetsCloseAt,
@@ -83,20 +75,9 @@ export default function BettingPlatform() {
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: endingSoonPools } = useQuery(GET_POOLS, {
-    variables: {
-      filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
-      orderBy: Pool_OrderBy.BetsCloseAt,
-      orderDirection: OrderDirection.Asc,
-      first: 3,
-    },
-    context: { name: 'endingSoonSearch' },
-    notifyOnNetworkStatusChange: true,
-  });
-
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
-    
+
     // Force refetch after filter change
     setTimeout(() => {
       refetchPools();
@@ -112,15 +93,8 @@ export default function BettingPlatform() {
     if (!searchQuery.trim()) return pools.pools;
 
     const query = searchQuery.toLowerCase().trim();
-    return pools.pools.filter((pool) =>
-      pool.question.toLowerCase().includes(query)
-    );
+    return pools.pools.filter((pool) => pool.question.toLowerCase().includes(query));
   }, [pools?.pools, searchQuery]);
-
-  const filteredEndingSoonPools = useMemo(() => {
-    if (!endingSoonPools?.pools) return [];
-    return endingSoonPools.pools;
-  }, [endingSoonPools?.pools]);
 
   const renderFilterButton = (value: string, label: string) => (
     <Button
@@ -207,22 +181,13 @@ export default function BettingPlatform() {
                   className='w-full'
                 >
                   <TabsList className='bg-gray-900'>
-                    <TabsTrigger
-                      value='newest'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='newest' className='data-[state=active]:bg-gray-800'>
                       Newest
                     </TabsTrigger>
-                    <TabsTrigger
-                      value='highest'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='highest' className='data-[state=active]:bg-gray-800'>
                       Highest Vol.
                     </TabsTrigger>
-                    <TabsTrigger
-                      value='ending_soon'
-                      className='data-[state=active]:bg-gray-800'
-                    >
+                    <TabsTrigger value='ending_soon' className='data-[state=active]:bg-gray-800'>
                       Ending Soon
                     </TabsTrigger>
                     <TabsTrigger
@@ -238,20 +203,19 @@ export default function BettingPlatform() {
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
                 {filteredPools.map((pool) => {
-                  const safePool = safeCastPool(pool);
                   return (
                     <BettingPost
-                      key={safePool.id}
-                      id={safePool.id}
+                      key={pool.id}
+                      id={pool.id}
                       avatar='/trump.jpeg'
                       username='realDonaldTrump'
-                      time={safePool.createdAt}
-                      question={safePool.question}
-                      options={safePool.options}
+                      time={pool.createdAt}
+                      question={pool.question}
+                      options={pool.options}
                       commentCount={0}
-                      volume={calculateVolume(safePool, tokenType)}
-                      optionBets={safePool.options.map((_, index) =>
-                        getBetTotals(safePool, tokenType, index)
+                      volume={calculateVolume(pool, tokenType)}
+                      optionBets={pool.options.map((_, index) =>
+                        getBetTotals(pool, tokenType, index)
                       )}
                     />
                   );

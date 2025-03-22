@@ -51,8 +51,7 @@ export default function CommentSection({
 
   const { signMessage } = useSignMessage();
 
-  const isWalletConnected =
-    authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
+  const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
 
   const handleLoginClick = () => login();
 
@@ -67,7 +66,7 @@ export default function CommentSection({
       if (!wallet || !wallet.address) {
         console.warn('Please connect a wallet to comment');
         setIsSubmitting(false);
-        
+
         if (!authenticated) {
           handleLoginClick();
         }
@@ -96,8 +95,7 @@ export default function CommentSection({
             uiOptions: {
               title: 'Sign your comment',
 
-              description:
-                'Sign this message to verify you are the author of this comment',
+              description: 'Sign this message to verify you are the author of this comment',
 
               buttonText: 'Sign Comment',
             },
@@ -123,7 +121,7 @@ export default function CommentSection({
 
           commentID: null,
 
-          upvotes: null
+          upvotes: null,
         };
 
         if (!tempComment || !comments) {
@@ -162,8 +160,8 @@ export default function CommentSection({
       handleLoginClick();
       return;
     }
-    
-    handleCommentSubmit("FACTS 🦅");
+
+    handleCommentSubmit('FACTS 🦅');
   };
 
   return (
@@ -171,9 +169,7 @@ export default function CommentSection({
       <h2 className='mb-4 text-xl font-bold'>Comments</h2>
 
       <CommentInput
-        onCommentSubmit={
-          isWalletConnected ? handleCommentSubmit : handleLoginClick
-        }
+        onCommentSubmit={isWalletConnected ? handleCommentSubmit : handleLoginClick}
         isWalletConnected={Boolean(isWalletConnected)}
       />
 

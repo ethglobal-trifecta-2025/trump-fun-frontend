@@ -1,8 +1,8 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+import { base, baseSepolia, mainnet, sepolia } from 'viem/chains';
 import { useChainId, useSwitchChain } from 'wagmi';
-import { baseSepolia, base, mainnet, sepolia } from 'viem/chains';
-import { useState, useCallback } from 'react';
 
 /**
  * Network information for a specific chain
@@ -21,64 +21,67 @@ export const useNetwork = () => {
   const chainId = useChainId();
   const { switchChain, isPending } = useSwitchChain();
   const [isHovering, setIsHovering] = useState(false);
-  
+
   // Get network data using viem's chain objects
   const getNetworkInfo = useCallback((id: number): NetworkInfo => {
     // Check for known chains
     if (id === baseSepolia.id) {
       return {
         id,
-        name: "Base Sepolia",
+        name: 'Base Sepolia',
         color: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
-        isSupported: true
+        isSupported: true,
       };
     } else if (id === base.id) {
       return {
         id,
-        name: "Base",
+        name: 'Base',
         color: 'bg-blue-600/10 text-blue-600 hover:bg-blue-600/20',
-        isSupported: true
+        isSupported: true,
       };
     } else if (id === sepolia.id) {
       return {
         id,
-        name: "Sepolia",
+        name: 'Sepolia',
         color: 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20',
-        isSupported: false
+        isSupported: false,
       };
     } else if (id === mainnet.id) {
       return {
         id,
-        name: "Ethereum",
+        name: 'Ethereum',
         color: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
-        isSupported: true
+        isSupported: true,
       };
     }
-    
+
     // Default for unknown chains
     return {
       id,
       name: `Chain ${id}`,
       color: 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20',
-      isSupported: false
+      isSupported: false,
     };
   }, []);
 
   // Get the current network info
   const networkInfo = getNetworkInfo(chainId);
-  
+
   // Handle network switching
-  const handleSwitchNetwork = useCallback((targetChainId: number) => {
-    try {
-      switchChain({ chainId: targetChainId });
-    } catch (error) {
-      // Silently handle the error
-    }
-  }, [switchChain]);
-  
+  const handleSwitchNetwork = useCallback(
+    (targetChainId: number) => {
+      try {
+        switchChain({ chainId: targetChainId });
+      } catch (error) {
+        console.debug('Error switching network:', error);
+      }
+    },
+    [switchChain]
+  );
+
   // Check if current network is supported
   const isNetworkSupported = networkInfo.isSupported;
-  
+
   return {
     chainId,
     networkInfo,
@@ -86,11 +89,11 @@ export const useNetwork = () => {
     supportedNetworks: {
       baseSepolia,
       base,
-      mainnet
+      mainnet,
     },
     switchNetwork: handleSwitchNetwork,
     isSwitchingNetwork: isPending,
     isHovering,
-    setIsHovering
+    setIsHovering,
   };
-}; 
+};

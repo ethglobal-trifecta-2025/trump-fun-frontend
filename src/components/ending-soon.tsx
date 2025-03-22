@@ -1,13 +1,11 @@
-import { Clock } from 'lucide-react';
-import { EndingSoonBet } from './ending-soon-bet';
-import { calculateVolume, safeCastPool } from '@/utils/betsInfo';
-import { useQuery } from '@apollo/client';
-import { Pool_OrderBy } from '@/lib/__generated__/graphql';
-import { OrderDirection } from '@/lib/__generated__/graphql';
-import { PoolStatus } from '@/lib/__generated__/graphql';
 import { GET_POOLS } from '@/app/queries';
-import { useMemo } from 'react';
 import { useTokenContext } from '@/hooks/useTokenContext';
+import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
+import { calculateVolume } from '@/utils/betsInfo';
+import { useQuery } from '@apollo/client';
+import { Clock } from 'lucide-react';
+import { useMemo } from 'react';
+import { EndingSoonBet } from './ending-soon-bet';
 
 export function EndingSoon() {
   const { tokenType } = useTokenContext();
@@ -40,22 +38,25 @@ export function EndingSoon() {
   const fallbackPools = [
     {
       id: '4',
-      question: 'Will my administration RELEASE the UNEDITED J6 TAPES and EXPOSE the TRUTH about what REALLY happened, showing the American people what the CORRUPT Deep State has been HIDING from them, before the end of 2024?',
+      question:
+        'Will my administration RELEASE the UNEDITED J6 TAPES and EXPOSE the TRUTH about what REALLY happened, showing the American people what the CORRUPT Deep State has been HIDING from them, before the end of 2024?',
       volume: '$0.00',
-      betsCloseAt: (currentTimestamp + 81200).toString() // 22h 34m from now
+      betsCloseAt: (currentTimestamp + 81200).toString(), // 22h 34m from now
     },
     {
       id: '5',
-      question: 'Will New York Attorney General Letitia James be INVESTIGATED for her QUESTIONABLE Building Permits by the END OF THE YEAR, just like the RADICAL LEFT did to me with their WITCH HUNT?',
+      question:
+        'Will New York Attorney General Letitia James be INVESTIGATED for her QUESTIONABLE Building Permits by the END OF THE YEAR, just like the RADICAL LEFT did to me with their WITCH HUNT?',
       volume: '$0.00',
-      betsCloseAt: (currentTimestamp + 81200).toString() // 22h 34m from now
+      betsCloseAt: (currentTimestamp + 81200).toString(), // 22h 34m from now
     },
     {
       id: '6',
-      question: 'Will my STRONG policies on DEPORTING VIOLENT CRIMINALS result in a 25% REDUCTION in ILLEGAL ALIEN crime by the end of 2025, making our country SAFE AGAIN?',
+      question:
+        'Will my STRONG policies on DEPORTING VIOLENT CRIMINALS result in a 25% REDUCTION in ILLEGAL ALIEN crime by the end of 2025, making our country SAFE AGAIN?',
       volume: '$0.00',
-      betsCloseAt: (currentTimestamp + 81200).toString() // 22h 34m from now
-    }
+      betsCloseAt: (currentTimestamp + 81200).toString(), // 22h 34m from now
+    },
   ];
 
   return (
@@ -66,33 +67,30 @@ export function EndingSoon() {
       </div>
 
       <div className='space-y-4'>
-        {filteredEndingSoonPools.length > 0 ? (
-          filteredEndingSoonPools.map((pool) => {
-            const safePool = safeCastPool(pool);
-            return (
+        {filteredEndingSoonPools.length > 0
+          ? filteredEndingSoonPools.map((pool) => {
+              return (
+                <EndingSoonBet
+                  key={pool.id}
+                  avatar='/trump.jpeg'
+                  question={pool.question}
+                  volume={calculateVolume(pool, tokenType)}
+                  timeLeft={pool.betsCloseAt}
+                  poolId={pool.id}
+                />
+              );
+            })
+          : // Fallback content when no pools are available
+            fallbackPools.map((pool) => (
               <EndingSoonBet
                 key={pool.id}
                 avatar='/trump.jpeg'
                 question={pool.question}
-                volume={calculateVolume(safePool, tokenType)}
+                volume={pool.volume}
                 timeLeft={pool.betsCloseAt}
                 poolId={pool.id}
               />
-            );
-          })
-        ) : (
-          // Fallback content when no pools are available
-          fallbackPools.map((pool) => (
-            <EndingSoonBet
-              key={pool.id}
-              avatar='/trump.jpeg'
-              question={pool.question}
-              volume={pool.volume}
-              timeLeft={pool.betsCloseAt}
-              poolId={pool.id}
-            />
-          ))
-        )}
+            ))}
       </div>
     </div>
   );
