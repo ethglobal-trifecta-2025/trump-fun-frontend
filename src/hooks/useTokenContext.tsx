@@ -7,15 +7,15 @@ import { POINTS_ADDRESS, USDC_ADDRESS } from '@/consts/addresses';
 
 // Define token types as enum for better type safety
 export enum TokenType {
-  USDC = 'USDC',
+  USDC = 'USD',
   POINTS = 'POINTS',
 }
 
 // Token logos/symbols
 export const TOKEN_SYMBOLS: Record<TokenType, { symbol: string; logo: React.ReactNode }> = {
   [TokenType.USDC]: {
-    symbol: 'USDC',
-    logo: <Image src='/usdc.svg' alt='USDC' width={16} height={16} style={{ display: 'inline' }} />,
+    symbol: 'USD',
+    logo: <Image src='/usdc.svg' alt='USD' width={16} height={16} style={{ display: 'inline' }} />,
   },
   [TokenType.POINTS]: {
     symbol: 'FREEDOM',

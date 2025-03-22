@@ -1,11 +1,13 @@
 'use client';
 
 import { POINTS_ADDRESS } from '@/consts/addresses';
+import { USDC_DECIMALS } from '@/consts';
 import { useEffect, useState } from 'react';
 import { type Address } from 'viem';
 import { useBalance } from 'wagmi';
 import { GetBalanceData } from 'wagmi/query';
 import { useTokenContext } from './useTokenContext';
+import { TokenType } from './useTokenContext';
 import { useWalletAddress } from './useWalletAddress';
 
 interface UseTokenBalanceOptions {
@@ -25,11 +27,11 @@ export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalance
   const [nativeBalance, setNativeBalance] = useState<GetBalanceData>();
 
   // Track last token type to detect changes
-  const [lastTokenType, setLastTokenType] = useState<string | null>(null);
+  const [lastTokenType, setLastTokenType] = useState<TokenType | null>(null);
 
   // Get the correct token address based on token type
   let finalTokenAddress: Address | undefined;
-  if (tokenType === 'POINTS') {
+  if (tokenType === TokenType.POINTS) {
     // For POINTS (native token), use undefined to fetch native balance
     finalTokenAddress = POINTS_ADDRESS;
   } else {
@@ -42,15 +44,15 @@ export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalance
 
   // Get USDC balance
   const usdcBalanceResult = useBalance({
-    address: shouldFetch && tokenType === 'USDC' ? address : undefined,
-    token: shouldFetch && tokenType === 'USDC' ? finalTokenAddress : undefined,
+    address: shouldFetch && tokenType === TokenType.USDC ? address : undefined,
+    token: shouldFetch && tokenType === TokenType.USDC ? finalTokenAddress : undefined,
     chainId: shouldFetch ? chainId : undefined,
   });
 
   // Get native token balance (ETH/POINTS)
   const nativeBalanceResult = useBalance({
-    address: shouldFetch && tokenType === 'POINTS' ? address : undefined,
-    token: shouldFetch && tokenType === 'POINTS' ? finalTokenAddress : undefined,
+    address: shouldFetch && tokenType === TokenType.POINTS ? address : undefined,
+    token: shouldFetch && tokenType === TokenType.POINTS ? finalTokenAddress : undefined,
     chainId: shouldFetch ? chainId : undefined,
   });
 
@@ -76,14 +78,14 @@ export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalance
   }, [nativeBalanceResult.isSuccess, nativeBalanceResult.data]);
 
   // Get the appropriate balance object based on token type
-  const activeResult = tokenType === 'POINTS' ? nativeBalanceResult : usdcBalanceResult;
-  const cachedBalance = tokenType === 'POINTS' ? nativeBalance : usdcBalance;
+  const activeResult = tokenType === TokenType.POINTS ? nativeBalanceResult : usdcBalanceResult;
+  const cachedBalance = tokenType === TokenType.POINTS ? nativeBalance : usdcBalance;
 
   // Choose current balance or fallback to cached
   const finalBalance = activeResult.data || cachedBalance;
 
   // Get token decimals (6 for USDC, 18 for native tokens but display only 4 decimals)
-  const tokenDecimals = tokenType === 'USDC' ? 6 : 18;
+  const tokenDecimals = tokenType === TokenType.USDC ? USDC_DECIMALS : 18;
   // Don't show any decimals in the display (no cents allowed)
 
   // Format balance with proper decimal precision - no decimals for display

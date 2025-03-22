@@ -20,7 +20,7 @@ export function NetworkIndicator() {
           variant='outline'
           className={cn(
             networkInfo.color,
-            'mr-2 cursor-pointer px-2 py-1 font-medium',
+            'mr-2 cursor-pointer bg-blue-600/40 text-blue-400 px-2 py-1 font-medium hover:bg-blue-600/40 hover:text-blue-400',
             !networkInfo.isSupported && 'border-red-500 text-red-500'
           )}
           onClick={() => setIsHovering(!isHovering)}
@@ -37,7 +37,7 @@ export function NetworkIndicator() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full bg-orange-600/10 text-xs text-orange-500 hover:text-orange-400'
+                    className='w-full bg-blue-600/10 text-xs text-blue-500 hover:text-blue-400'
                     onClick={() => switchNetwork(supportedNetworks.baseSepolia.id)}
                   >
                     Switch to Base Sepolia
@@ -45,7 +45,7 @@ export function NetworkIndicator() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full bg-orange-700/10 text-xs text-orange-600 hover:text-orange-500'
+                    className='w-full bg-blue-700/10 text-xs text-blue-600 hover:text-blue-500'
                     onClick={() => switchNetwork(supportedNetworks.base.id)}
                   >
                     Switch to Base
@@ -53,7 +53,7 @@ export function NetworkIndicator() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full bg-orange-500/10 text-xs text-orange-500 hover:text-orange-400'
+                    className='w-full bg-blue-500/10 text-xs text-blue-500 hover:text-blue-400'
                     onClick={() => switchNetwork(supportedNetworks.mainnet.id)}
                   >
                     Switch to Ethereum

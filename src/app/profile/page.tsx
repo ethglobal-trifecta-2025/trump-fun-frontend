@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { History, Search, Settings } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
 
 import { GET_BETS } from '@/app/queries';
 import { useNetwork } from '@/hooks/useNetwork';
@@ -19,7 +19,6 @@ import { Bet_Filter, Bet_OrderBy, OrderDirection } from '@/lib/__generated__/gra
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState } from 'react';
-
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,11 +119,15 @@ export default function ProfilePage() {
     </Button>
   );
 
+  // Memoize the sidebar components to prevent re-rendering when filter changes
+  const memoizedHighestVolume = useMemo(() => <HighestVolume />, []);
+  const memoizedEndingSoon = useMemo(() => <EndingSoon />, []);
+
   return (
     <div className='flex h-[calc(100vh-4rem)] flex-col'>
       <div className='flex flex-1 overflow-hidden'>
         {/* Sidebar */}
-        <div className='hidden w-60 flex-col border-r border-gray-800 p-4 md:flex'>
+        <div className='hidden w-60 flex-col border-r border-gray-200 p-4 md:flex dark:border-gray-800'>
           <div className='mb-6 flex flex-col items-center gap-3'>
             <Avatar className='h-20 w-20 overflow-hidden rounded-full'>
               <AvatarImage src='/trump.jpeg' alt='Profile' />
@@ -137,17 +140,45 @@ export default function ProfilePage() {
                 {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected'}
               </div>
             </div>
-            <div className='flex w-full items-center justify-between rounded-lg bg-gray-800 p-3'>
+            <div className='flex w-full items-center justify-between rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
               <div className='text-center'>
-                <div className='text-sm text-gray-400'>Balance</div>
+                <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                 <div className='font-bold'>
                   {formattedBalance} {tokenTextLogo}
                 </div>
               </div>
               <div className='text-center'>
-                <div className='text-sm text-gray-400'>Network</div>
+                <div className='text-sm text-gray-500 dark:text-gray-400'>Network</div>
                 <div className='font-semibold'>{networkInfo.name}</div>
               </div>
+            </div>
+          </div>
+          <div className='space-y-3'>
+            <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+              Token Actions
+            </div>
+            <div className='mb-2'>
+              <Input
+                type='number'
+                placeholder='Enter amount'
+                className='w-full border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
+              />
+            </div>
+            <div className='grid grid-cols-2 gap-2'>
+              <Button
+                variant='outline'
+                className='flex items-center justify-center gap-1 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30 dark:hover:text-green-400'
+              >
+                <ArrowDownToLine className='h-4 w-4' />
+                <span>Deposit</span>
+              </Button>
+              <Button
+                variant='outline'
+                className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
+              >
+                <ArrowUpFromLine className='h-4 w-4' />
+                <span>Withdraw</span>
+              </Button>
             </div>
           </div>
 
@@ -184,16 +215,46 @@ export default function ProfilePage() {
                     {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected'}
                   </div>
                 </div>
-                <div className='flex w-full max-w-xs items-center justify-between rounded-lg bg-gray-800 p-3'>
+                <div className='flex w-full max-w-xs items-center justify-between rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
                   <div className='text-center'>
-                    <div className='text-sm text-gray-400'>Balance</div>
+                    <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                     <div className='font-bold'>
                       {formattedBalance} {tokenTextLogo}
                     </div>
                   </div>
                   <div className='text-center'>
-                    <div className='text-sm text-gray-400'>Network</div>
+                    <div className='text-sm text-gray-500 dark:text-gray-400'>Network</div>
                     <div className='font-semibold'>{networkInfo.name}</div>
+                  </div>
+                </div>
+
+                {/* Mobile Token Actions */}
+                <div className='mt-2 w-full space-y-3'>
+                  <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+                    Token Actions
+                  </div>
+                  <div className='mb-2'>
+                    <Input
+                      type='number'
+                      placeholder='Enter amount'
+                      className='w-full border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
+                    />
+                  </div>
+                  <div className='grid grid-cols-2 gap-2'>
+                    <Button
+                      variant='outline'
+                      className='flex items-center justify-center gap-1 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 dark:bg-green-900/20 dark:text-green-500 dark:hover:bg-green-900/30 dark:hover:text-green-400'
+                    >
+                      <ArrowDownToLine className='h-4 w-4' />
+                      <span>Deposit</span>
+                    </Button>
+                    <Button
+                      variant='outline'
+                      className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
+                    >
+                      <ArrowUpFromLine className='h-4 w-4' />
+                      <span>Withdraw</span>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -202,12 +263,12 @@ export default function ProfilePage() {
               <div className='mb-4 md:hidden'>
                 <div className='relative'>
                   <Search
-                    className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400'
+                    className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 dark:text-gray-400'
                     size={18}
                   />
                   <Input
                     placeholder='Search your bets...'
-                    className='border-gray-700 bg-gray-900 pl-10 text-white'
+                    className='border-gray-300 bg-white pl-10 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white'
                     value={searchQuery}
                     onChange={handleSearch}
                   />
@@ -222,17 +283,23 @@ export default function ProfilePage() {
                   onValueChange={handleFilterChange}
                   className='w-full'
                 >
-                  <TabsList className='bg-gray-900'>
-                    <TabsTrigger value='active' className='data-[state=active]:bg-gray-800'>
+                  <TabsList className='bg-gray-100 dark:bg-gray-900'>
+                    <TabsTrigger
+                      value='active'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       Active
                     </TabsTrigger>
-                    {/* <TabsTrigger value='won' className='data-[state=active]:bg-gray-800'>
+                    {/* <TabsTrigger value='won' className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'>
                       Won
                     </TabsTrigger>
-                    <TabsTrigger value='lost' className='data-[state=active]:bg-gray-800'>
+                    <TabsTrigger value='lost' className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'>
                       Lost
                     </TabsTrigger> */}
-                    <TabsTrigger value='all' className='data-[state=active]:bg-gray-800'>
+                    <TabsTrigger
+                      value='all'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       All
                     </TabsTrigger>
                   </TabsList>
@@ -259,7 +326,7 @@ export default function ProfilePage() {
                   />
                 ))}
                 {filteredPools.length === 0 && (
-                  <div className='py-8 text-center text-gray-400'>
+                  <div className='py-8 text-center text-gray-500 dark:text-gray-400'>
                     No bets found for this filter
                   </div>
                 )}
@@ -269,17 +336,17 @@ export default function ProfilePage() {
         </main>
 
         {/* Right Sidebar */}
-        <div className='hidden w-80 overflow-y-auto border-l border-gray-800 p-4 md:block'>
+        <div className='hidden w-80 overflow-y-auto border-l border-gray-200 p-4 md:block dark:border-gray-800'>
           {/* Search */}
           <div className='mb-6'>
             <div className='relative'>
               <Search
-                className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400'
+                className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 dark:text-gray-400'
                 size={18}
               />
               <Input
                 placeholder='Search your bets...'
-                className='bg-background border-gray-700 pl-10 text-white'
+                className='dark:bg-background border-gray-300 bg-white pl-10 text-gray-900 dark:border-gray-700 dark:text-white'
                 value={searchQuery}
                 onChange={handleSearch}
               />
@@ -287,10 +354,10 @@ export default function ProfilePage() {
           </div>
 
           {/* Highest Volume */}
-          <HighestVolume />
+          {memoizedHighestVolume}
 
           {/* Ending Soon */}
-          <EndingSoon />
+          {memoizedEndingSoon}
         </div>
       </div>
     </div>

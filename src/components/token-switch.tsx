@@ -39,7 +39,7 @@ export function TokenSwitch() {
             </Badge>
           </Tooltip.Trigger>
           <Tooltip.Content>
-            <p>{tokenType === TokenType.POINTS ? 'Trump Points' : 'USDC'}</p>
+            <p>{tokenType === TokenType.POINTS ? 'Trump Points' : 'USD'}</p>
             <p className='mt-1 text-xs text-gray-400'>
               Balance: {formattedBalance} {symbol}
             </p>

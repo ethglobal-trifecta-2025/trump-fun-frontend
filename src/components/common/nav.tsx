@@ -2,13 +2,28 @@
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, User } from 'lucide-react';
+import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { Compass, Menu, User } from 'lucide-react';
 import Link from 'next/link';
 import { NetworkIndicator } from '../network-indicator';
 import { ThemeToggle } from '../theme-toggle';
 import { TrumpUserPill } from '../user-pill';
 
 export default function Nav() {
+  const { formattedBalance, tokenTextLogo } = useTokenBalance();
+
+  const navItems = [
+    {
+      label: 'Explore',
+      href: '/explore',
+      icon: Compass,
+    },
+    {
+      label: 'Profile',
+      href: '/profile',
+      icon: User,
+    },
+  ];
   return (
     <>
       <header className='flex h-full items-center justify-between px-4 py-2 md:h-16 md:py-0'>
@@ -19,31 +34,65 @@ export default function Nav() {
           {/* Desktop navigation */}
           <div className='hidden items-center gap-4 md:flex'>
             <NetworkIndicator />
-            <ThemeToggle />
-            <Button
-              variant='outline'
-              className='h-10.5 bg-transparent text-gray-400 hover:bg-transparent hover:text-orange-500'
-              asChild
-            >
-              <Link href='/profile'>
-                <User size={18} className='mr-0.5' />
-                Profile
-              </Link>
-            </Button>
+            {navItems.map((item) => (
+              <Button
+                key={item.href}
+                variant='outline'
+                className='h-10.5 bg-transparent text-gray-400 hover:bg-transparent hover:text-orange-500'
+                asChild
+              >
+                <Link href={item.href}>
+                  <item.icon size={18} className='mr-0.5' />
+                  {item.label}
+                </Link>
+              </Button>
+            ))}
+            <div className='flex items-center gap-2'>
+              <div className='text-sm text-gray-400'>Balance</div>
+              <div className='font-bold'>
+                {tokenTextLogo} {formattedBalance}
+              </div>
+            </div>
+
             <TrumpUserPill />
+            <ThemeToggle />
           </div>
 
           {/* Mobile navigation */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant='ghost' size='icon' className='md:hidden' aria-label='Toggle menu'>
+              <Button variant='ghost' size='icon' aria-label='Toggle menu' className='md:hidden'>
                 <Menu size={24} />
               </Button>
             </SheetTrigger>
             <SheetContent side='right' className='flex h-full flex-col'>
-              <SheetTitle></SheetTitle>
+              <SheetTitle className='text-center text-xl font-bold text-orange-500'>
+                Trump.fun
+              </SheetTitle>
               <div className='mt-6 flex flex-1 flex-col items-center gap-6'>
+                <div className='flex items-center gap-2 mb-4'>
+                  <div className='text-sm text-gray-400'>Balance</div>
+                  <div className='font-bold'>
+                    {tokenTextLogo} {formattedBalance}
+                  </div>
+                </div>
+                <div className='w-full space-y-4'>
+                  {navItems.map((item) => (
+                    <Button
+                      key={item.href}
+                      variant='outline'
+                      className='w-full justify-center bg-transparent text-gray-400 hover:bg-transparent hover:text-orange-500'
+                      asChild
+                    >
+                      <Link href={item.href}>
+                        <item.icon size={18} className='mr-2' />
+                        {item.label}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
                 <NetworkIndicator />
+
                 <TrumpUserPill />
               </div>
               <div className='flex flex-col items-center gap-4 pb-6'>
