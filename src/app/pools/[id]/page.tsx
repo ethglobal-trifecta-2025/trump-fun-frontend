@@ -116,6 +116,36 @@ export default function PoolDetailPage() {
   const currentTokenContext = useTokenContext();
   const currentTokenType = currentTokenContext.tokenType;
 
+  // Check URL parameters for bet information
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const amountParam = urlParams.get('amount');
+      const optionParam = urlParams.get('option');
+
+      if (amountParam && !isNaN(Number(amountParam))) {
+        const amount = Number(amountParam);
+        setBetAmount(amount);
+
+        // Set slider value based on balance
+        if (balance) {
+          const maxAmount = parseFloat(balance.formatted);
+          const percentage = Math.min(100, (amount / maxAmount) * 100);
+          setSliderValue([percentage]);
+        }
+      }
+
+      if (optionParam && !isNaN(Number(optionParam))) {
+        setSelectedOption(Number(optionParam));
+      }
+
+      // Clear the URL parameters to avoid reapplying them on refresh
+      if (amountParam || optionParam) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [balance]);
+
   // Fetch initial FACTS count and status when component mounts
   useEffect(() => {
     const fetchInitialFacts = async () => {
