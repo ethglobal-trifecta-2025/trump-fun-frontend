@@ -1,8 +1,6 @@
+import { USDC_DECIMALS, POINTS_DECIMALS } from '@/consts';
 import { TokenType } from '@/hooks/useTokenContext';
 import { GetPoolQuery, GetPoolsQuery } from '@/lib/__generated__/graphql';
-
-const USDC_DECIMALS = 1;
-const POINTS_DECIMALS = 6;
 
 export const calculateVolume = (
   pool: GetPoolsQuery['pools'][number] | GetPoolQuery['pool'],
