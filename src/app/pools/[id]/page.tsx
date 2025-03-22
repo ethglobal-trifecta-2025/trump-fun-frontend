@@ -352,14 +352,14 @@ export default function PoolDetailPage() {
 
   const calculatePercentages = (usdcBetTotals: string[]) => {
     if (!Array.isArray(usdcBetTotals) || usdcBetTotals.length < 2) {
-      return { yesPercentage: 50, noPercentage: 50 };
+      return { yesPercentage: 0, noPercentage: 0 };
     }
 
     const yesAmount = Number(usdcBetTotals[0]) || 0;
     const noAmount = Number(usdcBetTotals[1]) || 0;
     const total = yesAmount + noAmount;
 
-    if (total === 0) return { yesPercentage: 50, noPercentage: 50 };
+    if (total === 0) return { yesPercentage: 0, noPercentage: 0 };
 
     const yesPercentage = Math.round((yesAmount / total) * 100);
     const noPercentage = 100 - yesPercentage;
@@ -546,10 +546,22 @@ export default function PoolDetailPage() {
         <CardContent>
           {/* Progress Bar */}
           <div className='mb-6'>
-            <Progress value={percentages[0]} className='mb-2 h-4' />
+            <Progress
+              value={percentages[0]}
+              className='mb-2 h-4'
+              foregroundColor='bg-green-500'
+              backgroundColor='bg-red-500'
+            />
             <div className='mb-2 flex justify-between text-sm font-medium'>
               {pool.options.map((option, index) => (
-                <span key={index}>
+                <span
+                  key={index}
+                  className={
+                    index === 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }
+                >
                   {option} {percentages[index]}%
                 </span>
               ))}
@@ -588,8 +600,12 @@ export default function PoolDetailPage() {
                     className={cn(
                       'w-full',
                       selectedOption === i
-                        ? 'bg-orange-500 hover:bg-orange-600'
-                        : 'bg-gray-700 hover:bg-gray-600'
+                        ? i === 0
+                          ? 'bg-green-500 text-white hover:bg-green-600'
+                          : 'bg-red-500 text-white hover:bg-red-600'
+                        : i === 0
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+                          : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
                     )}
                     onClick={() => setSelectedOption(i)}
                   >

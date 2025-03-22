@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { useTokenContext } from '@/hooks/useTokenContext';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageCircle } from 'lucide-react';
@@ -249,18 +249,18 @@ export function BettingPost({
                     const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
                     const total = yes + no;
 
-                    // Default to 50/50 if no bets
-                    const yesPercent = total > 0 ? (yes / total) * 100 : 50;
-                    const noPercent = total > 0 ? (no / total) * 100 : 50;
+                    // Show 0% when no bets instead of default 50/50
+                    const yesPercent = total > 0 ? (yes / total) * 100 : 0;
+                    const noPercent = total > 0 ? (no / total) * 100 : 0;
 
                     return (
                       <>
                         <div
-                          className={`h-2 rounded-l-full bg-orange-500`}
+                          className={`h-2 rounded-l-full bg-green-500`}
                           style={{ width: `${yesPercent}%` }}
                         ></div>
                         <div
-                          className='h-2 rounded-r-full bg-gray-300 dark:bg-gray-700'
+                          className='h-2 rounded-r-full bg-red-500 dark:bg-red-700'
                           style={{ width: `${noPercent}%` }}
                         ></div>
                       </>
@@ -286,36 +286,39 @@ export function BettingPost({
             const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
             const total = yes + no;
 
-            // Calculate percentage for this option
-            const percent =
-              total > 0 ? Math.round(((i === 0 ? yes : no) / total) * 100) : i === 0 ? 50 : 50;
+            // Calculate percentage for this option - show 0% when no bets
+            const percent = total > 0 ? Math.round(((i === 0 ? yes : no) / total) * 100) : 0;
 
             return (
               <div
                 key={i}
                 className={`flex items-center justify-between rounded-md p-2 transition-colors ${
                   selectedOption === i
-                    ? 'border border-orange-500 bg-gray-100 dark:bg-gray-800'
+                    ? `border ${i === 0 ? 'border-green-500' : 'border-red-500'} bg-gray-100 dark:bg-gray-800`
                     : 'bg-gray-50 opacity-90 hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-800'
                 } cursor-pointer`}
                 onClick={() => setSelectedOption(i)}
               >
                 <span
-                  className={`font-medium ${selectedOption === i ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
+                  className={`font-medium ${
+                    i === 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}
                 >
                   {i === 0 ? 'YES' : 'NO'} {percent}%
                 </span>
 
                 <div
                   className={`flex items-center justify-center rounded-full ${
-                    tokenType === TokenType.POINTS
+                    i === 0
                       ? selectedOption === i
-                        ? 'bg-orange-500'
-                        : 'bg-orange-400 dark:bg-orange-700'
+                        ? 'bg-green-500'
+                        : 'bg-green-400 dark:bg-green-700'
                       : selectedOption === i
-                        ? 'bg-orange-500'
-                        : 'bg-orange-400 dark:bg-orange-700'
-                  } px-3 py-1 text-sm font-medium ${selectedOption === i ? '' : 'opacity-80'}`}
+                        ? 'bg-red-500'
+                        : 'bg-red-400 dark:bg-red-700'
+                  } px-3 py-1 text-sm font-medium text-white ${selectedOption === i ? '' : 'opacity-80'}`}
                 >
                   {optionBets[i] || '0'}
                 </div>

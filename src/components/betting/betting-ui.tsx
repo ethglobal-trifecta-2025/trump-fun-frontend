@@ -71,7 +71,7 @@ export default function BettingUI({
         <Button
           onClick={() => handleOptionSelect('yes')}
           variant={selectedOption === 'yes' ? 'default' : 'outline'}
-          className='flex-1'
+          className={`flex-1 ${selectedOption === 'yes' ? 'bg-green-500 hover:bg-green-600' : 'border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
         >
           YES ({yesPercentage}%)
         </Button>
@@ -79,7 +79,7 @@ export default function BettingUI({
         <Button
           onClick={() => handleOptionSelect('no')}
           variant={selectedOption === 'no' ? 'default' : 'outline'}
-          className='flex-1'
+          className={`flex-1 ${selectedOption === 'no' ? 'bg-red-500 hover:bg-red-600' : 'border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
         >
           NO ({noPercentage}%)
         </Button>
