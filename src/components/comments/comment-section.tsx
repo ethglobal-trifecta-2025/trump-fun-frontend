@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import CommentList from './comment-list';
 
 import CommentInput from './comment-input';
@@ -45,8 +43,6 @@ export default function CommentSection({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const router = useRouter();
-
   const { wallets } = useWallets();
 
   const { login, authenticated } = usePrivy();
@@ -60,7 +56,7 @@ export default function CommentSection({
     }
   }, [initialComments]);
 
-  const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
+  // const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
 
   const handleLoginClick = () => login();
 

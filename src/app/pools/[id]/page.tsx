@@ -36,7 +36,7 @@ import { calculateVolume } from '@/utils/betsInfo';
 export default function PoolDetailPage() {
   // Router and authentication
   const { id } = useParams();
-  const { isConnected, authenticated, address } = useWalletAddress();
+  const { isConnected, authenticated } = useWalletAddress();
   const { login } = usePrivy();
   const publicClient = usePublicClient();
   const account = useAccount();
@@ -92,7 +92,7 @@ export default function PoolDetailPage() {
   const {
     data: commentsData,
     isLoading: isCommentsLoading,
-    refetch: refetchComments,
+    // refetch: refetchComments,
     error: commentsError,
   } = useQuery({
     queryKey: ['comments', id],
@@ -148,6 +148,7 @@ export default function PoolDetailPage() {
         setApprovedAmount(formattedAllowance.toString());
       } catch (error) {
         setApprovedAmount('0');
+        console.error('Error fetching approved amount:', error);
       }
     };
 
@@ -195,17 +196,17 @@ export default function PoolDetailPage() {
       const messageStr = JSON.stringify(messageObj);
 
       // Request signature from user
-      const { signature } = await signMessage(
-        { message: messageStr },
-        {
-          uiOptions: {
-            title: newIsFactsed ? 'Sign to FACTS' : 'Sign to remove FACTS',
-            description: 'Sign this message to verify your action',
-            buttonText: 'Sign',
-          },
-          address: wallet.address,
-        }
-      );
+      // const { signature } = await signMessage(
+      //   { message: messageStr },
+      //   {
+      //     uiOptions: {
+      //       title: newIsFactsed ? 'Sign to FACTS' : 'Sign to remove FACTS',
+      //       description: 'Sign this message to verify your action',
+      //       buttonText: 'Sign',
+      //     },
+      //     address: wallet.address,
+      //   }
+      // );
 
       // Only update after successful signature
       setHasFactsed(newIsFactsed);

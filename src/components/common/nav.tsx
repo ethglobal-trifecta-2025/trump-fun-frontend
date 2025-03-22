@@ -1,18 +1,12 @@
 'use client';
 
-import React from 'react';
-import { ThemeToggle } from '../theme-toggle';
-import { TrumpUserPill } from '../user-pill';
-import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Menu, User } from 'lucide-react';
 import Link from 'next/link';
 import { NetworkIndicator } from '../network-indicator';
+import { ThemeToggle } from '../theme-toggle';
+import { TrumpUserPill } from '../user-pill';
 
 export default function Nav() {
   return (
@@ -26,18 +20,23 @@ export default function Nav() {
           <div className='hidden items-center gap-4 md:flex'>
             <NetworkIndicator />
             <ThemeToggle />
+            <Button
+              variant='outline'
+              className='h-10.5 bg-transparent text-gray-400 hover:bg-transparent hover:text-orange-500'
+              asChild
+            >
+              <Link href='/profile'>
+                <User size={18} className='mr-0.5' />
+                Profile
+              </Link>
+            </Button>
             <TrumpUserPill />
           </div>
 
           {/* Mobile navigation */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='md:hidden'
-                aria-label='Toggle menu'
-              >
+              <Button variant='ghost' size='icon' className='md:hidden' aria-label='Toggle menu'>
                 <Menu size={24} />
               </Button>
             </SheetTrigger>

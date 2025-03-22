@@ -8,21 +8,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { History, Search, Settings, Trophy, Wallet } from 'lucide-react';
+import { History, Search, Settings } from 'lucide-react';
 
 import { GET_BETS } from '@/app/queries';
+import { useNetwork } from '@/hooks/useNetwork';
+import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { Bet_Filter, Bet_OrderBy, OrderDirection, PoolStatus } from '@/lib/__generated__/graphql';
+import { useWalletAddress } from '@/hooks/useWalletAddress';
+import { Bet_Filter, Bet_OrderBy, OrderDirection } from '@/lib/__generated__/graphql';
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { useMemo, useState } from 'react';
-import { useAccount } from 'wagmi';
 
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
-  const { address } = useAccount();
+  const { address } = useWalletAddress();
+  const { formattedBalance, tokenTextLogo } = useTokenBalance();
+  const { networkInfo } = useNetwork();
 
   const filterConfigs = useMemo(
     () => ({
@@ -36,30 +40,30 @@ export default function ProfilePage() {
           },
         },
       },
-      won: {
-        orderBy: Bet_OrderBy.UpdatedAt,
-        orderDirection: OrderDirection.Desc,
-        filter: {
-          pool_: {
-            status_eq: PoolStatus.Graded,
-          },
-          winner_: {
-            id_eq: address,
-          },
-        },
-      },
-      lost: {
-        orderBy: Bet_OrderBy.UpdatedAt,
-        orderDirection: OrderDirection.Desc,
-        filter: {
-          pool_: {
-            status_eq: PoolStatus.Graded,
-          },
-          loser_: {
-            id_eq: address,
-          },
-        },
-      },
+      // won: {
+      //   orderBy: Bet_OrderBy.UpdatedAt,
+      //   orderDirection: OrderDirection.Desc,
+      //   filter: {
+      //     pool_: {
+      //       status_eq: PoolStatus.Graded,
+      //     },
+      //     winner_: {
+      //       id_eq: address,
+      //     },
+      //   },
+      // },
+      // lost: {
+      //   orderBy: Bet_OrderBy.UpdatedAt,
+      //   orderDirection: OrderDirection.Desc,
+      //   filter: {
+      //     pool_: {
+      //       status_eq: PoolStatus.Graded,
+      //     },
+      //     loser_: {
+      //       id_eq: address,
+      //     },
+      //   },
+      // },
       all: {
         orderBy: Bet_OrderBy.UpdatedAt,
         orderDirection: OrderDirection.Desc,
@@ -129,17 +133,20 @@ export default function ProfilePage() {
               </AvatarFallback>
             </Avatar>
             <div className='text-center'>
-              <div className='text-xl font-bold'>@username</div>
-              <div className='text-sm text-gray-400'>Joined Mar 2024</div>
+              <div className='text-xl font-bold'>
+                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected'}
+              </div>
             </div>
             <div className='flex w-full items-center justify-between rounded-lg bg-gray-800 p-3'>
               <div className='text-center'>
                 <div className='text-sm text-gray-400'>Balance</div>
-                <div className='font-bold'>1000 pts</div>
+                <div className='font-bold'>
+                  {formattedBalance} {tokenTextLogo}
+                </div>
               </div>
               <div className='text-center'>
-                <div className='text-sm text-gray-400'>Win Rate</div>
-                <div className='font-bold'>75%</div>
+                <div className='text-sm text-gray-400'>Network</div>
+                <div className='font-semibold'>{networkInfo.name}</div>
               </div>
             </div>
           </div>
@@ -148,8 +155,8 @@ export default function ProfilePage() {
 
           <nav className='space-y-1'>
             {renderFilterButton('active', 'Active Bets', <History className='h-4 w-4' />)}
-            {renderFilterButton('won', 'Won Bets', <Trophy className='h-4 w-4' />)}
-            {renderFilterButton('lost', 'Lost Bets', <Wallet className='h-4 w-4' />)}
+            {/* {renderFilterButton('won', 'Won Bets', <Trophy className='h-4 w-4' />)} */}
+            {/* {renderFilterButton('lost', 'Lost Bets', <Wallet className='h-4 w-4' />)} */}
             {renderFilterButton('all', 'All Bets', <History className='h-4 w-4' />)}
             <Separator className='my-2' />
             <Button variant='ghost' className='w-full justify-start gap-2 font-medium'>
@@ -164,6 +171,33 @@ export default function ProfilePage() {
           {/* Feed */}
           <div className='scrollbar-hide flex flex-1 justify-center overflow-y-auto p-4'>
             <div className='w-full max-w-2xl'>
+              {/* Mobile Profile Section */}
+              <div className='mb-6 flex flex-col items-center gap-3 md:hidden'>
+                <Avatar className='h-20 w-20 overflow-hidden rounded-full'>
+                  <AvatarImage src='/trump.jpeg' alt='Profile' />
+                  <AvatarFallback>
+                    <span className='text-2xl font-bold text-orange-500'>U</span>
+                  </AvatarFallback>
+                </Avatar>
+                <div className='text-center'>
+                  <div className='text-xl font-bold'>
+                    {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected'}
+                  </div>
+                </div>
+                <div className='flex w-full max-w-xs items-center justify-between rounded-lg bg-gray-800 p-3'>
+                  <div className='text-center'>
+                    <div className='text-sm text-gray-400'>Balance</div>
+                    <div className='font-bold'>
+                      {formattedBalance} {tokenTextLogo}
+                    </div>
+                  </div>
+                  <div className='text-center'>
+                    <div className='text-sm text-gray-400'>Network</div>
+                    <div className='font-semibold'>{networkInfo.name}</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Mobile Search */}
               <div className='mb-4 md:hidden'>
                 <div className='relative'>
@@ -192,12 +226,12 @@ export default function ProfilePage() {
                     <TabsTrigger value='active' className='data-[state=active]:bg-gray-800'>
                       Active
                     </TabsTrigger>
-                    <TabsTrigger value='won' className='data-[state=active]:bg-gray-800'>
+                    {/* <TabsTrigger value='won' className='data-[state=active]:bg-gray-800'>
                       Won
                     </TabsTrigger>
                     <TabsTrigger value='lost' className='data-[state=active]:bg-gray-800'>
                       Lost
-                    </TabsTrigger>
+                    </TabsTrigger> */}
                     <TabsTrigger value='all' className='data-[state=active]:bg-gray-800'>
                       All
                     </TabsTrigger>
