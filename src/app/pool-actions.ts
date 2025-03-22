@@ -60,3 +60,64 @@ export const getAllLikedComments = (): Record<number, boolean> => {
     return {};
   }
 };
+
+// Helper to manage local storage for pool FACTS persistence
+export const FACTSD_POOLS_KEY = 'trump_fun_factsd_pools';
+
+// Save a FACTS'd pool to local storage
+export const savePoolFacts = (poolId: string, factsd: boolean) => {
+  try {
+    // Get current FACTS'd pools
+    const currentFactsdStr = localStorage.getItem(FACTSD_POOLS_KEY);
+    let factsdPools: Record<string, boolean> = {};
+
+    if (currentFactsdStr) {
+      try {
+        factsdPools = JSON.parse(currentFactsdStr);
+      } catch (e) {
+        console.error("Error parsing FACTS'd pools from localStorage:", e);
+      }
+    }
+
+    // Update the FACTS status
+    if (factsd) {
+      factsdPools[poolId] = true;
+    } else {
+      delete factsdPools[poolId];
+    }
+
+    // Save back to localStorage
+    localStorage.setItem(FACTSD_POOLS_KEY, JSON.stringify(factsdPools));
+    return true;
+  } catch (e) {
+    console.error('Error saving pool FACTS to localStorage:', e);
+    return false;
+  }
+};
+
+// Check if a pool is FACTS'd in local storage
+export const isPoolFactsd = (poolId: string): boolean => {
+  try {
+    const currentFactsdStr = localStorage.getItem(FACTSD_POOLS_KEY);
+    if (!currentFactsdStr) return false;
+
+    const factsdPools = JSON.parse(currentFactsdStr);
+    return Boolean(factsdPools[poolId]);
+  } catch (e) {
+    console.error('Error checking pool FACTS status from localStorage:', e);
+    return false;
+  }
+};
+
+// Get all FACTS'd pools
+export const getAllFactsdPools = (): Record<string, boolean> => {
+  try {
+    const currentFactsdStr = localStorage.getItem(FACTSD_POOLS_KEY);
+    if (!currentFactsdStr) return {};
+
+    return JSON.parse(currentFactsdStr);
+  } catch (e) {
+    console.error("Error getting all FACTS'd pools from localStorage:", e);
+    return {};
+  }
+};

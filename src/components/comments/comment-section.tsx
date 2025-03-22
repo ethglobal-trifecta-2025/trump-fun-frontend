@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -10,7 +10,7 @@ import CommentInput from './comment-input';
 
 import { addComment } from '@/app/actions/comment-actions';
 
-import { useSignMessage, useWallets, usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 
 import { Comment } from '@/types';
 
@@ -38,8 +38,10 @@ export default function CommentSection({
   poolId,
 
   initialComments,
+  isLoading,
+  error,
 }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>(initialComments || []);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,6 +52,22 @@ export default function CommentSection({
   const { login, authenticated } = usePrivy();
 
   const { signMessage } = useSignMessage();
+
+  // Debug logs for comment data
+  console.log('CommentSection mounted:', {
+    poolId,
+    initialCommentsCount: initialComments?.length || 0,
+    initialComments,
+    currentCommentsCount: comments?.length || 0,
+  });
+
+  // Update comments when initialComments changes
+  useEffect(() => {
+    console.log('initialComments changed:', initialComments?.length || 0);
+    if (initialComments && initialComments.length > 0) {
+      setComments(initialComments);
+    }
+  }, [initialComments]);
 
   const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
 
@@ -132,24 +150,13 @@ export default function CommentSection({
 
         setComments([tempComment, ...comments]);
 
-        const result = await addComment(poolId, content, signature, messageStr);
-
-        if (result.success) {
-          router.refresh();
-        } else {
-          console.error('Failed to add comment:', result.error);
-        }
+        // Add comment to database but don't refresh the page
+        await addComment(poolId, content, signature, messageStr);
       } catch (signError) {
-        console.error('Signing error:', signError);
+        // Silent error handling to avoid UI disruption
       }
     } catch (error) {
-      console.error(
-        `Error: ${
-          error instanceof Error
-            ? error.message
-            : 'Unknown error occurred during comment submission.'
-        }`
-      );
+      // Silent error handling to avoid UI disruption
     } finally {
       setIsSubmitting(false);
     }
@@ -165,15 +172,37 @@ export default function CommentSection({
   // };
 
   return (
-    <div>
-      <h2 className='mb-4 text-xl font-bold'>Comments</h2>
+    <div className='space-y-4'>
+      <h2 className='text-xl font-semibold'>Comments</h2>
 
-      <CommentInput
-        onCommentSubmit={isWalletConnected ? handleCommentSubmit : handleLoginClick}
-        isWalletConnected={Boolean(isWalletConnected)}
-      />
+      {authenticated ? (
+        <CommentInput onCommentSubmit={handleCommentSubmit} isWalletConnected={authenticated} />
+      ) : (
+        <button
+          onClick={handleLoginClick}
+          className='w-full rounded-md bg-orange-500 py-2 text-center font-medium text-white transition-colors hover:bg-orange-600'
+        >
+          Connect Wallet to Comment
+        </button>
+      )}
 
-      <CommentList comments={comments} />
+      {error && (
+        <div className='rounded-md bg-red-500/10 p-4 text-red-500'>
+          Error loading comments: {error.message}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className='flex items-center justify-center py-8'>
+          <div className='h-8 w-8 animate-spin rounded-full border-2 border-orange-500 border-t-transparent'></div>
+        </div>
+      ) : comments && comments.length > 0 ? (
+        <CommentList comments={comments} />
+      ) : (
+        <div className='py-6 text-center text-gray-500'>
+          No comments yet. Be the first to share your thoughts!
+        </div>
+      )}
     </div>
   );
 }

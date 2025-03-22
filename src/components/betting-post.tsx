@@ -1,12 +1,13 @@
 'use client';
 
+import { isPoolFactsd, savePoolFacts } from '@/app/pool-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -44,11 +45,25 @@ export function BettingPost({
   const [factsCount, setFactsCount] = useState(Math.floor(Math.random() * 50) + 5);
   const [hasFactsed, setHasFactsed] = useState(false);
   const [sliderValue, setSliderValue] = useState([0]);
+  const [isFactsProcessing, setIsFactsProcessing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { authenticated, login } = usePrivy();
+  const { wallets } = useWallets();
+  const { signMessage } = useSignMessage();
   const { tokenType } = useTokenContext();
 
   // Use our custom hook for token balance
   const { balance, formattedBalance, symbol } = useTokenBalance();
+
+  const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
+
+  // Check localStorage when component mounts to see if this pool was FACTS'd before
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const wasFactsd = isPoolFactsd(id);
+      setHasFactsed(wasFactsd);
+    }
+  }, [id]);
 
   // Update bet amount when slider changes
   useEffect(() => {
@@ -70,18 +85,82 @@ export function BettingPost({
     setShowBetForm(!showBetForm);
   };
 
-  const handleFacts = () => {
-    if (!authenticated) {
+  const handleFacts = async () => {
+    if (!isWalletConnected) {
       login();
       return;
     }
 
-    if (hasFactsed) {
-      setFactsCount((prev) => prev - 1);
-    } else {
-      setFactsCount((prev) => prev + 1);
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const wallet = wallets?.[0];
+
+      if (!wallet || !wallet.address) {
+        console.warn('Please connect a wallet to FACTS posts');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Optimistically update UI
+      const isAdding = !hasFactsed;
+      const newFactsCount = isAdding ? factsCount + 1 : factsCount - 1;
+
+      setHasFactsed(isAdding);
+      setFactsCount(newFactsCount);
+
+      // Update localStorage to persist the like
+      savePoolFacts(id, isAdding);
+
+      const messageObj = {
+        action: 'toggle_facts',
+        poolId: id,
+        operation: isAdding ? 'add_facts' : 'remove_facts',
+        timestamp: new Date().toISOString(),
+        account: wallet.address.toLowerCase(),
+      };
+
+      const messageStr = JSON.stringify(messageObj);
+
+      const { signature } = await signMessage(
+        { message: messageStr },
+        {
+          uiOptions: {
+            title: isAdding ? 'Sign to FACTS' : 'Sign to remove FACTS',
+            description: 'Sign this message to verify your action',
+            buttonText: 'Sign',
+          },
+          address: wallet.address,
+        }
+      );
+
+      console.log(
+        `FACTS ${isAdding ? 'added to' : 'removed from'} pool ${id} with signature`,
+        signature.substring(0, 10) + '...'
+      );
+
+      // In the future, send this signature to your backend or smart contract
+      // const result = await togglePoolFacts(id, isAdding, signature, messageStr);
+
+      // For now just simulate a delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('Error updating FACTS:', error);
+
+      // Revert optimistic update on error
+      const isAdding = !hasFactsed;
+      setHasFactsed(!isAdding);
+      setFactsCount(isAdding ? factsCount - 1 : factsCount + 1);
+
+      // Revert localStorage
+      savePoolFacts(id, !isAdding);
+
+      alert('Failed to update FACTS. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setHasFactsed(!hasFactsed);
   };
 
   // Handle percentage button clicks
@@ -245,8 +324,13 @@ export function BettingPost({
                   : 'text-orange-500 hover:text-orange-500'
               }`}
               onClick={handleFacts}
+              disabled={isSubmitting}
             >
-              {hasFactsed ? 'FACTS 🦅' : 'FACTS '}
+              {isSubmitting ? (
+                <span className='inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent'></span>
+              ) : (
+                <>FACTS{hasFactsed ? <span className='ml-1.5'>🦅</span> : ''}</>
+              )}
               <span className='ml-1.5'>{factsCount}</span>
             </Button>
 

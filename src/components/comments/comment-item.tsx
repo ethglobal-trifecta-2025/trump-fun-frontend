@@ -14,6 +14,11 @@ interface CommentItemProps {
 }
 
 const CommentItem = ({ comment }: CommentItemProps) => {
+  // Ensure we have a valid comment object
+  if (!comment || !comment.id) {
+    return null;
+  }
+
   const [upvotes, setUpvotes] = useState<number>(comment.upvotes || 0);
   const [isLiked, setIsLiked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +50,6 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       const wallet = wallets?.[0];
 
       if (!wallet || !wallet.address) {
-        console.warn('Please connect a wallet to like comments');
         setIsSubmitting(false);
         return;
       }
@@ -82,24 +86,21 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         }
       );
 
-      const result = await toggleLike(
-        comment.id,
-        newIsLiked ? 'like' : 'unlike',
-        signature,
-        messageStr
-      );
-
-      if (!result.success) {
-        // Revert optimistic update on error
-        setIsLiked(!newIsLiked);
-        setUpvotes(newIsLiked ? upvotes - 1 : upvotes + 1);
-        // Also update localStorage to revert
-        saveCommentLike(comment.id, !newIsLiked);
-        console.error('Failed to like: ' + result.error);
-      }
+      // No need to await this call to avoid UI freezing
+      toggleLike(comment.id, newIsLiked ? 'like' : 'unlike', signature, messageStr)
+        .then((result) => {
+          if (!result.success) {
+            // Revert optimistic update on error
+            setIsLiked(!newIsLiked);
+            setUpvotes(newIsLiked ? upvotes - 1 : upvotes + 1);
+            // Also update localStorage to revert
+            saveCommentLike(comment.id, !newIsLiked);
+          }
+        })
+        .catch(() => {
+          // Silently handle errors after optimistic update
+        });
     } catch (error) {
-      console.error('Error liking comment:', error);
-
       // Revert optimistic update on error
       const revertedLiked = !isLiked;
       setIsLiked(revertedLiked);
@@ -119,7 +120,9 @@ const CommentItem = ({ comment }: CommentItemProps) => {
 
         <div className='flex-1'>
           <div className='mb-1 flex items-center gap-2'>
-            <span className='font-medium'>{comment.user_address}</span>
+            <span className='font-medium'>
+              {comment.user_address.slice(0, 6)}...{comment.user_address.slice(-4)}
+            </span>
 
             <span className='text-sm text-gray-500'>{formatDate(comment.created_at)}</span>
           </div>
@@ -134,9 +137,9 @@ const CommentItem = ({ comment }: CommentItemProps) => {
               onClick={handleLike}
               disabled={isSubmitting}
             >
-              <span className='font-bold'>{isLiked ? 'FACTS' : 'FACTS'}</span>
-              {isLiked && <span>🦅</span>}
-              <span className='ml-1'>{upvotes}</span>
+              <span className='font-bold'>FACTS</span>
+              {isLiked && <span className='ml-1.5'>🦅</span>}
+              <span className='ml-1.5'>{upvotes}</span>
             </Button>
           </div>
         </div>

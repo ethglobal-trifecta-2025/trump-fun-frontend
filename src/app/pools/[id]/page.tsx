@@ -2,9 +2,9 @@
 
 import { Progress } from '@/components/Progress';
 import { useQuery as useQueryA } from '@apollo/client';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Clock, MessageCircle, TrendingUp, Users } from 'lucide-react';
+import { ArrowLeft, Clock, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,7 +12,6 @@ import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteCont
 // Import ABIs and types
 import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
-import { Comment } from '@/types';
 // Import hooks
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
@@ -26,7 +25,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Import utils
 import { GET_POOL } from '@/app/queries';
@@ -38,18 +36,33 @@ import { calculateVolume } from '@/utils/betsInfo';
 export default function PoolDetailPage() {
   // Router and authentication
   const { id } = useParams();
-  const { isConnected, authenticated } = useWalletAddress();
+  const { isConnected, authenticated, address } = useWalletAddress();
+  const { login } = usePrivy();
   const publicClient = usePublicClient();
   const account = useAccount();
   const { ready } = usePrivy();
   const { wallets } = useWallets();
+  const { signMessage } = useSignMessage();
 
   // Component state
   const [betAmount, setBetAmount] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [sliderValue, setSliderValue] = useState([0]);
-  const [poolFacts, setPoolFacts] = useState(() => Math.floor(Math.random() * 50) + 5);
-  const [hasFactsed, setHasFactsed] = useState(false);
+  const [poolFacts, setPoolFacts] = useState<number>(() => {
+    // Use localStorage as temporary fallback until Supabase is set up
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem(`pool_facts_${id}`) || '0', 10) || 5;
+    }
+    return 5;
+  });
+  const [hasFactsed, setHasFactsed] = useState<boolean>(() => {
+    // Use localStorage as temporary fallback until Supabase is set up
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`pool_facts_liked_${id}`) === 'true';
+    }
+    return false;
+  });
+  const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('0');
 
   // Contract interaction
@@ -80,6 +93,7 @@ export default function PoolDetailPage() {
     data: commentsData,
     isLoading: isCommentsLoading,
     refetch: refetchComments,
+    error: commentsError,
   } = useQuery({
     queryKey: ['comments', id],
     queryFn: async () => {
@@ -94,7 +108,8 @@ export default function PoolDetailPage() {
     refetchOnWindowFocus: true,
   });
 
-  const comments = commentsData?.comments as Comment[];
+  // Safely extract comments from the response
+  const comments = commentsData?.comments || [];
 
   // Use the current token type for display
   const currentTokenContext = useTokenContext();
@@ -132,7 +147,6 @@ export default function PoolDetailPage() {
         const formattedAllowance = Number(allowance) / 10 ** USDC_DECIMALS;
         setApprovedAmount(formattedAllowance.toString());
       } catch (error) {
-        console.error('Error fetching allowance:', error);
         setApprovedAmount('0');
       }
     };
@@ -150,17 +164,87 @@ export default function PoolDetailPage() {
     setSliderValue([percentage]);
   };
 
-  const handleFacts = () => {
-    // Toggle facts state
-    const newHasFactsed = !hasFactsed;
-    setHasFactsed(newHasFactsed);
+  // Handle FACTS button click
+  const handleFacts = async () => {
+    if (!isConnected) {
+      login();
+      return;
+    }
 
-    // Update count based on toggle (increment or decrement)
-    setPoolFacts((prevCount) => (newHasFactsed ? prevCount + 1 : Math.max(5, prevCount - 1)));
+    setIsFactsProcessing(true);
 
-    // If the user is logged in, refetch comments to show the updated FACTS comment
-    if (isConnected && authenticated) {
-      setTimeout(() => refetchComments(), 2000);
+    try {
+      // Optimistic update
+      const newIsFactsed = !hasFactsed;
+      setHasFactsed(newIsFactsed);
+
+      // Update facts count optimistically
+      const newFactsCount = newIsFactsed ? poolFacts + 1 : Math.max(5, poolFacts - 1);
+      setPoolFacts(newFactsCount);
+
+      // Temporary localStorage solution until Supabase is ready
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
+        localStorage.setItem(`pool_facts_liked_${id}`, newIsFactsed.toString());
+      }
+
+      const wallet = wallets?.[0];
+      if (!wallet || !wallet.address) {
+        return;
+      }
+
+      // Create message for signature
+      const messageObj = {
+        action: 'toggle_facts',
+        poolId: id,
+        operation: newIsFactsed ? 'like' : 'unlike',
+        timestamp: new Date().toISOString(),
+        account: wallet.address.toLowerCase(),
+      };
+
+      const messageStr = JSON.stringify(messageObj);
+
+      // Request signature from user
+      const { signature } = await signMessage(
+        { message: messageStr },
+        {
+          uiOptions: {
+            title: newIsFactsed ? 'Sign to FACTS' : 'Sign to remove FACTS',
+            description: 'Sign this message to verify your action',
+            buttonText: 'Sign',
+          },
+          address: wallet.address,
+        }
+      );
+
+      // FUTURE: When Supabase is ready, uncomment this code
+      /*
+      // Call the server action to update the database
+      const result = await togglePoolFacts(
+        id as string,
+        newIsFactsed ? 'like' : 'unlike',
+        signature,
+        messageStr
+      );
+
+      // Update UI with server data if successful
+      if (result.success && typeof result.facts === 'number') {
+        setPoolFacts(result.facts);
+      }
+      */
+    } catch (error) {
+      // Revert optimistic update on error
+      setHasFactsed(!hasFactsed);
+      const revertedFactsCount = hasFactsed ? poolFacts + 1 : Math.max(5, poolFacts - 1);
+      setPoolFacts(revertedFactsCount);
+
+      // Update localStorage to revert
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`pool_facts_${id}`, revertedFactsCount.toString());
+        localStorage.setItem(`pool_facts_liked_${id}`, (!hasFactsed).toString());
+      }
+    } finally {
+      setIsFactsProcessing(false);
     }
   };
 
@@ -321,6 +405,40 @@ export default function PoolDetailPage() {
 
     // Use existing formatters from the file
   };
+
+  // FUTURE: When Supabase is ready, uncomment this function
+  /*
+  // Fetch initial FACTS count and status from the server
+  const fetchPoolFacts = async () => {
+    try {
+      // Include wallet address in query if available
+      const walletAddress = wallets && wallets[0]?.address 
+        ? wallets[0].address.toLowerCase() 
+        : '';
+      
+      const res = await fetch(`/api/pool-facts?poolId=${id}&address=${walletAddress}`);
+      if (!res.ok) return;
+      
+      const data = await res.json();
+      
+      // Update facts count with explicit type handling
+      const factsCount = typeof data.count === 'number' ? data.count : 0;
+      setPoolFacts(factsCount);
+      
+      // Update hasFactsed state
+      setHasFactsed(!!data.userLiked);
+    } catch (error) {
+      // Silently handle error and keep using localStorage data
+    }
+  };
+
+  // Fetch FACTS data when component mounts and when wallet changes
+  useEffect(() => {
+    if (ready && id) {
+      fetchPoolFacts();
+    }
+  }, [id, wallets, ready]);
+  */
 
   // Loading state
   if (isPoolLoading) {
@@ -528,9 +646,19 @@ export default function PoolDetailPage() {
                       : 'text-orange-500 hover:text-orange-500'
                   )}
                   onClick={handleFacts}
+                  disabled={isFactsProcessing}
                 >
-                  FACTS
-                  <span className='ml-1'>{poolFacts}</span>
+                  {isFactsProcessing ? (
+                    <span className='flex items-center justify-center'>
+                      <span className='mr-1 h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent'></span>
+                      FACTS
+                    </span>
+                  ) : (
+                    <>
+                      FACTS{hasFactsed ? <span className='ml-1.5'>🦅</span> : ''}{' '}
+                      <span className='ml-1.5'>{poolFacts}</span>
+                    </>
+                  )}
                 </Button>
 
                 <Button
@@ -556,47 +684,8 @@ export default function PoolDetailPage() {
             poolId={pool.id}
             initialComments={comments || []}
             isLoading={isCommentsLoading}
+            error={commentsError}
           />
-
-          <Tabs
-            defaultValue='comments'
-            onValueChange={(value) => {
-              if (value === 'comments') {
-                refetchComments();
-              }
-            }}
-          >
-            <TabsList className='w-full'>
-              <TabsTrigger value='comments' className='flex-1'>
-                <MessageCircle className='mr-2' size={16} />
-                Comments ({comments?.length ?? 0})
-              </TabsTrigger>
-              <TabsTrigger value='details' className='flex-1'>
-                Details
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value='comments' className='pt-4'>
-              {/* Comments section content is now handled outside the tabs */}
-            </TabsContent>
-            <TabsContent value='details' className='pt-4'>
-              <div className='space-y-4'>
-                <div>
-                  <h4 className='font-medium'>Closure Criteria</h4>
-                  <p className='text-muted-foreground'>
-                    The result will be determined based on official sources when available.
-                  </p>
-                </div>
-                <div>
-                  <h4 className='font-medium'>Pool ID</h4>
-                  <p className='text-muted-foreground font-mono text-sm'>{pool.id}</p>
-                </div>
-                <div>
-                  <h4 className='font-medium'>Status</h4>
-                  <p className='text-muted-foreground'>{pool.status}</p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
         </CardContent>
       </Card>
     </div>
