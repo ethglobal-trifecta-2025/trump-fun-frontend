@@ -47,7 +47,6 @@ export function UserBettingPost({
   truthSocialId,
 }: UserBettingPostProps) {
   const [highlight, setHighlight] = useState(false);
-  const [timePercent, setTimePercent] = useState(100);
   const { data: userBetData } = useQuery({
     queryKey: ['user-profile-post', id],
     queryFn: async () => {
@@ -62,25 +61,6 @@ export function UserBettingPost({
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
-
-  // Calculate time percentage for progress bar
-  useEffect(() => {
-    if (status === PoolStatus.Pending) {
-      const updateTimePercent = () => {
-        const now = new Date().getTime();
-        const closeTime = closesAt * 1000;
-        const creationTime = time * 1000;
-        const totalDuration = closeTime - creationTime;
-        const elapsed = now - creationTime;
-        const percent = Math.max(0, Math.min(100, 100 - (elapsed / totalDuration) * 100));
-        setTimePercent(percent);
-      };
-
-      updateTimePercent();
-      const interval = setInterval(updateTimePercent, 30000); // Update every 30 seconds
-      return () => clearInterval(interval);
-    }
-  }, [closesAt, time, status]);
 
   // Create highlight effect when component mounts
   useEffect(() => {
@@ -117,16 +97,6 @@ export function UserBettingPost({
       }`}
     >
       <div className='p-4'>
-        {/* Time progress bar for active bets */}
-        {/* {isActive && !isClosed && (
-          <div className='-mt-4 mb-3 h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
-            <div
-              className='h-full bg-orange-500 transition-all duration-500 ease-in-out'
-              style={{ width: `${timePercent}%` }}
-            ></div>
-          </div>
-        )} */}
-
         <div className='mb-2 flex items-center gap-2'>
           <Avatar className='h-10 w-10 overflow-hidden rounded-full'>
             <AvatarImage
@@ -134,7 +104,7 @@ export function UserBettingPost({
               alt={username}
             />
             <AvatarFallback>
-                <Image src='/trump.jpeg' alt={username} width={40} height={40} />
+              <Image src='/trump.jpeg' alt={username} width={40} height={40} />
             </AvatarFallback>
           </Avatar>
           <div className='flex-1'>

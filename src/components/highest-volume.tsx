@@ -13,6 +13,7 @@ import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { TrendingUp } from 'lucide-react';
 import { TrendingBet } from './trending-bet';
+import { POLLING_INTERVALS } from '@/consts';
 
 export function HighestVolume() {
   const { tokenType } = useTokenContext();
@@ -28,6 +29,7 @@ export function HighestVolume() {
     },
     context: { name: 'volumeSearch' },
     notifyOnNetworkStatusChange: true,
+    pollInterval: POLLING_INTERVALS['highest-volume'],
   });
 
   // Simplified volume formatting
