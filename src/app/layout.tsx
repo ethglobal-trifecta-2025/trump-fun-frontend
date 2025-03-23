@@ -5,6 +5,7 @@ import Nav from '@/components/common/nav';
 import { ApolloClientProvider } from '@/components/providers/apollo-provider';
 import { PrivyAuthProvider } from '@/components/providers/privy-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 import { TokenProvider } from '@/hooks/useTokenContext';
 import type { Metadata } from 'next';
 import './globals.css';
@@ -44,6 +45,8 @@ export default function RootLayout({
                 <ApolloClientProvider>
                   <Nav />
                   <div className='pt-16 md:pt-20'>{children}</div>
+                  <Toaster />
+                  {children}
                   <MobileNav />
                 </ApolloClientProvider>
               </div>

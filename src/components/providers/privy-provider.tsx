@@ -46,7 +46,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
           createOnLogin: 'all-users',
         },
         defaultChain: baseSepolia,
-        supportedChains: [baseSepolia, mainnet, base],
+        supportedChains: [baseSepolia],
         passkeys: {
           shouldUnlinkOnUnenrollMfa: false,
           shouldUnenrollMfaOnUnlink: false,

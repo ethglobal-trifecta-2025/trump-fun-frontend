@@ -259,7 +259,6 @@ export default function PoolDetailPage() {
 
   // Remove the log for approved amount that's causing noise
   useEffect(() => {
-    // Silently update approvedAmount - no logging
     setApprovedAmount(approvedAmount);
   }, [approvedAmount]);
 
