@@ -32,6 +32,7 @@ import { togglePoolFacts } from '@/app/actions/pool-facts';
 import { GET_POOL } from '@/app/queries';
 import TruthSocial from '@/components/common/truth-social';
 import { Related } from '@/components/Related';
+import { Activity } from '@/components/Activity';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
@@ -924,7 +925,7 @@ export default function PoolDetailPage() {
                   error={commentsError}
                 />
               )}
-              {selectedTab === 'activity' && <div>Activity content goes here...</div>}
+              {selectedTab === 'activity' && <Activity pool={pool} />}
               {selectedTab === 'related' && <Related question={pool.question} />}
             </div>
           </div>

@@ -878,7 +878,6 @@ export enum PayoutClaimed_OrderBy {
   ChainName = 'chainName',
   Id = 'id',
   Pool = 'pool',
-  PoolId = 'poolId',
   PoolBetsCloseAt = 'pool__betsCloseAt',
   PoolChainId = 'pool__chainId',
   PoolChainName = 'pool__chainName',
