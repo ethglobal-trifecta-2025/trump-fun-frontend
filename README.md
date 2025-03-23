@@ -62,14 +62,27 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ## Project Structure
 
 ```
-/src
-  /app            # Next.js App Router structure
-  /components     # Reusable UI components
-  /hooks          # Custom React hooks
-  /lib            # Utility functions and shared logic
-  /services       # API and blockchain interaction services
-  /styles         # Global styles
-  /types          # TypeScript type definitions
+/trump-fun-frontend
+  /public           # Static assets
+  /src
+    /abi            # Blockchain contract ABIs
+    /app            # Next.js App Router pages and layouts
+      /api          # API routes
+      /(routes)     # Various app routes/pages
+    /components     # Reusable UI components
+    /consts         # Constants and configuration values
+    /hooks          # Custom React hooks
+    /lib            # Utility functions and shared logic
+    /server         # Utility for server
+    /services       # API and blockchain interaction services
+    /types          # TypeScript type definitions
+    /utils          # Helper utilities
+  /.env.example     # Environment variables example
+  /.gitignore       # Git ignore file
+  /next.config.ts   # Next.js configuration
+  /package.json     # Project dependencies
+  /tsconfig.json    # TypeScript configuration
+  /README.md        # Project documentation
 ```
 
 ## Connecting to Other Services
