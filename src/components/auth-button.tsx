@@ -21,7 +21,7 @@ export function AuthButton() {
   // Only check authReady initially
   if (!authReady) {
     return (
-      <div className='flex gap-2'>
+      <div className='flex gap-2 w-full'>
         <Button size='lg' disabled className='h-12 w-full max-w-48 bg-gray-400'>
           Loading Auth...
         </Button>

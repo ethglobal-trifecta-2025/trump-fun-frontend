@@ -55,7 +55,7 @@ export default function Home() {
     <div className='bg-background flex min-h-screen'>
       <main className='flex-1'>
         <section>
-          <div className='container'>
+          <div className='container px-4 md:px-0'>
             <div className='relative flex flex-col items-center gap-4 text-center'>
               <Image
                 src='/hero.png'
@@ -64,7 +64,7 @@ export default function Home() {
                 height={1000}
                 className='h-auto w-full rounded-t-lg'
               />
-              <div className='mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
+              <div className=' mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
                 <Button
                   variant='default'
                   className='h-12 w-full bg-orange-500 text-lg font-semibold text-white hover:bg-orange-600 md:max-w-48'

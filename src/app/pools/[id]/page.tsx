@@ -818,7 +818,7 @@ export default function PoolDetailPage() {
                 />
               </div>
 
-              <div className='mb-4 flex flex-col gap-2 sm:flex-row'>
+              <div className='relative mb-4 flex flex-col gap-2 sm:flex-row'>
                 <div className='relative flex-1'>
                   <Input
                     type='text'
@@ -874,12 +874,12 @@ export default function PoolDetailPage() {
                   <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
                     <span className='mr-1'>{tokenLogo}</span> {symbol}
                   </div>
-                  {balance && (
-                    <div className='absolute -bottom-5 left-0 text-xs text-gray-400'>
-                      Balance: {formattedBalance}
-                    </div>
-                  )}
                 </div>
+                {balance && (
+                  <div className='-bottom-5 left-0 text-xs text-gray-400 md:absolute'>
+                    Balance: {formattedBalance}
+                  </div>
+                )}
 
                 <Button
                   onClick={handleBet}

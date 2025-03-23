@@ -72,12 +72,14 @@ export default function Nav() {
                 Trump.fun
               </SheetTitle>
               <div className='mt-6 flex flex-1 flex-col items-center gap-6'>
-                <div className='mb-4 flex items-center gap-2'>
+                <div className='mb-2 flex items-center gap-2'>
                   <div className='text-sm text-gray-400'>Balance</div>
                   <div className='font-bold'>
                     {tokenLogo} {formattedBalance}
                   </div>
                 </div>
+                <TokenSwitch />
+
                 <div className='w-full space-y-4'>
                   {navItems.map((item) => (
                     <Button

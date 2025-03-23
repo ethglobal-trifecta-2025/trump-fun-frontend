@@ -584,8 +584,8 @@ export function BettingPost({
           })}
         </div>
 
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <div className='flex items-center gap-2 w-full justify-between md:w-auto'>
             {closesAt && !isNaN(new Date(closesAt * 1000).getTime()) && (
               <CountdownTimer closesAt={closesAt * 1000} />
             )}
@@ -603,7 +603,7 @@ export function BettingPost({
             </Button>
           </div>
 
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-2  w-full justify-between  md:w-auto'>
             <Button
               variant='ghost'
               size='sm'
