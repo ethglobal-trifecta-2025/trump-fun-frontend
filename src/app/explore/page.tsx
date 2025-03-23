@@ -12,14 +12,14 @@ import { Search } from 'lucide-react';
 import Link from 'next/link';
 
 import { GET_POOLS } from '@/app/queries';
+import { POLLING_INTERVALS } from '@/consts';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { TRUMP_FUN_TWITTER_URL, TRUMP_FUN_TWITTER_USERNAME } from '@/utils/config';
 import { useQuery } from '@apollo/client';
 import Image from 'next/image';
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { POLLING_INTERVALS } from '@/consts';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
@@ -52,7 +52,19 @@ export default function BettingPlatform() {
       ending_soon: {
         orderBy: Pool_OrderBy.BetsCloseAt,
         orderDirection: OrderDirection.Asc,
-        filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
+        filter: {
+          status_in: [PoolStatus.Pending, PoolStatus.None],
+          betsCloseAt_gt: Math.floor(Date.now() / 1000).toString(),
+          betsCloseAt_lt: (Math.floor(Date.now() / 1000) + 86400).toString(),
+        },
+      },
+      ended: {
+        orderBy: Pool_OrderBy.BetsCloseAt,
+        orderDirection: OrderDirection.Desc,
+        filter: {
+          status_in: [PoolStatus.Pending, PoolStatus.None],
+          betsCloseAt_lt: Math.floor(Date.now() / 1000).toString(),
+        },
       },
       recently_closed: {
         orderBy: Pool_OrderBy.GradedBlockTimestamp,
@@ -257,6 +269,7 @@ export default function BettingPlatform() {
             {renderFilterButton('newest', 'Newest')}
             {renderFilterButton('highest', 'Highest Vol.')}
             {renderFilterButton('ending_soon', 'Ending Soon')}
+            {renderFilterButton('ended', 'Ended')}
             {renderFilterButton('recently_closed', 'Recently Closed')}
             <Separator className='my-2' />
           </nav>
@@ -309,6 +322,12 @@ export default function BettingPlatform() {
                       className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
                     >
                       Ending Soon
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value='ended'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
+                      Ended
                     </TabsTrigger>
                     <TabsTrigger
                       value='recently_closed'

@@ -56,9 +56,16 @@ export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: En
     };
 
     calculateRemainingTime();
-    const timer = setInterval(calculateRemainingTime, 1000);
 
-    return () => clearInterval(timer);
+    // Only set up the interval if the poll hasn't ended yet
+    let timer: NodeJS.Timeout | null = null;
+    if (parseInt(timeLeft) * 1000 > Date.now()) {
+      timer = setInterval(calculateRemainingTime, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [timeLeft]);
 
   return (
