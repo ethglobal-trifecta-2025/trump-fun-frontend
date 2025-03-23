@@ -571,7 +571,7 @@ export default function ProfilePage() {
                   return (
                     <UserBettingPost
                       key={bet.id}
-                      id={bet.id}
+                      id={bet.pool.id}
                       avatar='/trump.jpeg'
                       username='realDonaldTrump'
                       time={pool.createdAt}

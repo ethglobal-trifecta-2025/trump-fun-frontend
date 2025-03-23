@@ -10,7 +10,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 // Import ABIs and types
-import { Pool, PoolStatus } from '@/lib/__generated__/graphql';
+import { Bet_Filter, Bet_OrderBy, Pool, PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 // Import hooks
 import { useTokenBalance } from '@/hooks/useTokenBalance';
@@ -29,17 +29,17 @@ import { formatDistanceToNow } from 'date-fns';
 
 // Import utils
 import { togglePoolFacts } from '@/app/actions/pool-facts';
-import { GET_POOL } from '@/app/queries';
+import { GET_BETS, GET_POOL } from '@/app/queries';
+import { Activity } from '@/components/Activity';
 import TruthSocial from '@/components/common/truth-social';
 import { Related } from '@/components/Related';
-import { Activity } from '@/components/Activity';
+import CountdownTimer from '@/components/Timer';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-import Image from 'next/image';
-import CountdownTimer from '@/components/Timer';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import Image from 'next/image';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -108,6 +108,19 @@ export default function PoolDetailPage() {
     error: poolError,
   } = useQueryA<{ pool: Pool }>(GET_POOL, {
     variables: { poolId: id },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const { data: placedBets } = useQueryA<{ bets: any[] }>(GET_BETS, {
+    variables: {
+      filter: {
+        user: account.address,
+        poolId: id,
+      } as Bet_Filter,
+      orderBy: Bet_OrderBy.CreatedAt,
+      orderDirection: 'desc',
+    },
+    context: { name: `placedbets${id}` },
     notifyOnNetworkStatusChange: true,
   });
 
@@ -841,6 +854,14 @@ export default function PoolDetailPage() {
                 </div>
 
                 <Button
+                  onClick={handleBet}
+                  disabled={!betAmount || selectedOption === null || !authenticated || isPending}
+                  className='h-10 w-full bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black sm:w-auto dark:text-black'
+                >
+                  {isPending ? 'Processing...' : 'Confirm Bet'}
+                </Button>
+
+                <Button
                   variant={hasFactsed ? 'default' : 'outline'}
                   size='sm'
                   className={cn(
@@ -864,14 +885,6 @@ export default function PoolDetailPage() {
                     </>
                   )}
                 </Button>
-
-                <Button
-                  onClick={handleBet}
-                  disabled={!betAmount || selectedOption === null || !authenticated || isPending}
-                  className='h-10 w-full bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black sm:w-auto dark:text-black'
-                >
-                  {isPending ? 'Processing...' : 'Confirm Bet'}
-                </Button>
               </div>
 
               {selectedOption !== null && (
@@ -880,6 +893,20 @@ export default function PoolDetailPage() {
                   {symbol} on &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
+            </div>
+          )}
+
+          {placedBets?.bets && placedBets.bets.length > 0 && (
+            <div className='mt-6 border-t border-gray-800 pt-4'>
+              <h4 className='mb-2 text-sm font-bold'>Your Bets</h4>
+              {placedBets.bets.map((bet: { id: string; option: number; amount: number }) => (
+                <div key={bet.id} className='mb-2 flex items-center justify-between'>
+                  <span className='text-sm'>{pool.options[bet.option]}</span>
+                  <span className='text-sm'>
+                    {bet.amount / Math.pow(10, USDC_DECIMALS)} {symbol}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
