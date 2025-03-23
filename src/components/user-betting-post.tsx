@@ -69,13 +69,21 @@ export function UserBettingPost({
             <div className='font-bold'>{username}</div>
           </div>
           <div className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400'>
-            <Badge
-              variant={isActive ? 'default' : 'secondary'}
-              className={isActive ? 'bg-green-500' : ''}
-            >
-              {isActive ? 'ACTIVE' : 'CLOSED'}
-            </Badge>
-            <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
+            {isActive ? (
+              <div className='flex items-center'>
+                <span className='relative flex h-3 w-3'>
+                  <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75'></span>
+                  <span className='relative inline-flex h-3 w-3 rounded-full bg-green-500'></span>
+                </span>
+              </div>
+            ) : (
+              <Badge variant='secondary' className='bg-red-500'>
+                CLOSED
+              </Badge>
+            )}
+            <span className='text-muted-foreground text-xs'>
+              {formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}
+            </span>
             {truthSocialId && <TruthSocial postId={truthSocialId} />}
           </div>
         </div>
@@ -107,7 +115,7 @@ export function UserBettingPost({
                 </span>
               </div>
               <div className='rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300'>
-                Total Volume: {resolvedTokenType === TokenType.USDC ? '💲' : '🦅'} {volume}
+                Total Vol: {resolvedTokenType === TokenType.USDC ? '💲' : '🦅'} {volume}
               </div>
             </div>
             {userBet.payout && (

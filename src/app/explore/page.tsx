@@ -17,13 +17,22 @@ import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generate
 import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
 import { TRUMP_FUN_TWITTER_URL, TRUMP_FUN_TWITTER_USERNAME } from '@/utils/config';
 import { useQuery } from '@apollo/client';
-import { useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
+
+  // Infinite scroll states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [displayedPools, setDisplayedPools] = useState<Pool[]>([]);
+  const [fetchingMore, setFetchingMore] = useState(false);
+  const ITEMS_PER_PAGE = 10;
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const filterConfigs = useMemo(
     () => ({
@@ -35,7 +44,9 @@ export default function BettingPlatform() {
       highest: {
         orderBy: tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
         orderDirection: OrderDirection.Desc,
-        filter: {},
+        filter: {
+          status_in: [PoolStatus.Pending, PoolStatus.None],
+        },
       },
       ending_soon: {
         orderBy: Pool_OrderBy.BetsCloseAt,
@@ -43,7 +54,7 @@ export default function BettingPlatform() {
         filter: { status_in: [PoolStatus.Pending, PoolStatus.None] },
       },
       recently_closed: {
-        orderBy: Pool_OrderBy.BetsCloseAt,
+        orderBy: Pool_OrderBy.GradedBlockTimestamp,
         orderDirection: OrderDirection.Desc,
         filter: {
           status_in: [PoolStatus.Graded, PoolStatus.Regraded],
@@ -59,28 +70,22 @@ export default function BettingPlatform() {
     [activeFilter, filterConfigs]
   );
 
-  const { data: pools, refetch: refetchPools, loading: isLoading } = useQuery(GET_POOLS, {
+  const {
+    data: pools,
+    refetch: refetchPools,
+    loading: isLoading,
+    fetchMore,
+  } = useQuery(GET_POOLS, {
     variables: {
       filter,
       orderBy,
       orderDirection,
+      first: ITEMS_PER_PAGE,
+      skip: 0,
     },
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,
   });
-
-  const handleFilterChange = (value: string) => {
-    setActiveFilter(value);
-
-    // Force refetch after filter change
-    setTimeout(() => {
-      refetchPools();
-    }, 100);
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
 
   const filteredPools = useMemo(() => {
     if (!pools?.pools) return [];
@@ -89,6 +94,103 @@ export default function BettingPlatform() {
     const query = searchQuery.toLowerCase().trim();
     return pools.pools.filter((pool: Pool) => pool.question.toLowerCase().includes(query));
   }, [pools?.pools, searchQuery]);
+
+  // Initialize displayed pools when data loads or filters change
+  useEffect(() => {
+    if (filteredPools.length) {
+      setDisplayedPools(filteredPools);
+      setPage(1);
+      setHasMore(filteredPools.length >= ITEMS_PER_PAGE);
+    }
+  }, [filteredPools]);
+
+  // Handle intersection observer for infinite scroll
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasMore && !isLoading && !fetchingMore && !searchQuery) {
+        setFetchingMore(true);
+        fetchMore({
+          variables: {
+            skip: page * ITEMS_PER_PAGE,
+            first: ITEMS_PER_PAGE,
+          },
+          updateQuery: (prev, { fetchMoreResult }) => {
+            setFetchingMore(false);
+
+            if (!fetchMoreResult?.pools?.length) {
+              setHasMore(false);
+              return prev;
+            }
+
+            setPage((prevPage) => prevPage + 1);
+
+            // Check if we've reached the end
+            if (fetchMoreResult.pools.length < ITEMS_PER_PAGE) {
+              setHasMore(false);
+            }
+
+            const newPools = [...prev.pools, ...fetchMoreResult.pools];
+            setDisplayedPools(newPools);
+
+            return {
+              ...prev,
+              pools: newPools,
+            };
+          },
+        }).catch(() => {
+          setFetchingMore(false);
+        });
+      }
+    },
+    [fetchMore, page, hasMore, isLoading, fetchingMore, searchQuery]
+  );
+
+  // Set up the intersection observer
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: '100px', // Start loading a bit before reaching the bottom
+      threshold: 0.1,
+    });
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [handleObserver]);
+
+  const handleFilterChange = (value: string) => {
+    setActiveFilter(value);
+    setDisplayedPools([]);
+    setPage(1);
+    setHasMore(true);
+    setFetchingMore(false);
+
+    // Force refetch after filter change
+    setTimeout(() => {
+      refetchPools({
+        filter: filterConfigs[value as keyof typeof filterConfigs].filter,
+        orderBy: filterConfigs[value as keyof typeof filterConfigs].orderBy,
+        orderDirection: filterConfigs[value as keyof typeof filterConfigs].orderDirection,
+        first: ITEMS_PER_PAGE,
+        skip: 0,
+      });
+    }, 100);
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
 
   const renderFilterButton = (value: string, label: string) => (
     <Button
@@ -100,10 +202,19 @@ export default function BettingPlatform() {
     </Button>
   );
 
-  if (isLoading) {
+  // Only show full loading screen on initial load when there are no posts
+  const showFullLoadingScreen = isLoading && page === 1 && displayedPools.length === 0;
+
+  if (showFullLoadingScreen) {
     return (
-      <div className='container mx-auto max-w-4xl px-4 py-8 h-screen flex flex-col justify-center items-center'>
-        <Image src='/loader.gif' alt='Loading' width={100} height={100} className='animate-spin rounded-full size-40 z-50' />
+      <div className='container mx-auto flex h-screen max-w-4xl flex-col items-center justify-center px-4 py-8'>
+        <Image
+          src='/loader.gif'
+          alt='Loading'
+          width={100}
+          height={100}
+          className='z-50 size-40 animate-spin rounded-full'
+        />
       </div>
     );
   }
@@ -209,33 +320,65 @@ export default function BettingPlatform() {
 
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
-                {filteredPools.map((pool: Pool) => {
-                  return (
-                    <BettingPost
-                      key={pool.id}
-                      id={pool.id}
-                      avatar='/trump.jpeg'
-                      username='realDonaldTrump'
-                      time={pool.createdAt}
-                      question={pool.question}
-                      options={pool.options}
-                      commentCount={0}
-                      truthSocialId={pool.originalTruthSocialPostId}
-                      volume={calculateVolume(pool, tokenType)}
-                      optionBets={pool.options.map((_, index) =>
-                        getBetTotals(pool, tokenType, index)
-                      )}
-                      status={pool.status}
-                    />
-                  );
-                })}
+                {/* Initial loading indicator (if no posts yet) */}
+                {isLoading && page === 1 && displayedPools.length === 0 && (
+                  <div className='flex justify-center py-4'>
+                    <div className='size-8 animate-spin rounded-full border-b-2 border-gray-900 dark:border-white'></div>
+                  </div>
+                )}
+
+                {/* Display posts */}
+                {displayedPools.map((pool: Pool) => (
+                  <BettingPost
+                    key={pool.id}
+                    id={pool.id}
+                    avatar='/trump.jpeg'
+                    username='realDonaldTrump'
+                    time={pool.createdAt}
+                    question={pool.question}
+                    options={pool.options}
+                    commentCount={0}
+                    truthSocialId={pool.originalTruthSocialPostId}
+                    volume={calculateVolume(pool, tokenType)}
+                    optionBets={pool.options.map((_, index) =>
+                      getBetTotals(pool, tokenType, index)
+                    )}
+                    closesAt={pool.betsCloseAt}
+                    gradedBlockTimestamp={pool.gradedBlockTimestamp}
+                    status={pool.status}
+                  />
+                ))}
+
+                {/* Intersection observer target element */}
+                <div ref={loadMoreRef} style={{ height: '20px', width: '100%' }} />
+
+                {/* Bottom loader for infinite scroll */}
+                {fetchingMore && (
+                  <div className='flex justify-center py-6'>
+                    <div className='size-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900 dark:border-gray-700 dark:border-t-white'></div>
+                  </div>
+                )}
+
+                {/* No more content message */}
+                {!hasMore && displayedPools.length > 0 && !fetchingMore && (
+                  <div className='py-4 text-center text-gray-500 dark:text-gray-400'>
+                    No more pools to load
+                  </div>
+                )}
+
+                {/* No results message */}
+                {displayedPools.length === 0 && !isLoading && !fetchingMore && (
+                  <div className='py-4 text-center text-gray-500 dark:text-gray-400'>
+                    No pools found
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </main>
 
         {/* Right Sidebar */}
-        <div className='hidden w-80 overflow-y-auto border-l border-gray-200 p-4 md:block dark:border-gray-800'>
+        <div className='hidden w-80 gap-4 overflow-y-auto border-l border-gray-200 p-4 md:block dark:border-gray-800'>
           {/* Search */}
           <div className='mb-6'>
             <div className='relative'>
@@ -252,7 +395,7 @@ export default function BettingPlatform() {
             </div>
           </div>
 
-          {/* Highest Volume */}
+          {/* Highest Vol */}
           <HighestVolume />
 
           {/* Ending Soon */}

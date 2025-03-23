@@ -195,7 +195,8 @@ export default function ProfilePage() {
               <div className='text-center'>
                 <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                 <div className='font-bold'>
-                  {tokenTextLogo}{formattedBalance}
+                  {tokenTextLogo}
+                  {formattedBalance}
                 </div>
               </div>
               <div className='text-center'>
@@ -210,7 +211,8 @@ export default function ProfilePage() {
             </div>
 
             <p className='text-sm text-gray-500 dark:text-gray-400'>
-              Withdrawable Balance: {tokenTextLogo}{formattedWithdrawableBalance}
+              Withdrawable Balance: {tokenTextLogo}
+              {formattedWithdrawableBalance}
             </p>
 
             <div className='mb-2'>
@@ -400,7 +402,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Highest Volume */}
+          {/* Highest Vol */}
           {memoizedHighestVolume}
 
           {/* Ending Soon */}

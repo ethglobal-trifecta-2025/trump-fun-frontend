@@ -1,6 +1,8 @@
+'use client';
+
 import { GET_POOLS } from '@/app/queries';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { OrderDirection, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
+import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { Clock } from 'lucide-react';
@@ -68,7 +70,7 @@ export function EndingSoon() {
 
       <div className='space-y-4'>
         {filteredEndingSoonPools.length > 0
-          ? filteredEndingSoonPools.map((pool) => {
+          ? filteredEndingSoonPools.map((pool: Pool) => {
               return (
                 <EndingSoonBet
                   key={pool.id}

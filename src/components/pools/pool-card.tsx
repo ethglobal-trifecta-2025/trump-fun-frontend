@@ -9,6 +9,7 @@ import { formatDistance } from 'date-fns';
 import Link from 'next/link';
 import TruthSocial from '../common/truth-social';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import CountdownTimer from '../Timer';
 
 export function PoolCard({ pool }: { pool: Pool }) {
   const { tokenType } = useTokenContext();
@@ -45,10 +46,6 @@ export function PoolCard({ pool }: { pool: Pool }) {
     } else {
       return 0;
     }
-  });
-
-  const timeUntilClose = formatDistance(new Date(Number(pool.betsCloseAt) * 1000), new Date(), {
-    addSuffix: true,
   });
 
   const isClosed = new Date(Number(pool.betsCloseAt) * 1000) < new Date();
@@ -122,9 +119,11 @@ export function PoolCard({ pool }: { pool: Pool }) {
           ) : null}
           <div className='flex items-center justify-between'>
             <div className='text-muted-foreground text-sm'>
-              {isClosed ? 'Bets are closed' : `Bets close in: ${timeUntilClose}`}
+              {isClosed ? 'Bets are closed' : <CountdownTimer closesAt={pool.betsCloseAt * 1000} />}
             </div>
-            <div className='text-sm font-medium'>Volume: {calculateVolume(pool, tokenType)}</div>
+            <div className='text-muted-foreground text-sm font-medium'>
+              Vol: {calculateVolume(pool, tokenType)}
+            </div>
           </div>
           <Link href={`/pools/${pool.id}`} className='mt-auto pt-4'>
             <Button className='w-full bg-orange-500 text-white hover:bg-orange-600'>

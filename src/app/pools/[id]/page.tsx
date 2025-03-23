@@ -31,12 +31,13 @@ import { formatDistanceToNow } from 'date-fns';
 import { togglePoolFacts } from '@/app/actions/pool-facts';
 import { GET_POOL } from '@/app/queries';
 import TruthSocial from '@/components/common/truth-social';
+import { Related } from '@/components/Related';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-import { Related } from '@/components/Related';
 import Image from 'next/image';
+import CountdownTimer from '@/components/Timer';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -533,8 +534,14 @@ export default function PoolDetailPage() {
   // Loading state
   if (isPoolLoading) {
     return (
-      <div className='container mx-auto max-w-4xl px-4 py-8 h-screen flex flex-col justify-center items-center'>
-        <Image src='/loader.gif' alt='Loading' width={100} height={100} className='animate-spin rounded-full size-40 z-50' />
+      <div className='container mx-auto flex h-screen max-w-4xl flex-col items-center justify-center px-4 py-8'>
+        <Image
+          src='/loader.gif'
+          alt='Loading'
+          width={100}
+          height={100}
+          className='z-50 size-40 animate-spin rounded-full'
+        />
       </div>
     );
   }
@@ -621,18 +628,25 @@ export default function PoolDetailPage() {
               </div>
             </div>
             <div className='flex items-center gap-3'>
-              <Badge
-                variant={isActive ? 'default' : 'secondary'}
-                className={isActive ? 'bg-green-500' : ''}
-              >
-                {isActive ? 'ACTIVE' : 'CLOSED'}
-              </Badge>
+              {isActive ? (
+                <div className='flex items-center'>
+                  <span className='relative flex h-3 w-3'>
+                    <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75'></span>
+                    <span className='relative inline-flex h-3 w-3 rounded-full bg-green-500'></span>
+                  </span>
+                </div>
+              ) : (
+                <Badge variant='secondary' className='bg-red-500'>
+                  CLOSED
+                </Badge>
+              )}
               <span className='text-muted-foreground text-xs'>
                 {formatDistanceToNow(new Date(pool.createdAt * 1000), { addSuffix: true })}
               </span>
               <TruthSocial postId={pool.originalTruthSocialPostId} />
             </div>
           </div>
+
           <CardTitle className='text-2xl font-bold'>{pool.question}</CardTitle>
         </CardHeader>
 
@@ -673,13 +687,18 @@ export default function PoolDetailPage() {
           <div className='mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3'>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <TrendingUp className='mx-auto mb-2 text-green-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Total Volume</p>
+              <p className='text-muted-foreground text-sm'>Total Vol</p>
               <p className='font-bold'>{totalVolume}</p>
             </div>
-            <div className='bg-muted rounded-lg p-4 text-center'>
+            <div className='bg-muted flex items-center justify-center rounded-lg p-4 text-center'>
               <Clock className='mx-auto mb-2 text-green-500' size={24} />
               <p className='text-muted-foreground text-sm'>Time Left</p>
-              <p className='font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
+
+              {pool.betsCloseAt && !isNaN(new Date(pool.betsCloseAt * 1000).getTime()) ? (
+                <CountdownTimer closesAt={pool.betsCloseAt * 1000} />
+              ) : (
+                <p className='font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
+              )}
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
               <Users className='mx-auto mb-2 text-green-500' size={24} />

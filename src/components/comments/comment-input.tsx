@@ -41,7 +41,7 @@ const CommentInput = ({
             placeholder={isWalletConnected ? 'Add a comment...' : 'Sign in to comment...'}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className='min-h-[80px] w-full rounded-md border p-3 dark:bg-gray-800'
+            className='border-input bg-background ring-offset-background focus-visible:ring-ring min-h-[80px] w-full rounded-md border p-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
           />
 
           <div className='flex justify-end'>

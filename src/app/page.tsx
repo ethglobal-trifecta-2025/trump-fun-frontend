@@ -12,20 +12,20 @@ export default function Home() {
   return (
     <div className='bg-background flex min-h-screen'>
       <main className='flex-1'>
-        <section className='pt-8'>
+        <section>
           <div className='container px-4 md:px-6'>
-            <div className='flex flex-col items-center gap-4 text-center relative'>
+            <div className='relative flex flex-col items-center gap-4 text-center'>
               <Image
                 src='/hero.png'
                 alt='Trump'
                 width={1000}
                 height={1000}
-                className='w-full h-auto rounded-lg'
+                className='h-auto w-full rounded-lg'
               />
-              <div className='flex flex-col md:flex-row gap-2 w-full md:absolute md:bottom-28 md:left-10 md:transform mt-4 md:mt-0'>
+              <div className='mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
                 <Button
                   variant='default'
-                  className='bg-orange-500 text-white hover:bg-orange-600 w-full md:max-w-48 h-12 text-lg font-semibold'
+                  className='h-12 w-full bg-orange-500 text-lg font-semibold text-white hover:bg-orange-600 md:max-w-48'
                   asChild
                 >
                   <Link href='/explore'>
@@ -36,12 +36,6 @@ export default function Home() {
                 <AuthButton />
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className='py-12'>
-          <div className='container px-4 md:px-6'>
-            <PoolList />
           </div>
         </section>
         <section className='bg-muted/50 py-12 md:py-18'>
@@ -76,6 +70,12 @@ export default function Home() {
           </div>
         </section>
 
+        <section className='py-12'>
+          <div className='container px-4 md:px-6'>
+            <PoolList />
+          </div>
+        </section>
+
         <footer className='bg-background border-t border-gray-200 py-8 dark:border-gray-800'>
           <div className='container px-4 md:px-6'>
             <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
@@ -83,9 +83,6 @@ export default function Home() {
                 <div className='text-2xl font-bold text-orange-500'>
                   <Link href='/'>Trump.fun</Link>
                 </div>
-                <p className='text-muted-foreground text-center text-sm md:text-left'>
-                  Predict what Trump will do next and win big!
-                </p>
               </div>
               <div className='flex flex-col items-center gap-6 md:flex-row'>
                 <Link href={TRUMP_FUN_TG_URL} target='_blank' rel='noopener noreferrer'>

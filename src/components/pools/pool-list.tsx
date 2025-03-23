@@ -39,9 +39,8 @@ export function PoolList() {
 
   return (
     <div>
-      <h2 className='mb-6 text-2xl font-bold'>Active Prediction Markets</h2>
       <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-        {pools.pools.map((pool) => (
+        {pools.pools.map((pool: Pool) => (
           <PoolCard key={pool.id} pool={pool as unknown as Pool} />
         ))}
       </div>

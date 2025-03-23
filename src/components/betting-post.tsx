@@ -13,18 +13,19 @@ import { PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageCircle } from 'lucide-react';
+import { HandCoins, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import TruthSocial from './common/truth-social';
 import { Badge } from './ui/badge';
+import CountdownTimer from './Timer';
 
 interface BettingPostProps {
   id: string;
   avatar: string;
   username: string;
-  time: number; // Changed to number (unix timestamp)
+  time: number; // Unix timestamp
   question: string;
   options: string[];
   truthSocialId: string;
@@ -32,13 +33,15 @@ interface BettingPostProps {
   commentCount?: number;
   volume?: string;
   optionBets?: string[];
+  closesAt?: number;
+  gradedBlockTimestamp?: number;
 }
 
 export function BettingPost({
   id,
   avatar,
   username,
-  time, // Now expecting unix timestamp
+  time,
   question,
   options,
   truthSocialId,
@@ -46,30 +49,34 @@ export function BettingPost({
   commentCount = 0,
   volume = '0',
   optionBets = [],
+  gradedBlockTimestamp,
+  closesAt,
 }: BettingPostProps) {
+  // Form state
   const [betAmount, setBetAmount] = useState<string>('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showBetForm, setShowBetForm] = useState(false);
+  const [sliderValue, setSliderValue] = useState([0]);
+  const [isUserTyping, setIsUserTyping] = useState(false);
+  const [userEnteredValue, setUserEnteredValue] = useState<string>('');
+
+  // Action states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState('0');
+
+  // FACTS feature state
   const [factsCount, setFactsCount] = useState(() => {
-    // Use localStorage as temporary fallback until Supabase is set up
     if (typeof window !== 'undefined') {
       return parseInt(localStorage.getItem(`pool_facts_${id}`) || '0', 10);
     }
     return 5;
   });
   const [hasFactsed, setHasFactsed] = useState(() => {
-    // Use localStorage as temporary fallback until Supabase is set up
     if (typeof window !== 'undefined') {
       return localStorage.getItem(`pool_facts_liked_${id}`) === 'true';
     }
     return false;
   });
-  const [sliderValue, setSliderValue] = useState([0]);
-  const [isFactsProcessing, setIsFactsProcessing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [approvedAmount, setApprovedAmount] = useState('0');
-  const [isUserTyping, setIsUserTyping] = useState(false);
-  const [userEnteredValue, setUserEnteredValue] = useState<string>('');
 
   // Contract and wallet states
   const { authenticated, login } = usePrivy();
@@ -82,17 +89,55 @@ export function BettingPost({
   const publicClient = usePublicClient();
   const account = useAccount();
   const { data: hash, isPending, writeContract } = useWriteContract();
-  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  // Pool status
   const isActive = status === PoolStatus.Pending || status === PoolStatus.None;
 
-  // Use our custom hook for token balance
+  // Token balance
   const { balance, formattedBalance, symbol } = useTokenBalance();
 
+  // Wallet connection status
   const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
 
-  // Check localStorage when component mounts to see if this pool was FACTS'd before
+  // Parse bets and calculate percentages
+  const betData = useMemo(() => {
+    // Parse all option bet amounts, removing any currency symbols and converting to numbers
+    const betAmounts = optionBets.map(
+      (bet) => parseFloat(bet.replace(/[$£€]/g, '').replace(/\s+pts/g, '')) || 0
+    );
+
+    // Calculate total volume
+    const totalVolume = betAmounts.reduce((sum, amount) => sum + amount, 0);
+
+    // Calculate exact percentages for each option
+    const percentages = betAmounts.map((amount) =>
+      totalVolume > 0 ? (amount / totalVolume) * 100 : 0
+    );
+
+    // For display, ensure percentages add up to 100% by rounding all but the last one
+    // and setting the last one to the remainder
+    const displayPercentages = [...percentages];
+    if (totalVolume > 0) {
+      // Round all percentages except the last one
+      let total = 0;
+      for (let i = 0; i < displayPercentages.length - 1; i++) {
+        displayPercentages[i] = Math.round(displayPercentages[i]);
+        total += displayPercentages[i];
+      }
+      // Set the last percentage to ensure sum is 100%
+      displayPercentages[displayPercentages.length - 1] = 100 - total;
+    }
+
+    return {
+      betAmounts,
+      totalVolume,
+      exactPercentages: percentages,
+      displayPercentages,
+    };
+  }, [optionBets]);
+
+  // Check localStorage for FACTS status
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const wasFactsd = isPoolFactsd(id);
@@ -102,10 +147,10 @@ export function BettingPost({
 
   // Update bet amount when slider changes
   useEffect(() => {
-    // Skip this effect completely during and after user typing
+    // Skip during user typing or if no balance
     if (isUserTyping || !balance) return;
 
-    // Don't update the input if user directly typed a value
+    // Don't update if user directly typed a value
     if (userEnteredValue) return;
 
     const rawBalanceValue = Number(balance.value) / Math.pow(10, balance.decimals);
@@ -122,11 +167,11 @@ export function BettingPost({
         return;
       }
 
-      // Compensate for the 1-off error by using Math.ceil instead of Math.floor
+      // Calculate amount based on percentage (minimum 1)
       const amount = Math.max(Math.ceil(rawBalanceValue * percentage), 1);
       const amountStr = amount.toString();
 
-      // Don't set the value if it's already the same (prevents cursor jumping)
+      // Only update if value changed (prevents cursor jumping)
       if (amountStr !== betAmount) {
         setBetAmount(amountStr);
       }
@@ -135,7 +180,7 @@ export function BettingPost({
     }
   }, [sliderValue, balance, betAmount, isUserTyping, userEnteredValue]);
 
-  // Fetch approved amount when component mounts or account changes
+  // Fetch approved token amount
   useEffect(() => {
     const fetchApprovedAmount = async () => {
       if (!account.address || !publicClient) return;
@@ -148,7 +193,6 @@ export function BettingPost({
           args: [account.address, APP_ADDRESS],
         });
 
-        // Format the allowance (divide by 10^TOKEN_DECIMALS for USDC)
         const formattedAllowance = Number(allowance) / 10 ** USDC_DECIMALS;
         setApprovedAmount(formattedAllowance.toString());
       } catch (error) {
@@ -160,6 +204,7 @@ export function BettingPost({
     fetchApprovedAmount();
   }, [account.address, publicClient, hash, getTokenAddress]);
 
+  // Handle bet button click
   const handleBetClick = () => {
     if (!authenticated) {
       login();
@@ -168,6 +213,7 @@ export function BettingPost({
     setShowBetForm(!showBetForm);
   };
 
+  // Handle FACTS feature
   const handleFacts = async () => {
     if (!isWalletConnected) {
       login();
@@ -175,7 +221,6 @@ export function BettingPost({
     }
 
     if (isSubmitting) return;
-
     setIsSubmitting(true);
 
     try {
@@ -188,7 +233,6 @@ export function BettingPost({
       }
 
       const isAdding = !hasFactsed;
-
       const messageObj = {
         action: 'toggle_facts',
         poolId: id,
@@ -198,8 +242,7 @@ export function BettingPost({
       };
 
       const messageStr = JSON.stringify(messageObj);
-
-      const { signature } = await signMessage(
+      await signMessage(
         { message: messageStr },
         {
           uiOptions: {
@@ -211,7 +254,6 @@ export function BettingPost({
         }
       );
 
-      // Only update the UI after successful signature
       // Calculate new facts count
       const newFactsCount = isAdding ? factsCount + 1 : factsCount - 1;
 
@@ -219,23 +261,17 @@ export function BettingPost({
       setHasFactsed(isAdding);
       setFactsCount(newFactsCount);
 
-      // Update localStorage to persist the like
+      // Update localStorage
       savePoolFacts(id, isAdding);
-
-      // Store facts count in localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem(`pool_facts_${id}`, newFactsCount.toString());
         localStorage.setItem(`pool_facts_liked_${id}`, isAdding.toString());
       }
 
-      // In the future, send this signature to your backend or smart contract
-      // const result = await togglePoolFacts(id, isAdding, signature, messageStr);
-
-      // For now just simulate a delay
+      // Simulate backend delay
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      // No need to revert optimistic update since we're only updating after success
-      // Don't log errors when user rejects the request
+      // Only log non-user rejection errors
       if (
         error instanceof Error &&
         !error.message.includes('rejected') &&
@@ -255,26 +291,23 @@ export function BettingPost({
 
     const rawBalanceValue = Number(balance.value) / Math.pow(10, balance.decimals);
 
-    // Compensate for the 1-off error by adding 1 to all non-zero values
     let amount;
     if (percentage === 100) {
-      // For 100%, use the exact integer from the formatted balance
+      // For 100%, use the exact integer
       amount = Math.ceil(rawBalanceValue);
     } else if (percentage === 0) {
       amount = 0;
     } else {
-      // For percentages, calculate and add 1 to ensure correct value
+      // Calculate percentage with minimum value of 1
       amount = Math.max(Math.ceil(rawBalanceValue * (percentage / 100)), 1);
     }
 
-    // Set as string (whole number)
     setBetAmount(amount.toString());
     setSliderValue([percentage]);
-
-    // Clear user entered value since this is from a button
-    setUserEnteredValue('');
+    setUserEnteredValue(''); // Clear user entered value
   };
 
+  // Place bet function
   const placeBet = async () => {
     if (!authenticated) {
       login();
@@ -297,12 +330,13 @@ export function BettingPost({
     setIsSubmitting(true);
 
     try {
-      // Convert amount to token units with proper decimals
+      // Convert amount to token units
       const amount = parseInt(betAmount, 10);
       const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
 
+      // Check if approval is needed
       if (approvedAmount && parseFloat(approvedAmount) < amount) {
-        // First approve tokens to be spent
+        // Approve tokens first
         const { request: approveRequest } = await publicClient.simulateContract({
           abi: pointsTokenAbi,
           address: getTokenAddress() as `0x${string}`,
@@ -314,9 +348,8 @@ export function BettingPost({
         writeContract(approveRequest);
       }
 
-      // Wait for the transaction to be confirmed before proceeding
+      // Place bet after approval or if already approved
       if (isConfirmed || parseFloat(approvedAmount) >= amount) {
-        // Now place the bet
         const { request } = await publicClient.simulateContract({
           abi: bettingContractAbi,
           address: APP_ADDRESS,
@@ -327,7 +360,7 @@ export function BettingPost({
 
         writeContract(request);
 
-        // Reset form after transaction is sent
+        // Reset form after transaction sent
         if (!isPending) {
           setBetAmount('');
           setSelectedOption(null);
@@ -339,6 +372,73 @@ export function BettingPost({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Render volume progress bar
+  const renderVolumeBar = () => {
+    if (volume === '0') {
+      return (
+        <div className='relative'>
+          {/* Empty progress bar */}
+          <div className='flex-1 rounded-full bg-gray-200 dark:bg-gray-800'>
+            <div className='flex overflow-hidden rounded-full'>
+              <div className='h-2 w-full bg-gray-300 dark:bg-gray-700'></div>
+            </div>
+          </div>
+
+          {/* Zero volume text */}
+          <div className='mt-1 flex justify-end'>
+            <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+              {volume} vol.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className='relative'>
+        {/* Progress bar for volume visualization */}
+        <div className='flex-1 rounded-full bg-gray-200 dark:bg-gray-800'>
+          <div className='flex overflow-hidden rounded-full'>
+            {betData.exactPercentages.map((percent, index) => {
+              // Generate colors for each option (extend beyond just red/green for multiple options)
+              const colors = [
+                'bg-green-500',
+                'bg-red-500 dark:bg-red-700',
+                'bg-blue-500',
+                'bg-yellow-500',
+                'bg-purple-500',
+              ];
+
+              // Use mod operator to cycle through colors if more options than colors
+              const colorClass = colors[index % colors.length];
+
+              // Apply rounded corners only to first and last segments
+              const roundedClass =
+                index === 0
+                  ? 'rounded-l-full'
+                  : index === betData.exactPercentages.length - 1
+                    ? 'rounded-r-full'
+                    : '';
+
+              return (
+                <div
+                  key={index}
+                  className={`h-2 ${colorClass} ${roundedClass}`}
+                  style={{ width: `${percent.toFixed(2)}%` }}
+                ></div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Show total volume */}
+        <div className='mt-1 flex justify-end'>
+          <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>{volume} vol.</div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -353,13 +453,32 @@ export function BettingPost({
             <div className='font-bold'>{username}</div>
           </div>
           <div className='flex items-center gap-2'>
-            <Badge
-              variant={isActive ? 'default' : 'secondary'}
-              className={isActive ? 'bg-green-500' : ''}
-            >
-              {isActive ? 'ACTIVE' : 'CLOSED'}
-            </Badge>
-            <span>{formatDistanceToNow(new Date(time * 1000), { addSuffix: true })}</span>
+            {isActive ? (
+              <div className='flex items-center'>
+                <span className='relative flex h-3 w-3'>
+                  <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75'></span>
+                  <span className='relative inline-flex h-3 w-3 rounded-full bg-green-500'></span>
+                </span>
+              </div>
+            ) : (
+              <Badge variant='secondary' className='bg-red-500'>
+                CLOSED
+              </Badge>
+            )}
+            <span className='text-muted-foreground text-xs'>
+              {formatDistanceToNow(
+                new Date(
+                  status === PoolStatus.Graded &&
+                  gradedBlockTimestamp &&
+                  !isNaN(new Date(gradedBlockTimestamp * 1000).getTime())
+                    ? gradedBlockTimestamp * 1000
+                    : time && !isNaN(new Date(time * 1000).getTime())
+                      ? time * 1000
+                      : Date.now()
+                ),
+                { addSuffix: true }
+              )}
+            </span>
             <TruthSocial postId={truthSocialId} />
           </div>
         </div>
@@ -370,118 +489,42 @@ export function BettingPost({
           </p>
         </Link>
 
-        <div className='mb-3 rounded-md'>
-          {volume === '0' ? (
-            <div className='relative'>
-              {/* Empty progress bar for no bets */}
-              <div className='flex-1 rounded-full bg-gray-200 dark:bg-gray-800'>
-                <div className='flex overflow-hidden rounded-full'>
-                  <div className='h-2 w-full bg-gray-300 dark:bg-gray-700'></div>
-                </div>
-              </div>
-
-              {/* Show zero volume */}
-              <div className='mt-1 flex justify-end'>
-                <div className={`text-sm font-medium text-gray-500 dark:text-gray-400`}>
-                  {volume} vol.
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className='relative'>
-              {/* Progress bar for volume visualization */}
-              <div className='flex-1 rounded-full bg-gray-200 dark:bg-gray-800'>
-                <div className='flex overflow-hidden rounded-full'>
-                  {(() => {
-                    const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
-                    const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
-                    const total = yes + no;
-
-                    // Use exact percentages for the visual bar (not rounded)
-                    // This ensures the visual representation is precise
-                    const yesPercent = total > 0 ? (yes / total) * 100 : 0;
-                    const noPercent = total > 0 ? (no / total) * 100 : 0;
-
-                    return (
-                      <>
-                        <div
-                          className={`h-2 rounded-l-full bg-green-500`}
-                          style={{ width: `${yesPercent.toFixed(2)}%` }}
-                        ></div>
-                        <div
-                          className='h-2 rounded-r-full bg-red-500 dark:bg-red-700'
-                          style={{ width: `${noPercent.toFixed(2)}%` }}
-                        ></div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Show total volume */}
-              <div className='mt-1 flex justify-end'>
-                <div className={`text-sm font-medium text-gray-500 dark:text-gray-400`}>
-                  {volume} vol.
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <div className='mb-3 rounded-md'>{renderVolumeBar()}</div>
 
         <div className='mb-4 space-y-2'>
           {options.map((option, i) => {
-            // Extract bet amounts
-            const yes = parseFloat(optionBets[0].replace('$', '').replace(' pts', '')) || 0;
-            const no = parseFloat(optionBets[1].replace('$', '').replace(' pts', '')) || 0;
-            const total = yes + no;
+            // Get option colors (extend beyond red/green for more than 2 options)
+            const optionColors = [
+              { text: 'text-green-600 dark:text-green-400', bg: 'bg-green-500' },
+              { text: 'text-red-600 dark:text-red-400', bg: 'bg-red-500' },
+              { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500' },
+              { text: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-500' },
+              { text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500' },
+            ];
 
-            // Calculate exact percentages first
-            let exactYesPercent = 0;
-            let exactNoPercent = 0;
+            // Use modulo to cycle through colors if more options than colors
+            const colorIndex = i % optionColors.length;
+            const { text: textColor, bg: bgColor } = optionColors[colorIndex];
 
-            if (total > 0) {
-              exactYesPercent = (yes / total) * 100;
-              exactNoPercent = (no / total) * 100;
-            }
-
-            // For display text, ensure they add up to 100%
-            // Round YES, then calculate NO as 100-YES
-            const yesDisplay = total > 0 ? Math.round(exactYesPercent) : 0;
-            const noDisplay = total > 0 ? 100 - yesDisplay : 0;
-
-            // Use the calculated display percentages for each option
-            const percent = i === 0 ? yesDisplay : noDisplay;
+            // Get display percentage for this option
+            const percent = betData.displayPercentages[i] || 0;
 
             return (
               <div
                 key={i}
                 className={`flex items-center justify-between rounded-md p-2 transition-colors ${
                   selectedOption === i
-                    ? `border ${i === 0 ? 'border-green-500' : 'border-red-500'} bg-gray-100 dark:bg-gray-800`
+                    ? `border border-${bgColor.replace('bg-', '')} bg-gray-100 dark:bg-gray-800`
                     : 'bg-gray-50 opacity-90 hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-800'
                 } cursor-pointer`}
                 onClick={() => setSelectedOption(i)}
               >
-                <span
-                  className={`font-medium ${
-                    i === 0
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-red-600 dark:text-red-400'
-                  }`}
-                >
-                  {i === 0 ? 'YES' : 'NO'} {percent}%
+                <span className={`font-medium ${textColor}`}>
+                  {option} {percent}%
                 </span>
 
                 <div
-                  className={`flex items-center justify-center rounded-full ${
-                    i === 0
-                      ? selectedOption === i
-                        ? 'bg-green-500'
-                        : 'bg-green-400 dark:bg-green-700'
-                      : selectedOption === i
-                        ? 'bg-red-500'
-                        : 'bg-red-400 dark:bg-red-700'
-                  } px-3 py-1 text-sm font-medium text-white ${selectedOption === i ? '' : 'opacity-80'}`}
+                  className={`flex items-center justify-center rounded-full ${bgColor} px-3 py-1 text-sm font-medium text-white`}
                 >
                   {optionBets[i] || '0'}
                 </div>
@@ -491,19 +534,35 @@ export function BettingPost({
         </div>
 
         <div className='flex items-center justify-between'>
-          <Button
-            variant='ghost'
-            size='sm'
-            className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-            asChild
-          >
-            <Link href={`/pools/${id}`}>
-              <MessageCircle size={18} className='mr-1' />
-              {commentCount > 0 ? commentCount : 'Comment'}
-            </Link>
-          </Button>
+          <div className='flex items-center gap-2'>
+            {closesAt && !isNaN(new Date(closesAt * 1000).getTime()) && (
+              <CountdownTimer closesAt={closesAt * 1000} />
+            )}
+
+            <Button
+              variant='ghost'
+              size='sm'
+              className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              asChild
+            >
+              <Link href={`/pools/${id}`}>
+                <MessageCircle size={18} className='mr-1' />
+                {commentCount > 0 ? commentCount : 'Comment'}
+              </Link>
+            </Button>
+          </div>
 
           <div className='flex items-center gap-2'>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              onClick={handleBetClick}
+            >
+              <HandCoins size={18} className='mr-1' />
+              Bet
+            </Button>
+
             <Button
               variant={hasFactsed ? 'default' : 'outline'}
               size='sm'
@@ -521,14 +580,6 @@ export function BettingPost({
                 <>FACTS{hasFactsed ? <span className='ml-1.5'>🦅</span> : ''}</>
               )}
               <span className='ml-1.5'>{factsCount}</span>
-            </Button>
-
-            <Button
-              size='sm'
-              className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
-              onClick={handleBetClick}
-            >
-              Bet
             </Button>
           </div>
         </div>
@@ -566,8 +617,6 @@ export function BettingPost({
               step={1}
               value={sliderValue}
               onValueChange={(newValue) => {
-                // When slider is directly manipulated, clear userEnteredValue
-                // to allow the slider effect to work again
                 setUserEnteredValue('');
                 setSliderValue(newValue);
               }}
@@ -585,11 +634,9 @@ export function BettingPost({
                   onChange={(e) => {
                     const value = e.target.value;
 
-                    // Flag that user is typing and store direct input
                     setIsUserTyping(true);
                     setUserEnteredValue(value);
 
-                    // Empty input handling
                     if (value === '') {
                       setBetAmount('');
                       setSliderValue([0]);
@@ -597,19 +644,14 @@ export function BettingPost({
                       return;
                     }
 
-                    // Only allow whole numbers (no decimals)
                     if (/^[0-9]+$/.test(value)) {
-                      // Set input value immediately and preserve it
                       setBetAmount(value);
 
-                      // Update slider if balance exists, but don't allow the slider to modify the input
                       if (balance) {
                         const inputNum = parseInt(value, 10);
-                        // Use raw token value with decimals instead of formatted
                         const balanceNum = Number(balance.value) / Math.pow(10, balance.decimals);
 
                         if (inputNum > 0 && balanceNum > 0) {
-                          // Calculate percentage of balance
                           const percentage = Math.min(
                             100,
                             Math.ceil((inputNum / balanceNum) * 100)
@@ -621,7 +663,6 @@ export function BettingPost({
                       }
                     }
 
-                    // Keep typing flag on longer to prevent auto-updates
                     setTimeout(() => {
                       setIsUserTyping(false);
                     }, 2000);

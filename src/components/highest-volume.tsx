@@ -5,6 +5,7 @@ import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import {
   GetPoolsQuery,
   OrderDirection,
+  Pool,
   Pool_OrderBy,
   PoolStatus,
 } from '@/lib/__generated__/graphql';
@@ -35,18 +36,18 @@ export function HighestVolume() {
   };
 
   return (
-    <div className='bg-background mb-6 rounded-lg border border-gray-800 p-4 shadow-lg'>
+    <div className='bg-background mb-4 rounded-lg border border-gray-800 p-4 shadow-lg'>
       <div className='mb-4 flex items-center gap-2'>
         <TrendingUp size={20} className='text-orange-500' />
-        <h2 className='text-lg font-bold'>Highest Volume</h2>
+        <h2 className='text-lg font-bold'>Highest Vol</h2>
       </div>
 
-      <div className='space-y-6'>
+      <div className='space-y-4'>
         {volumePools?.pools && volumePools.pools.length > 0
           ? (() => {
               // Calculate relative progress based on actual volumes
               const pools = volumePools.pools.slice(0, 3);
-              const volumeValues = pools.map((pool) => {
+              const volumeValues = pools.map((pool: Pool) => {
                 const raw =
                   tokenType === TokenType.USDC
                     ? Number(pool.usdcVolume || '0')
@@ -55,9 +56,12 @@ export function HighestVolume() {
               });
 
               // Find max volume to calculate percentages
-              const maxVolume = Math.max(...volumeValues.map((v) => v.raw), 1); // Prevent division by zero
+              const maxVolume = Math.max(
+                ...volumeValues.map((v: { pool: Pool; raw: number }) => v.raw),
+                1
+              ); // Prevent division by zero
 
-              return pools.map((pool) => {
+              return pools.map((pool: Pool) => {
                 const rawVolume =
                   tokenType === TokenType.USDC
                     ? Number(pool.usdcVolume || '0')
