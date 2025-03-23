@@ -182,3 +182,22 @@ body {
   color: black !important;
   border: 2px solid black !important;
 }
+
+/* Dark mode compatible toast */
+.dark-mode-toast {
+  border-left: 4px solid #ff6d00 !important;
+}
+
+.dark .dark-mode-toast {
+  --toast-background: #1f1f1f;
+  --toast-foreground: #ffffff;
+  background-color: var(--toast-background) !important;
+  color: var(--toast-foreground) !important;
+}
+
+.light .dark-mode-toast {
+  --toast-background: #ffffff;
+  --toast-foreground: #0f0f0f;
+  background-color: var(--toast-background) !important;
+  color: var(--toast-foreground) !important;
+}

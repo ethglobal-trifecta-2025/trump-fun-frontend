@@ -38,7 +38,7 @@ import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import { showErrorToast } from '@/utils/toast';
 import Image from 'next/image';
 
 export default function PoolDetailPage() {
@@ -88,6 +88,8 @@ export default function PoolDetailPage() {
   });
   const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('0');
+  // Track which transactions we've already shown toasts for
+  const [toastShownForHash, setToastShownForHash] = useState<string | null>(null);
   const { tokenType, getTokenAddress } = useTokenContext();
   const { signMessage } = useSignMessage();
 
@@ -458,10 +460,6 @@ export default function PoolDetailPage() {
         });
 
         writeContract(request);
-
-        showSuccessToast(
-          `Bet placed successfully! You bet ${betAmount} ${symbol} on "${pool.options[selectedOption]}"`
-        );
       }
     } catch (error) {
       console.error('Error placing bet:', error);
@@ -544,6 +542,32 @@ export default function PoolDetailPage() {
 
     // Use existing formatters from the file
   };
+
+  // Add this effect to show success toast when transaction is confirmed
+  useEffect(() => {
+    if (isConfirmed && hash && selectedOption !== null && betAmount && data?.pool?.options) {
+      // Only show toast if we haven't already shown one for this hash
+      if (hash !== toastShownForHash) {
+        showBetSuccessToast(
+          `Bet placed successfully! You bet ${betAmount} ${symbol} on "${data.pool.options[selectedOption]}"! You make the GREATEST bets!`
+        );
+        // Mark this hash as having shown a toast
+        setToastShownForHash(hash);
+        // Reset form after successful transaction
+        setBetAmount('');
+        setSelectedOption(null);
+        setSliderValue([0]);
+      }
+    }
+  }, [
+    isConfirmed,
+    hash,
+    selectedOption,
+    betAmount,
+    symbol,
+    data?.pool?.options,
+    toastShownForHash,
+  ]);
 
   // Loading state
   if (isPoolLoading) {
