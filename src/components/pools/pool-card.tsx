@@ -7,11 +7,11 @@ import { Pool } from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
+import Image from 'next/image';
 import Link from 'next/link';
 import TruthSocial from '../common/truth-social';
 import CountdownTimer from '../Timer';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import Image from 'next/image';
 export function PoolCard({ pool }: { pool: Pool }) {
   const { tokenType } = useTokenContext();
 
@@ -143,10 +143,10 @@ export function PoolCard({ pool }: { pool: Pool }) {
             <div className='text-muted-foreground text-sm'>
               {isClosed ? 'Bets are closed' : <CountdownTimer closesAt={pool.betsCloseAt * 1000} />}
             </div>
-            <p className='text-muted-foreground text-md font-medium'>
-              <span className='font-bold text-white'>Vol: </span>
+            <div className='text-muted-foreground text-sm'>
+              <span className='text-muted-foreground'>Vol: </span>
               {calculateVolume(pool, tokenType)}
-            </p>
+            </div>
           </div>
           <Link href={`/pools/${pool.id}`} className='mt-auto pt-4'>
             <Button className='w-full bg-orange-500 text-white hover:bg-orange-600'>

@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react';
 
-const CountdownTimer = ({
-  closesAt,
-}: {
+type CountdownTimerProps = {
   closesAt: string | Date | number;
   displayText?: boolean;
-}) => {
+  containerClassName?: string;
+  digitClassName?: string;
+  colonClassName?: string;
+  wrapperClassName?: string;
+};
+
+const CountdownTimer = ({
+  closesAt,
+  containerClassName = 'flex flex-col items-end',
+  digitClassName = '',
+  colonClassName = '',
+  wrapperClassName = 'flex justify-center',
+}: CountdownTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<{
     hours: string;
     minutes: string;
@@ -77,28 +87,30 @@ const CountdownTimer = ({
 
   // Function to render a time digit with casino-style display
   const TimeDigit = ({ value }: { value: string }) => (
-    <div className='flex flex-col items-center'>
+    <div className='flex items-center'>
       <div
-        className={`mb-1 flex h-8 w-10 items-center justify-center rounded font-mono text-xs font-bold ${
+        className={`flex h-8 w-5 items-center justify-center font-mono text-xs font-bold ${
           isExpired
-            ? 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+            ? 'text-gray-500'
             : isUrgent
-              ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-              : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
-        } ${isUrgent && !isExpired ? 'animate-pulse' : ''} `}
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-gray-600 dark:text-gray-400'
+        } ${isUrgent && !isExpired ? 'animate-pulse' : ''} ${digitClassName}`}
       >
         {value}
       </div>
     </div>
   );
 
+  const colonClass = `flex h-8 items-center px-0 font-bold text-gray-500 ${colonClassName}`;
+
   return (
-    <div className='flex flex-col items-end'>
-      <div className='flex justify-center gap-1'>
+    <div className={containerClassName}>
+      <div className={wrapperClassName}>
         <TimeDigit value={timeRemaining.hours} />
-        <div className='flex h-8 items-center font-bold text-orange-500'>:</div>
+        <div className={colonClass}>:</div>
         <TimeDigit value={timeRemaining.minutes} />
-        <div className='flex h-8 items-center font-bold text-orange-500'>:</div>
+        <div className={colonClass}>:</div>
         <TimeDigit value={timeRemaining.seconds} />
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { GET_POOLS } from '@/app/queries';
+import { POLLING_INTERVALS } from '@/consts';
 import { useTokenContext } from '@/hooks/useTokenContext';
 import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
@@ -8,7 +9,6 @@ import { useQuery } from '@apollo/client';
 import { Clock } from 'lucide-react';
 import { useMemo } from 'react';
 import { EndingSoonBet } from './ending-soon-bet';
-import { POLLING_INTERVALS } from '@/consts';
 
 export function EndingSoon() {
   const { tokenType } = useTokenContext();
@@ -17,7 +17,11 @@ export function EndingSoon() {
 
   const oneDayFromNow = currentTimestamp + 86400;
 
-  const { data: endingSoonPools } = useQuery(GET_POOLS, {
+  const {
+    data: endingSoonPools,
+    loading,
+    previousData,
+  } = useQuery(GET_POOLS, {
     variables: {
       filter: {
         betsCloseAt_gt: currentTimestamp.toString(),
@@ -33,35 +37,20 @@ export function EndingSoon() {
     pollInterval: POLLING_INTERVALS['ending-soon'],
   });
 
-  const filteredEndingSoonPools = useMemo(() => {
-    if (!endingSoonPools?.pools) return [];
-    return endingSoonPools.pools;
-  }, [endingSoonPools?.pools]);
+  // Use previous data during subsequent loading states to prevent flashing
+  const poolsToDisplay = useMemo(() => {
+    // On initial load, show loading state
+    if (loading && !previousData) {
+      return { pools: [] };
+    }
+    // For subsequent loads, use previous data until new data is ready
+    return endingSoonPools || previousData || { pools: [] };
+  }, [endingSoonPools, loading, previousData]);
 
-  // Fallback data for when no pools are available
-  const fallbackPools = [
-    {
-      id: '4',
-      question:
-        'Will my administration RELEASE the UNEDITED J6 TAPES and EXPOSE the TRUTH about what REALLY happened, showing the American people what the CORRUPT Deep State has been HIDING from them, before the end of 2024?',
-      volume: '$0.00',
-      betsCloseAt: (currentTimestamp + 81200).toString(), // 22h 34m from now
-    },
-    {
-      id: '5',
-      question:
-        'Will New York Attorney General Letitia James be INVESTIGATED for her QUESTIONABLE Building Permits by the END OF THE YEAR, just like the RADICAL LEFT did to me with their WITCH HUNT?',
-      volume: '$0.00',
-      betsCloseAt: (currentTimestamp + 81200).toString(), // 22h 34m from now
-    },
-    {
-      id: '6',
-      question:
-        'Will my STRONG policies on DEPORTING VIOLENT CRIMINALS result in a 25% REDUCTION in ILLEGAL ALIEN crime by the end of 2025, making our country SAFE AGAIN?',
-      volume: '$0.00',
-      betsCloseAt: (currentTimestamp + 81200).toString(), // 22h 34m from now
-    },
-  ];
+  const filteredEndingSoonPools = useMemo(() => {
+    if (!poolsToDisplay?.pools) return [];
+    return poolsToDisplay.pools;
+  }, [poolsToDisplay?.pools]);
 
   return (
     <div className='bg-background rounded-lg border border-gray-800 p-4 shadow-lg'>
@@ -71,30 +60,44 @@ export function EndingSoon() {
       </div>
 
       <div className='space-y-4'>
-        {filteredEndingSoonPools.length > 0
-          ? filteredEndingSoonPools.map((pool: Pool) => {
-              return (
-                <EndingSoonBet
-                  key={pool.id}
-                  avatar='/trump.jpeg'
-                  question={pool.question}
-                  volume={calculateVolume(pool, tokenType)}
-                  timeLeft={pool.betsCloseAt}
-                  poolId={pool.id}
-                />
-              );
-            })
-          : // Fallback content when no pools are available
-            fallbackPools.map((pool) => (
+        {loading && !previousData ? (
+          // Initial loading state
+          <div className='space-y-4'>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className='animate-pulse'>
+                <div className='flex gap-3'>
+                  <div className='h-8 w-8 rounded-full bg-gray-700'></div>
+                  <div className='flex-1'>
+                    <div className='mb-2 h-4 w-3/4 rounded bg-gray-700'></div>
+                    <div className='h-3 w-full rounded bg-gray-700'></div>
+                    <div className='mt-2 flex justify-between'>
+                      <div className='h-3 w-16 rounded bg-gray-700'></div>
+                      <div className='h-3 w-16 rounded bg-gray-700'></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredEndingSoonPools.length > 0 ? (
+          filteredEndingSoonPools.map((pool: Pool) => {
+            return (
               <EndingSoonBet
                 key={pool.id}
                 avatar='/trump.jpeg'
                 question={pool.question}
-                volume={pool.volume}
+                volume={calculateVolume(pool, tokenType)}
                 timeLeft={pool.betsCloseAt}
                 poolId={pool.id}
               />
-            ))}
+            );
+          })
+        ) : (
+          // Empty state when no pools are available
+          <div className='py-4 text-center text-gray-400'>
+            <p>No predictions ending soon</p>
+          </div>
+        )}
       </div>
     </div>
   );
