@@ -82,8 +82,21 @@ export function UserBettingPost({
                 </span>
               </div>
             ) : (
-              <Badge variant='secondary' className='bg-red-500'>
-                CLOSED
+              <Badge
+                variant='secondary'
+                className={
+                  userBet.outcome === 'won'
+                    ? 'bg-green-500'
+                    : userBet.outcome === 'lost'
+                      ? 'bg-red-500'
+                      : 'bg-orange-500'
+                }
+              >
+                {userBet.outcome === 'won'
+                  ? 'WON'
+                  : userBet.outcome === 'lost'
+                    ? 'LOST'
+                    : 'PENDING'}
               </Badge>
             )}
             <span className='text-muted-foreground text-xs'>
@@ -98,46 +111,66 @@ export function UserBettingPost({
             {question}
           </p>
         </Link>
-        {/* User's Bet Information */}
-        <div className='mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'>
-          <div className='flex items-center justify-between'>
-            <div className='space-y-1'>
-              <span className='!text-sm !font-normal text-gray-600 dark:text-gray-400'>
-                Option Selected:
-              </span>
-              <span
-                className={`text-base font-semibold ${options[selectedOption]?.toLowerCase() === 'yes' ? 'text-green-500' : options[selectedOption]?.toLowerCase() === 'no' ? 'text-red-500' : 'text-orange-500'}`}
-              >
-                {` `}
-                {options[selectedOption]}
-              </span>
-            </div>
-            <div className=''>
-              {isClosed ? 'Bets are closed' : <CountdownTimer closesAt={closesAt * 1000} />}
-            </div>
-          </div>
-          <div className='mt-2 flex flex-col gap-2 text-sm'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-1'>
-                <span className='text-gray-600 dark:text-gray-400'>Amount:</span>
-                <span className='font-medium'>
-                  {symbol} {formattedAmount}
-                </span>
-              </div>
 
-              <div className='text-sm font-medium text-gray-600 dark:text-gray-300'>
-                {volume} Vol.
-              </div>
-            </div>
-            {userBet.payout && (
-              <div className='mt-2 flex items-center justify-between border-t border-gray-200 pt-2 dark:border-gray-700'>
-                <span className='text-gray-600 dark:text-gray-400'>Potential Payout:</span>
-                <span className='font-medium text-green-600 dark:text-green-500'>
-                  {symbol} {formattedPayout}
+        <div className='flex items-center justify-between'>
+          <div className='space-y-1'>
+            <span className='!text-sm !font-normal text-gray-600 dark:text-gray-400'>
+              Option Selected:
+            </span>
+            <span
+              className={`text-base font-semibold ${
+                options[selectedOption]?.toLowerCase() === 'yes'
+                  ? 'text-green-500'
+                  : options[selectedOption]?.toLowerCase() === 'no'
+                    ? 'text-red-500'
+                    : 'text-orange-500'
+              }`}
+            >
+              {` `}
+              {options[selectedOption]}
+            </span>
+          </div>
+          <div className=''>
+            {isClosed ? (
+              userBet.outcome === 'pending' ? (
+                'Awaiting Results'
+              ) : (
+                <span
+                  className={`font-medium ${
+                    userBet.outcome === 'won' ? 'text-green-500' : 'text-red-500'
+                  }`}
+                >
+                  {userBet.outcome === 'won' ? 'You Won!' : 'You Lost'}
                 </span>
-              </div>
+              )
+            ) : (
+              <CountdownTimer closesAt={closesAt * 1000} />
             )}
           </div>
+        </div>
+
+        <div className='mt-2 flex flex-col gap-2 text-sm'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-1'>
+              <span className='text-gray-600 dark:text-gray-400'>Amount Bet:</span>
+              <span className='font-medium'>
+                {symbol} {formattedAmount}
+              </span>
+            </div>
+
+            <div className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+              {volume} Vol.
+            </div>
+          </div>
+
+          {userBet.outcome === 'won' && userBet.payout && (
+            <div className='mt-2 flex items-center justify-between border-t border-gray-200 pt-2 dark:border-gray-700'>
+              <span className='text-gray-600 dark:text-gray-400'>Payout Received:</span>
+              <span className='font-medium text-green-600 dark:text-green-500'>
+                {symbol} {formattedPayout}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

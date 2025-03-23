@@ -145,6 +145,71 @@ export const GET_BETS_SUBSCRIPTION = gql`
   }
 `;
 
+export const GET_PAYOUT_CLAIMED = gql`
+  query GetPayoutClaimed(
+    $first: Int = 100
+    $skip: Int = 0
+    $orderBy: PayoutClaimed_orderBy = blockTimestamp
+    $orderDirection: OrderDirection = desc
+    $where: PayoutClaimed_filter
+  ) {
+    payoutClaimeds(
+      first: $first
+      skip: $skip
+      orderBy: $orderBy
+      orderDirection: $orderDirection
+      where: $where
+    ) {
+      id
+      betId
+      poolId
+      user
+      amount
+      tokenType
+      blockNumber
+      blockTimestamp
+      transactionHash
+      chainName
+      chainId
+      bet {
+        id
+        amount
+        option
+        user
+        createdAt
+        isWithdrawn
+        tokenType
+        pool {
+          id
+          question
+          options
+          status
+          winningOption
+          isDraw
+          betsCloseAt
+          usdcVolume
+          pointsVolume
+          usdcBetTotals
+          pointsBetTotals
+        }
+      }
+      pool {
+        id
+        question
+        options
+        status
+        winningOption
+        isDraw
+        betsCloseAt
+        usdcVolume
+        pointsVolume
+        usdcBetTotals
+        pointsBetTotals
+      }
+    }
+  }
+`;
+
 export const GET_POOL = gql`
   query GetPool($poolId: ID!) {
     pool(id: $poolId) {

@@ -7,23 +7,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useQuery } from '@apollo/client';
-import { ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
-import { useState } from 'react';
-import { usePublicClient, useWriteContract } from 'wagmi';
-
-import { GET_BETS } from '@/app/queries';
 import { UserBettingPost } from '@/components/user-betting-post';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { useNetwork } from '@/hooks/useNetwork';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
-import { Bet_Filter, Bet_OrderBy, OrderDirection } from '@/lib/__generated__/graphql';
+import {
+  Bet_Filter,
+  Bet_OrderBy,
+  OrderDirection,
+  PayoutClaimed_OrderBy,
+} from '@/lib/__generated__/graphql';
 import { bettingContractAbi } from '@/lib/contract.types';
 import { calculateVolume } from '@/utils/betsInfo';
-import { useMemo } from 'react';
-import { useReadContract } from 'wagmi';
+import { useQuery } from '@apollo/client';
+import { ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { usePublicClient, useReadContract, useWriteContract } from 'wagmi';
+import { GET_BETS, GET_PAYOUT_CLAIMED } from '../queries';
 
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
@@ -56,30 +58,27 @@ export default function ProfilePage() {
           },
         },
       },
-      // won: {
-      //   orderBy: Bet_OrderBy.UpdatedAt,
-      //   orderDirection: OrderDirection.Desc,
-      //   filter: {
-      //     pool_: {
-      //       status_eq: PoolStatus.Graded,
-      //     },
-      //     winner_: {
-      //       id_eq: address,
-      //     },
-      //   },
-      // },
-      // lost: {
-      //   orderBy: Bet_OrderBy.UpdatedAt,
-      //   orderDirection: OrderDirection.Desc,
-      //   filter: {
-      //     pool_: {
-      //       status_eq: PoolStatus.Graded,
-      //     },
-      //     loser_: {
-      //       id_eq: address,
-      //     },
-      //   },
-      // },
+      won: {
+        orderBy: PayoutClaimed_OrderBy.BlockTimestamp,
+        orderDirection: OrderDirection.Desc,
+        filter: {
+          user: address?.toLowerCase(),
+          bet_: {
+            user: address,
+          },
+        },
+      },
+      lost: {
+        orderBy: Bet_OrderBy.UpdatedAt,
+        orderDirection: OrderDirection.Desc,
+        filter: {
+          user: address,
+          pool_: {
+            status: 'GRADED',
+          },
+          isWithdrawn: false,
+        },
+      },
       all: {
         orderBy: Bet_OrderBy.UpdatedAt,
         orderDirection: OrderDirection.Desc,
@@ -104,7 +103,18 @@ export default function ProfilePage() {
     },
     context: { name: 'userBets' },
     notifyOnNetworkStatusChange: true,
-    skip: !address,
+    skip: !address || activeFilter === 'won',
+  });
+
+  const { data: payoutClaimeds } = useQuery<{ payoutClaimeds: any[] }>(GET_PAYOUT_CLAIMED, {
+    variables: {
+      where: filter,
+      orderBy,
+      orderDirection,
+    },
+    context: { name: 'payoutClaimeds' },
+    notifyOnNetworkStatusChange: true,
+    skip: !address || activeFilter !== 'won',
   });
 
   const handleFilterChange = (value: string) => {
@@ -116,12 +126,22 @@ export default function ProfilePage() {
   };
 
   const filteredPools = useMemo(() => {
+    if (activeFilter === 'won' && payoutClaimeds?.payoutClaimeds) {
+      if (!searchQuery.trim()) return payoutClaimeds.payoutClaimeds;
+      const query = searchQuery.toLowerCase().trim();
+      return payoutClaimeds.payoutClaimeds.filter(
+        (payout) =>
+          payout.bet?.pool?.question.toLowerCase().includes(query) ||
+          payout.pool?.question.toLowerCase().includes(query)
+      );
+    }
+
     if (!userBets?.bets) return [];
     if (!searchQuery.trim()) return userBets.bets;
 
     const query = searchQuery.toLowerCase().trim();
     return userBets.bets.filter((bet) => bet.pool.question.toLowerCase().includes(query));
-  }, [userBets?.bets, searchQuery]);
+  }, [userBets?.bets, payoutClaimeds?.payoutClaimeds, searchQuery, activeFilter]);
 
   const renderFilterButton = (value: string, label: string, icon: React.ReactNode) => (
     <Button
@@ -191,7 +211,7 @@ export default function ProfilePage() {
                 {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected'}
               </div>
             </div>
-            <div className='flex w-full items-center justify-between rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
+            <div className='dark:bg-background bor flex w-full items-center justify-between rounded-lg bg-gray-100 p-3'>
               <div className='text-center'>
                 <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                 <div className='font-bold'>
@@ -241,6 +261,8 @@ export default function ProfilePage() {
 
           <nav className='space-y-1'>
             {renderFilterButton('active', 'Active Bets', <History className='h-4 w-4' />)}
+            {renderFilterButton('won', 'Won Bets', <History className='h-4 w-4' />)}
+            {renderFilterButton('lost', 'Lost Bets', <History className='h-4 w-4' />)}
             {renderFilterButton('all', 'All Bets', <History className='h-4 w-4' />)}
             <Separator className='my-2' />
             <Button variant='ghost' className='w-full justify-start gap-2 font-medium'>
@@ -336,12 +358,18 @@ export default function ProfilePage() {
                     >
                       Active
                     </TabsTrigger>
-                    {/* <TabsTrigger value='won' className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'>
+                    <TabsTrigger
+                      value='won'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       Won
                     </TabsTrigger>
-                    <TabsTrigger value='lost' className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'>
+                    <TabsTrigger
+                      value='lost'
+                      className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
+                    >
                       Lost
-                    </TabsTrigger> */}
+                    </TabsTrigger>
                     <TabsTrigger
                       value='all'
                       className='data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800'
@@ -354,27 +382,44 @@ export default function ProfilePage() {
 
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
-                {filteredPools.map((bet) => (
-                  <UserBettingPost
-                    key={bet.id}
-                    id={bet.id}
-                    avatar='/trump.jpeg'
-                    username='realDonaldTrump'
-                    time={bet.pool.createdAt}
-                    question={bet.pool.question}
-                    status={bet.pool.status}
-                    options={bet.pool.options}
-                    selectedOption={bet.option}
-                    truthSocialId={bet.pool.originalTruthSocialPostId}
-                    volume={calculateVolume(bet.pool, bet.tokenType)}
-                    closesAt={bet.pool.betsCloseAt}
-                    userBet={{
-                      amount: bet.amount,
-                      selectedOption: bet.pool.options,
-                    }}
-                    tokenType={bet.tokenType}
-                  />
-                ))}
+                {filteredPools.map((item) => {
+                  const bet = activeFilter === 'won' ? item.bet : item;
+                  const pool = activeFilter === 'won' ? item.pool || item.bet.pool : bet.pool;
+                  const amount = activeFilter === 'won' ? item.amount : bet.amount;
+
+                  return (
+                    <UserBettingPost
+                      key={bet.id}
+                      id={bet.id}
+                      avatar='/trump.jpeg'
+                      username='realDonaldTrump'
+                      time={pool.createdAt}
+                      question={pool.question}
+                      status={pool.status}
+                      options={pool.options}
+                      selectedOption={bet.option}
+                      truthSocialId={pool.originalTruthSocialPostId}
+                      volume={calculateVolume(pool, bet.tokenType)}
+                      closesAt={pool.betsCloseAt}
+                      userBet={{
+                        amount: amount,
+                        selectedOption: bet.option,
+                        outcome:
+                          activeFilter === 'won'
+                            ? 'won'
+                            : activeFilter === 'lost'
+                              ? 'lost'
+                              : pool.status === 'GRADED'
+                                ? bet.isWithdrawn
+                                  ? 'won'
+                                  : 'lost'
+                                : 'pending',
+                        payout: activeFilter === 'won' ? amount : undefined,
+                      }}
+                      tokenType={bet.tokenType}
+                    />
+                  );
+                })}
                 {filteredPools.length === 0 && (
                   <div className='py-8 text-center text-gray-500 dark:text-gray-400'>
                     No bets found for this filter
