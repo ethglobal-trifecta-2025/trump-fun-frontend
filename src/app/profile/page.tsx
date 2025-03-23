@@ -571,7 +571,7 @@ export default function ProfilePage() {
                   return (
                     <UserBettingPost
                       key={bet.id}
-                      id={bet.id}
+                      id={bet.pool.id}
                       username='realDonaldTrump'
                       time={pool.createdAt}
                       question={pool.question}
@@ -581,7 +581,6 @@ export default function ProfilePage() {
                       truthSocialId={pool.originalTruthSocialPostId}
                       volume={calculateVolume(pool, bet.tokenType)}
                       closesAt={pool.betsCloseAt}
-                      poolId={bet.pool.id}
                       userBet={{
                         amount: amount,
                         selectedOption: bet.option,

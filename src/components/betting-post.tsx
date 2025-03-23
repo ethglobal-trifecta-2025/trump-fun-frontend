@@ -11,6 +11,7 @@ import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
+import { showBetSuccessToast, showErrorToast } from '@/utils/toast';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,7 +21,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import TruthSocial from './common/truth-social';
 import CountdownTimer from './Timer';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { Badge } from './ui/badge';
 import Image from 'next/image';
 
@@ -77,6 +77,9 @@ export function BettingPost({
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
+
+  // Track which transactions we've already shown toasts for
+  const [toastShownForHash, setToastShownForHash] = useState<string | null>(null);
 
   // Action states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -378,14 +381,14 @@ export function BettingPost({
 
         writeContract(request);
 
+        // We no longer show an immediate toast here to avoid duplicates
+        // The toast will only show when the transaction is confirmed in the useEffect
+
         // Reset form after transaction sent
         if (!isPending) {
           setBetAmount('');
           setSelectedOption(null);
           setShowBetForm(false);
-          showSuccessToast(
-            `Bet placed successfully! You bet ${betAmount} ${tokenType} on "${options[selectedOption]}"!`
-          );
         }
       }
     } catch (error) {
@@ -462,6 +465,24 @@ export function BettingPost({
       </div>
     );
   };
+
+  // Add effect to show toast when transaction is confirmed
+  useEffect(() => {
+    if (isConfirmed && hash && hash !== toastShownForHash) {
+      // Mark this hash as having shown a toast
+      setToastShownForHash(hash);
+
+      // Show a TRUMP-style success toast when the bet is confirmed
+      showBetSuccessToast(
+        `BET PLACED SUCCESSFULLY! You BET ${betAmount || '15'} FREEDOM on "${options[selectedOption || 0]}"! You make the GREATEST BETs!`
+      );
+
+      // Reset form after successful transaction
+      setBetAmount('');
+      setSelectedOption(null);
+      setShowBetForm(false);
+    }
+  }, [isConfirmed, hash, toastShownForHash, betAmount, selectedOption, options, showBetForm]);
 
   return (
     <div className='bg-background overflow-hidden rounded-lg border border-gray-200 transition-colors hover:border-gray-100 dark:border-gray-800 dark:hover:border-gray-700'>

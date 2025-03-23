@@ -20,7 +20,6 @@ interface UserBettingPostProps {
   status: PoolStatus;
   selectedOption: number;
   closesAt: number;
-  poolId: string;
   userBet: {
     amount: string;
     selectedOption: number;
@@ -46,14 +45,13 @@ export function UserBettingPost({
   status,
   tokenType,
   truthSocialId,
-  poolId,
 }: UserBettingPostProps) {
   const [highlight, setHighlight] = useState(false);
   const [timePercent, setTimePercent] = useState(100);
   const { data: userBetData } = useQuery({
     queryKey: ['user-profile-post', id],
     queryFn: async () => {
-      const res = await fetch(`/api/post?poolId=${poolId}`);
+      const res = await fetch(`/api/post?poolId=${id}`);
       if (!res.ok) {
         throw new Error('Network response was not ok');
       }

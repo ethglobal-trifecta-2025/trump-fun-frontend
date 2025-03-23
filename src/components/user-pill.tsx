@@ -17,7 +17,7 @@ export function TrumpUserPill() {
 
   return (
     <div className='flex items-center gap-2'>
-      <UserPill expanded={true} ui={{ background: 'accent' }} size={16} />
+      <UserPill ui={{ background: 'accent' }} size={16} />
     </div>
   );
 }

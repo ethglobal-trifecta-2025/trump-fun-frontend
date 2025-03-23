@@ -45,7 +45,13 @@ export default function RootLayout({
                 <ApolloClientProvider>
                   <Nav />
                   <div className='pt-16 md:pt-20'>{children}</div>
-                  <Toaster />
+                  <Toaster
+                    position='bottom-right'
+                    duration={5000}
+                    closeButton
+                    theme='light'
+                    className='z-50'
+                  />
                   <MobileNav />
                 </ApolloClientProvider>
               </div>

@@ -119,7 +119,7 @@ export const Activity: FC<ActivityProps> = ({ pool }) => {
           {allBets.map((bet) => (
             <div
               key={bet.id}
-              className='hover:bg-primary/5 rounded-lg border bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/50'
+              className='hover:bg-primary/5 rounded-lg border bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-white/10 dark:hover:bg-gray-700/50'
             >
               <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div className='flex items-center gap-3'>
