@@ -70,8 +70,8 @@ Please ensure:
 - Comments reference potential outcomes and reasoning
 - Include realistic crypto/prediction market terminology where appropriate
 
-Return ONLY a JSON array of strings formatted exactly like this:
-["First comment", "Second comment", ..., "Tenth comment"]`;
+Return ONLY a JSON object with a 'comments' array formatted exactly like this:
+{"comments": ["First comment", "Second comment", ..., "Tenth comment"]}`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
