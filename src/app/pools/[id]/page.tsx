@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
 import Image from 'next/image';
 import CountdownTimer from '@/components/Timer';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -444,9 +445,14 @@ export default function PoolDetailPage() {
         });
 
         writeContract(request);
+
+        showSuccessToast(
+          `Bet placed successfully! You bet ${betAmount} ${symbol} on "${pool.options[selectedOption]}"`
+        );
       }
     } catch (error) {
       console.error('Error placing bet:', error);
+      showErrorToast('Failed to place bet. Please try again.');
     }
   };
 

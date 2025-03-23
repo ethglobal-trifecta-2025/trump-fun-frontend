@@ -20,6 +20,7 @@ import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteCont
 import TruthSocial from './common/truth-social';
 import { Badge } from './ui/badge';
 import CountdownTimer from './Timer';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 interface BettingPostProps {
   id: string;
@@ -365,10 +366,14 @@ export function BettingPost({
           setBetAmount('');
           setSelectedOption(null);
           setShowBetForm(false);
+          showSuccessToast(
+            `Bet placed successfully! You bet ${betAmount} ${tokenType} on "${options[selectedOption]}"!`
+          );
         }
       }
     } catch (error) {
       console.error('Error placing bet:', error);
+      showErrorToast('Error placing bet. Please check your wallet connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -389,7 +394,7 @@ export function BettingPost({
           {/* Zero volume text */}
           <div className='mt-1 flex justify-end'>
             <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
-               {volume} vol.
+              {volume} vol.
             </div>
           </div>
         </div>
