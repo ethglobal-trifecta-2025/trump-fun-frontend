@@ -5,14 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { Pool } from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import Link from 'next/link';
 import TruthSocial from '../common/truth-social';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import CountdownTimer from '../Timer';
-
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import Image from 'next/image';
 export function PoolCard({ pool }: { pool: Pool }) {
   const { tokenType } = useTokenContext();
+
+  const { data: postData } = useQuery({
+    queryKey: ['user-bet', pool.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/post?poolId=${pool.id}`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      return res.json();
+    },
+    staleTime: 60000, // Consider data stale after 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
 
   const totalPoints = pool.pointsBetTotals.reduce(
     (sum, points) => sum + BigInt(points || '0'),
@@ -56,8 +72,10 @@ export function PoolCard({ pool }: { pool: Pool }) {
         <CardHeader>
           <div className='flex items-center gap-x-3'>
             <Avatar className='size-8'>
-              <AvatarImage src='/trump.jpeg' alt='Donald Trump' />
-              <AvatarFallback>DT</AvatarFallback>
+              <AvatarImage src={postData ? postData?.post?.image_url : '/trump.jpeg'} alt='Donald Trump' />
+              <AvatarFallback>
+                <Image src={'/trump.jpeg'} alt='User' width={32} height={32} />
+              </AvatarFallback>
             </Avatar>
             <div className='flex w-full items-center justify-between'>
               <div className='flex items-center gap-x-1'>

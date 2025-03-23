@@ -1,5 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useQuery } from '@tanstack/react-query';
 import { Clock, TrendingUp } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -13,6 +15,20 @@ interface EndingSoonBetProps {
 
 export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: EndingSoonBetProps) {
   const [remainingTime, setRemainingTime] = useState('');
+  const { data: poolData } = useQuery({
+    queryKey: ['ending-soon-bet', poolId],
+    queryFn: async () => {
+      const res = await fetch(`/api/post?poolId=${poolId}`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      return res.json();
+    },
+    staleTime: 60000, // Consider data stale after 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
 
   useEffect(() => {
     const calculateRemainingTime = () => {
@@ -52,8 +68,10 @@ export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: En
     >
       <div className='flex gap-3'>
         <Avatar className='h-8 w-8 overflow-hidden rounded-full'>
-          <AvatarImage src={avatar} alt='User' />
-          <AvatarFallback>U</AvatarFallback>
+          <AvatarImage src={poolData ? poolData?.post?.image_url : avatar} alt='User' />
+          <AvatarFallback>
+            <Image src={'/trump.jpeg'} alt='User' width={32} height={32} />
+          </AvatarFallback>
         </Avatar>
         <div className='flex-1'>
           <p className='mb-1 line-clamp-2 text-sm'>{question}</p>

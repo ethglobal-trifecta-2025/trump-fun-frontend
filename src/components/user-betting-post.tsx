@@ -8,10 +8,10 @@ import { useEffect, useState } from 'react';
 import TruthSocial from './common/truth-social';
 import CountdownTimer from './Timer';
 import { Badge } from './ui/badge';
-
+import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 interface UserBettingPostProps {
   id: string;
-  avatar: string;
   username: string;
   time: number;
   question: string;
@@ -20,6 +20,7 @@ interface UserBettingPostProps {
   status: PoolStatus;
   selectedOption: number;
   closesAt: number;
+  poolId: string;
   userBet: {
     amount: string;
     selectedOption: number;
@@ -34,7 +35,6 @@ interface UserBettingPostProps {
 
 export function UserBettingPost({
   id,
-  avatar,
   username,
   time,
   question,
@@ -46,9 +46,24 @@ export function UserBettingPost({
   status,
   tokenType,
   truthSocialId,
+  poolId,
 }: UserBettingPostProps) {
   const [highlight, setHighlight] = useState(false);
   const [timePercent, setTimePercent] = useState(100);
+  const { data: userBetData } = useQuery({
+    queryKey: ['user-profile-post', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/post?poolId=${poolId}`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      return res.json();
+    },
+    staleTime: 60000, // Consider data stale after 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
 
   // Calculate time percentage for progress bar
   useEffect(() => {
@@ -105,19 +120,24 @@ export function UserBettingPost({
     >
       <div className='p-4'>
         {/* Time progress bar for active bets */}
-        {isActive && !isClosed && (
+        {/* {isActive && !isClosed && (
           <div className='-mt-4 mb-3 h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
             <div
               className='h-full bg-orange-500 transition-all duration-500 ease-in-out'
               style={{ width: `${timePercent}%` }}
             ></div>
           </div>
-        )}
+        )} */}
 
         <div className='mb-2 flex items-center gap-2'>
           <Avatar className='h-10 w-10 overflow-hidden rounded-full'>
-            <AvatarImage src={avatar} alt={username} />
-            <AvatarFallback>{username.slice(0, 2)}</AvatarFallback>
+            <AvatarImage
+              src={userBetData ? userBetData?.post?.image_url : '/trump.jpeg'}
+              alt={username}
+            />
+            <AvatarFallback>
+                <Image src='/trump.jpeg' alt={username} width={40} height={40} />
+            </AvatarFallback>
           </Avatar>
           <div className='flex-1'>
             <div className='font-bold'>{username}</div>

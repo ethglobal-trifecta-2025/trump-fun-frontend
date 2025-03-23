@@ -299,30 +299,30 @@ export default function ProfilePage() {
               <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
                 Betting Stats
               </div>
-              <div className='grid grid-cols-2 gap-2 text-xs'>
-                <div>
+              <div className='grid grid-cols-2 gap-4 text-xs'>
+                <div className='flex flex-col gap-y-1'>
                   <div className='text-gray-500 dark:text-gray-400'>Total Bets</div>
                   <div className='animate-pulse font-semibold'>{userStats.totalBets}</div>
                 </div>
-                <div>
+                <div className='flex flex-col gap-y-1'>
                   <div className='text-gray-500 dark:text-gray-400'>Win Rate</div>
                   <div className='font-semibold text-green-500'>{userStats.winRate}%</div>
                 </div>
-                <div>
+                <div className='flex flex-col gap-y-2.5'>
                   <div className='text-gray-500 dark:text-gray-400'>Total Volume</div>
                   <div className='font-semibold'>
                     {tokenTextLogo}
-                    <span className='relative inline-block'>
+                    <span className='relative mr-5'>
                       {userStats.totalVolume.toFixed(2)}
                       {userStats.activeVolume > 0 && (
-                        <span className='absolute -top-2 -right-4 text-[10px] font-bold text-orange-500'>
+                        <span className='absolute -top-3 -right-3 text-[10px] font-bold text-orange-500'>
                           +{userStats.activeVolume.toFixed(2)}
                         </span>
                       )}
                     </span>
                   </div>
                 </div>
-                <div>
+                <div className='flex flex-col gap-y-2.5'>
                   <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
                   <div className='font-semibold'>
                     {tokenTextLogo}
@@ -572,7 +572,6 @@ export default function ProfilePage() {
                     <UserBettingPost
                       key={bet.id}
                       id={bet.id}
-                      avatar='/trump.jpeg'
                       username='realDonaldTrump'
                       time={pool.createdAt}
                       question={pool.question}
@@ -582,6 +581,7 @@ export default function ProfilePage() {
                       truthSocialId={pool.originalTruthSocialPostId}
                       volume={calculateVolume(pool, bet.tokenType)}
                       closesAt={pool.betsCloseAt}
+                      poolId={bet.pool.id}
                       userBet={{
                         amount: amount,
                         selectedOption: bet.option,

@@ -12,15 +12,17 @@ import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { HandCoins, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import TruthSocial from './common/truth-social';
-import { Badge } from './ui/badge';
 import CountdownTimer from './Timer';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import { Badge } from './ui/badge';
+import Image from 'next/image';
 
 interface BettingPostProps {
   id: string;
@@ -60,6 +62,21 @@ export function BettingPost({
   const [sliderValue, setSliderValue] = useState([0]);
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [userEnteredValue, setUserEnteredValue] = useState<string>('');
+
+  const { data: poolData } = useQuery({
+    queryKey: ['pool', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/post?poolId=${id}`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      return res.json();
+    },
+    staleTime: 60000, // Consider data stale after 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
 
   // Action states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -451,8 +468,10 @@ export function BettingPost({
       <div className='p-4'>
         <div className='mb-2 flex items-center gap-2'>
           <Avatar className='h-10 w-10 overflow-hidden rounded-full'>
-            <AvatarImage src={avatar} alt={username} />
-            <AvatarFallback>{username.slice(0, 2)}</AvatarFallback>
+            <AvatarImage src={poolData ? poolData?.post?.image_url : avatar} alt={username} />
+            <AvatarFallback>
+              <Image src={'/trump.jpeg'} alt='User' width={32} height={32} />
+            </AvatarFallback>
           </Avatar>
           <div className='flex-1'>
             <div className='font-bold'>{username}</div>

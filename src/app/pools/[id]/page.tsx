@@ -30,16 +30,16 @@ import { formatDistanceToNow } from 'date-fns';
 // Import utils
 import { togglePoolFacts } from '@/app/actions/pool-facts';
 import { GET_POOL } from '@/app/queries';
+import { Activity } from '@/components/Activity';
 import TruthSocial from '@/components/common/truth-social';
 import { Related } from '@/components/Related';
-import { Activity } from '@/components/Activity';
+import CountdownTimer from '@/components/Timer';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-import Image from 'next/image';
-import CountdownTimer from '@/components/Timer';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import Image from 'next/image';
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -618,8 +618,13 @@ export default function PoolDetailPage() {
           <div className='mb-2 flex flex-wrap items-start justify-between gap-2'>
             <div className='flex items-center'>
               <Avatar className='mr-2 h-8 w-8'>
-                <AvatarImage src='/trump.jpeg' alt='realDonaldTrump' />
-                <AvatarFallback>DT</AvatarFallback>
+                <AvatarImage
+                  src={postData ? postData?.post?.image_url : '/trump.jpeg'}
+                  alt='realDonaldTrump'
+                />
+                <AvatarFallback>
+                  <Image src={'/trump.jpeg'} alt='User' width={32} height={32} />
+                </AvatarFallback>
               </Avatar>
               <div className='text-sm'>
                 <div className='font-bold'>realDonaldTrump</div>
@@ -701,12 +706,14 @@ export default function PoolDetailPage() {
               <p className='text-muted-foreground text-sm'>Total Vol</p>
               <p className='font-bold'>{totalVolume}</p>
             </div>
-            <div className='bg-muted flex items-center justify-center rounded-lg p-4 text-center'>
-              <Clock className='mx-auto mb-2 text-green-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Time Left</p>
+            <div className='bg-muted flex flex-col gap-y-2 items-center justify-center rounded-lg p-4 text-center'>
+              <div className='flex items-center justify-center'>
+                <Clock className='mx-auto mb-2 text-green-500' size={24} />
+                <p className='text-muted-foreground text-sm'>Time Left</p>
+              </div>
 
               {pool.betsCloseAt && !isNaN(new Date(pool.betsCloseAt * 1000).getTime()) ? (
-                <CountdownTimer closesAt={pool.betsCloseAt * 1000} />
+                <CountdownTimer closesAt={pool.betsCloseAt * 1000} displayText={false} />
               ) : (
                 <p className='font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
               )}
@@ -761,7 +768,7 @@ export default function PoolDetailPage() {
               </div>
 
               {/* Slider */}
-              <div className='mb-4'>
+              <div className='my-4'>
                 <Slider
                   defaultValue={[0]}
                   max={100}

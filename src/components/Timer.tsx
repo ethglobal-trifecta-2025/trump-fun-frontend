@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const CountdownTimer = ({ closesAt }: { closesAt: string | Date | number }) => {
+const CountdownTimer = ({ closesAt, displayText = true }: { closesAt: string | Date | number, displayText?: boolean }) => {
   const [timeRemaining, setTimeRemaining] = useState<{
     hours: string;
     minutes: string;
@@ -90,7 +90,7 @@ const CountdownTimer = ({ closesAt }: { closesAt: string | Date | number }) => {
 
   return (
     <div className='flex flex-col items-end'>
-      <div className='mb-1 text-xs font-medium text-gray-500 dark:text-gray-400'>
+      <div className={` ${displayText ? '' : 'hidden'} text-xs font-medium text-gray-500 dark:text-gray-400`}>
         {isExpired ? 'Closed' : 'Closes in'}
       </div>
       <div className='flex justify-center gap-1'>
