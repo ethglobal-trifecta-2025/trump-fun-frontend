@@ -1,13 +1,12 @@
 'use client';
 
-import { POINTS_ADDRESS } from '@/consts/addresses';
 import { USDC_DECIMALS } from '@/consts';
+import { POINTS_ADDRESS } from '@/consts/addresses';
 import { useEffect, useState } from 'react';
 import { type Address } from 'viem';
 import { useBalance } from 'wagmi';
 import { GetBalanceData } from 'wagmi/query';
-import { useTokenContext } from './useTokenContext';
-import { TokenType } from './useTokenContext';
+import { TokenType, useTokenContext } from './useTokenContext';
 import { useWalletAddress } from './useWalletAddress';
 
 interface UseTokenBalanceOptions {
@@ -89,8 +88,8 @@ export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalance
   // Don't show any decimals in the display (no cents allowed)
 
   // Format balance with proper decimal precision - no decimals for display
-  const formattedBalance = finalBalance?.formatted
-    ? parseFloat(finalBalance.formatted).toFixed(0)
+  const formattedBalance = finalBalance?.value
+    ? Math.floor(Number(finalBalance.value) / Math.pow(10, finalBalance.decimals)).toString()
     : '0';
 
   // Determine loading and error states

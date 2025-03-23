@@ -50,9 +50,11 @@ export default function PoolDetailPage() {
   const [selectedTab, setSelectedTab] = useState<'comments' | 'activity' | 'related'>('comments');
 
   // Component state
-  const [betAmount, setBetAmount] = useState<number>(0);
+  const [betAmount, setBetAmount] = useState<string>('');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [sliderValue, setSliderValue] = useState([0]);
+  const [isUserTyping, setIsUserTyping] = useState(false);
+  const [userEnteredValue, setUserEnteredValue] = useState<string>('');
   const [poolFacts, setPoolFacts] = useState<number>(() => {
     // Use localStorage as temporary fallback until Supabase is set up
     if (typeof window !== 'undefined') {
@@ -128,11 +130,11 @@ export default function PoolDetailPage() {
 
       if (amountParam && !isNaN(Number(amountParam))) {
         const amount = Number(amountParam);
-        setBetAmount(amount);
+        setBetAmount(amount.toString());
 
         // Set slider value based on balance
         if (balance) {
-          const maxAmount = parseFloat(balance.formatted);
+          const maxAmount = Number(balance.value) / Math.pow(10, balance.decimals);
           const percentage = Math.min(100, (amount / maxAmount) * 100);
           setSliderValue([percentage]);
         }
@@ -196,18 +198,38 @@ export default function PoolDetailPage() {
 
   // Update bet amount when slider changes
   useEffect(() => {
-    if (!balance) return;
+    // Skip this effect completely during and after user typing
+    if (isUserTyping || !balance) return;
 
-    const maxAmount = parseFloat(balance.formatted);
+    // Don't update the input if user directly typed a value
+    if (userEnteredValue) return;
+
+    const rawBalanceValue = Number(balance.value) / Math.pow(10, balance.decimals);
 
     if (sliderValue[0] > 0) {
       const percentage = sliderValue[0] / 100;
-      const amount = parseFloat((maxAmount * percentage).toFixed(6));
-      setBetAmount(amount);
-    } else {
-      setBetAmount(0);
+
+      // Special case for 100%
+      if (sliderValue[0] === 100) {
+        const exactAmount = Math.ceil(rawBalanceValue).toString();
+        if (exactAmount !== betAmount) {
+          setBetAmount(exactAmount);
+        }
+        return;
+      }
+
+      // Compensate for the 1-off error by using Math.ceil instead of Math.floor
+      const amount = Math.max(Math.ceil(rawBalanceValue * percentage), 1);
+      const amountStr = amount.toString();
+
+      // Don't set the value if it's already the same (prevents cursor jumping)
+      if (amountStr !== betAmount) {
+        setBetAmount(amountStr);
+      }
+    } else if (sliderValue[0] === 0 && betAmount !== '') {
+      setBetAmount('');
     }
-  }, [sliderValue, balance]);
+  }, [sliderValue, balance, betAmount, isUserTyping, userEnteredValue]);
 
   // Fetch approved amount when component mounts or account changes
   useEffect(() => {
@@ -234,9 +256,9 @@ export default function PoolDetailPage() {
     fetchApprovedAmount();
   }, [account.address, publicClient, hash, getTokenAddress]);
 
-  // Log approvedAmount when it changes
+  // Remove the log for approved amount that's causing noise
   useEffect(() => {
-    console.log(`Approved amount: ${approvedAmount}`);
+    // Silently update approvedAmount - no logging
     setApprovedAmount(approvedAmount);
   }, [approvedAmount]);
 
@@ -244,10 +266,26 @@ export default function PoolDetailPage() {
   const handlePercentageClick = (percentage: number) => {
     if (!balance) return;
 
-    const maxAmount = parseFloat(balance.formatted);
-    const amount = parseFloat((maxAmount * (percentage / 100)).toFixed(6));
-    setBetAmount(amount);
+    const rawBalanceValue = Number(balance.value) / Math.pow(10, balance.decimals);
+
+    // Compensate for the 1-off error by adding 1 to all non-zero values
+    let amount;
+    if (percentage === 100) {
+      // For 100%, use the exact integer from the formatted balance
+      amount = Math.ceil(rawBalanceValue);
+    } else if (percentage === 0) {
+      amount = 0;
+    } else {
+      // For percentages, calculate and add 1 to ensure correct value
+      amount = Math.max(Math.ceil(rawBalanceValue * percentage), 1);
+    }
+
+    // Set as string (whole number)
+    setBetAmount(amount.toString());
     setSliderValue([percentage]);
+
+    // Clear user entered value since this is from a button
+    setUserEnteredValue('');
   };
 
   // Handle FACTS button click
@@ -359,7 +397,7 @@ export default function PoolDetailPage() {
       return;
     }
 
-    if (!betAmount || betAmount <= 0 || selectedOption === null) {
+    if (!betAmount || betAmount === '0' || selectedOption === null) {
       console.error('Invalid bet parameters');
       return;
     }
@@ -376,9 +414,10 @@ export default function PoolDetailPage() {
 
     try {
       // Convert amount to token units with proper decimals
-      const tokenAmount = BigInt(Math.floor(betAmount * 10 ** USDC_DECIMALS));
+      const amount = parseInt(betAmount, 10);
+      const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
 
-      if (approvedAmount && parseFloat(approvedAmount) < betAmount) {
+      if (approvedAmount && parseFloat(approvedAmount) < amount) {
         // First approve tokens to be spent
         const { request: approveRequest } = await publicClient.simulateContract({
           abi: pointsTokenAbi,
@@ -392,7 +431,7 @@ export default function PoolDetailPage() {
       }
 
       // Wait for the transaction to be confirmed before proceeding
-      if (isConfirmed || parseFloat(approvedAmount) >= betAmount) {
+      if (isConfirmed || parseFloat(approvedAmount) >= amount) {
         // Now place the bet
         const { request } = await publicClient.simulateContract({
           abi: bettingContractAbi,
@@ -633,17 +672,17 @@ export default function PoolDetailPage() {
           {/* Stats */}
           <div className='mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3'>
             <div className='bg-muted rounded-lg p-4 text-center'>
-              <TrendingUp className='mx-auto mb-2 text-orange-500' size={24} />
+              <TrendingUp className='mx-auto mb-2 text-green-500' size={24} />
               <p className='text-muted-foreground text-sm'>Total Volume</p>
               <p className='font-bold'>{totalVolume}</p>
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
-              <Clock className='mx-auto mb-2 text-orange-500' size={24} />
+              <Clock className='mx-auto mb-2 text-green-500' size={24} />
               <p className='text-muted-foreground text-sm'>Time Left</p>
               <p className='font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
             </div>
             <div className='bg-muted rounded-lg p-4 text-center'>
-              <Users className='mx-auto mb-2 text-orange-500' size={24} />
+              <Users className='mx-auto mb-2 text-green-500' size={24} />
               <p className='text-muted-foreground text-sm'>Bettors</p>
               <p className='font-bold'>{calculateBettors(pool)}</p>
             </div>
@@ -698,7 +737,12 @@ export default function PoolDetailPage() {
                   max={100}
                   step={1}
                   value={sliderValue}
-                  onValueChange={setSliderValue}
+                  onValueChange={(newValue) => {
+                    // When slider is directly manipulated, clear userEnteredValue
+                    // to allow the slider effect to work again
+                    setUserEnteredValue('');
+                    setSliderValue(newValue);
+                  }}
                   className='mb-2'
                 />
               </div>
@@ -706,29 +750,55 @@ export default function PoolDetailPage() {
               <div className='mb-4 flex flex-col gap-2 sm:flex-row'>
                 <div className='relative flex-1'>
                   <Input
-                    type='number'
+                    type='text'
+                    inputMode='numeric'
                     placeholder='0'
+                    className='h-10 pr-16'
                     value={betAmount}
                     onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (isNaN(value)) {
-                        setBetAmount(0);
+                      const value = e.target.value;
+
+                      // Flag that user is typing and store direct input
+                      setIsUserTyping(true);
+                      setUserEnteredValue(value);
+
+                      // Empty input handling
+                      if (value === '') {
+                        setBetAmount('');
                         setSliderValue([0]);
+                        setTimeout(() => setIsUserTyping(false), 1000);
                         return;
                       }
 
-                      setBetAmount(value);
+                      // Only allow whole numbers (no decimals)
+                      if (/^[0-9]+$/.test(value)) {
+                        // Set input value immediately and preserve it
+                        setBetAmount(value);
 
-                      // Update slider based on value
-                      if (balance && value > 0) {
-                        const maxAmount = parseFloat(balance.formatted);
-                        const percentage = Math.min(100, (value / maxAmount) * 100);
-                        setSliderValue([percentage]);
-                      } else {
-                        setSliderValue([0]);
+                        // Update slider if balance exists, but don't allow the slider to modify the input
+                        if (balance) {
+                          const inputNum = parseInt(value, 10);
+                          // Use raw token value with decimals instead of formatted
+                          const balanceNum = Number(balance.value) / Math.pow(10, balance.decimals);
+
+                          if (inputNum > 0 && balanceNum > 0) {
+                            // Calculate percentage of balance
+                            const percentage = Math.min(
+                              100,
+                              Math.ceil((inputNum / balanceNum) * 100)
+                            );
+                            setSliderValue([percentage]);
+                          }
+                        } else {
+                          setSliderValue([0]);
+                        }
                       }
+
+                      // Keep typing flag on longer to prevent auto-updates
+                      setTimeout(() => {
+                        setIsUserTyping(false);
+                      }, 2000);
                     }}
-                    className='h-10 pr-16'
                   />
                   <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
