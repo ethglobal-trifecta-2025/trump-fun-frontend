@@ -7,12 +7,13 @@ import { useBalance } from '@/components/usePointsBalance';
 import { TRUMP_FUN_TG_URL, TRUMP_FUN_TWITTER_URL } from '@/utils/config';
 import { topUpBalance } from '@/utils/topUp';
 import { usePrivy } from '@privy-io/react-auth';
-import { CheckCircle, Compass, DollarSign, Users } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect } from 'react';
 
 export default function Home() {
+  //TODO We want to remove this when we can, have it here because the login button callback isn't getting called, probably because of a demount issue
   const { ready, authenticated, user } = usePrivy();
   const { refetch: fetchBalance } = useBalance();
 
@@ -60,7 +61,7 @@ export default function Home() {
                 src='/hero.png'
                 alt='Trump'
                 width={1000}
-                height={1000}
+                height={800}
                 className='h-auto w-full rounded-lg'
               />
               <div className='mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
@@ -79,37 +80,40 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <section className='bg-muted/50 py-12 md:py-18'>
+        {/* TODO: Delete me or fix. This thing just doesn't look good */}
+        {/* <section className='bg-muted/50 py-8'>
           <div className='container px-4 md:px-6'>
-            <div className='grid gap-6 lg:grid-cols-3 lg:gap-12'>
-              <div className='flex flex-col items-center justify-center space-y-4 text-center'>
-                <div className='rounded-full bg-orange-100 p-4'>
-                  <CheckCircle className='h-6 w-6 text-orange-500' />
+            <div className='grid gap-4 lg:grid-cols-3 lg:gap-8'>
+              <div className='flex flex-col items-center justify-center space-y-3 text-center'>
+                <div className='rounded-full bg-orange-100 p-3'>
+                  <CheckCircle className='h-5 w-5 text-orange-500' />
                 </div>
                 <h3 className='text-xl font-bold'>Predict</h3>
-                <p className='text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   Bet on what Trump will tweet, say, or do next.
                 </p>
               </div>
-              <div className='flex flex-col items-center justify-center space-y-4 text-center'>
-                <div className='rounded-full bg-orange-100 p-4'>
-                  <DollarSign className='h-6 w-6 text-orange-500' />
+              <div className='flex flex-col items-center justify-center space-y-3 text-center'>
+                <div className='rounded-full bg-orange-100 p-3'>
+                  <DollarSign className='h-5 w-5 text-orange-500' />
                 </div>
                 <h3 className='text-xl font-bold'>Earn</h3>
-                <p className='text-muted-foreground'>Win big when your predictions come true.</p>
+                <p className='text-muted-foreground text-sm'>
+                  Win big when your predictions come true.
+                </p>
               </div>
-              <div className='flex flex-col items-center justify-center space-y-4 text-center'>
-                <div className='rounded-full bg-orange-100 p-4'>
-                  <Users className='h-6 w-6 text-orange-500' />
+              <div className='flex flex-col items-center justify-center space-y-3 text-center'>
+                <div className='rounded-full bg-orange-100 p-3'>
+                  <Users className='h-5 w-5 text-orange-500' />
                 </div>
                 <h3 className='text-xl font-bold'>Connect</h3>
-                <p className='text-muted-foreground'>
+                <p className='text-muted-foreground text-sm'>
                   Join the community and discuss the latest happenings.
                 </p>
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         <section className='py-12'>
           <div className='container px-4 md:px-6'>

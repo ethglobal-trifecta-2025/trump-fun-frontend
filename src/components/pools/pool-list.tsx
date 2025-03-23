@@ -1,6 +1,7 @@
 'use client';
 
 import { GET_POOLS } from '@/app/queries';
+import { POLLING_INTERVALS } from '@/consts';
 import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { PoolCard } from './pool-card';
@@ -19,6 +20,7 @@ export function PoolList() {
       orderDirection: OrderDirection.Desc,
       first: 9,
     },
+    pollInterval: POLLING_INTERVALS['landing-pools'],
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,
   });

@@ -7,11 +7,11 @@ import { Compass, Menu, User } from 'lucide-react';
 import Link from 'next/link';
 import { NetworkIndicator } from '../network-indicator';
 import { ThemeToggle } from '../theme-toggle';
-import { TrumpUserPill } from '../user-pill';
 import { TokenSwitch } from '../token-switch';
+import { TrumpUserPill } from '../user-pill';
 
 export default function Nav() {
-  const { formattedBalance, tokenTextLogo } = useTokenBalance();
+  const { formattedBalance, tokenLogo } = useTokenBalance();
 
   const navItems = [
     {
@@ -53,7 +53,7 @@ export default function Nav() {
             <div className='flex items-center gap-2'>
               <div className='text-sm text-gray-400'>Balance</div>
               <div className='font-bold'>
-                {tokenTextLogo} {formattedBalance}
+                {tokenLogo} {formattedBalance}
               </div>
             </div>
             <TrumpUserPill />
@@ -75,7 +75,7 @@ export default function Nav() {
                 <div className='mb-4 flex items-center gap-2'>
                   <div className='text-sm text-gray-400'>Balance</div>
                   <div className='font-bold'>
-                    {tokenTextLogo} {formattedBalance}
+                    {tokenLogo} {formattedBalance}
                   </div>
                 </div>
                 <div className='w-full space-y-4'>

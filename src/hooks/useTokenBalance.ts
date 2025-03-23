@@ -19,7 +19,7 @@ interface UseTokenBalanceOptions {
  */
 export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalanceOptions = {}) => {
   const { address, isConnected, chainId } = useWalletAddress();
-  const { tokenType, getTokenAddress, tokenSymbol, tokenLogo, tokenTextLogo } = useTokenContext();
+  const { tokenType, getTokenAddress, tokenSymbol, tokenLogo } = useTokenContext();
 
   // Store separate balances for each token type to avoid mixing them up
   const [usdcBalance, setUsdcBalance] = useState<GetBalanceData>();
@@ -109,7 +109,6 @@ export const useTokenBalance = (tokenAddress?: Address, options: UseTokenBalance
     symbol: tokenSymbol,
     decimals: finalBalance?.decimals || tokenDecimals,
     tokenLogo,
-    tokenTextLogo,
     hasValidWallet: shouldFetch,
   };
 };

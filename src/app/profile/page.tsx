@@ -34,7 +34,7 @@ export default function ProfilePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { tokenType } = useTokenContext();
   const { address } = useWalletAddress();
-  const { formattedBalance, tokenTextLogo } = useTokenBalance();
+  const { formattedBalance, tokenLogo } = useTokenBalance();
   const { networkInfo } = useNetwork();
   const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
   const { isPending, writeContract } = useWriteContract();
@@ -284,7 +284,7 @@ export default function ProfilePage() {
               <div className='text-center'>
                 <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                 <div className='font-bold'>
-                  {tokenTextLogo}
+                  {tokenLogo}
                   {formattedBalance}
                 </div>
               </div>
@@ -311,7 +311,7 @@ export default function ProfilePage() {
                 <div className='flex flex-col gap-y-2.5'>
                   <div className='text-gray-500 dark:text-gray-400'>Total Volume</div>
                   <div className='font-semibold'>
-                    {tokenTextLogo}
+                    {tokenLogo}
                     <span className='relative mr-5'>
                       {userStats.totalVolume.toFixed(2)}
                       {userStats.activeVolume > 0 && (
@@ -325,7 +325,7 @@ export default function ProfilePage() {
                 <div className='flex flex-col gap-y-2.5'>
                   <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
                   <div className='font-semibold'>
-                    {tokenTextLogo}
+                    {tokenLogo}
                     {userStats.avgBetSize}
                   </div>
                 </div>
@@ -338,7 +338,7 @@ export default function ProfilePage() {
             </div>
 
             <p className='text-sm text-gray-500 dark:text-gray-400'>
-              Withdrawable Balance: {tokenTextLogo}
+              Withdrawable Balance: {tokenLogo}
               {formattedWithdrawableBalance}
             </p>
 
@@ -446,7 +446,7 @@ export default function ProfilePage() {
                   <div className='text-center'>
                     <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
                     <div className='font-bold'>
-                      {formattedBalance} {tokenTextLogo}
+                      {formattedBalance} {tokenLogo}
                     </div>
                   </div>
                   <div className='text-center'>

@@ -1,34 +1,28 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Address } from 'viem';
-import Image from 'next/image';
 import { POINTS_ADDRESS, USDC_ADDRESS } from '@/consts/addresses';
+import Image from 'next/image';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Address } from 'viem';
 
 // Define token types as enum for better type safety
 export enum TokenType {
-  USDC = 'USD',
+  USDC = 'USDC',
   POINTS = 'FREEDOM',
 }
 
 // Token logos/symbols
 export const TOKEN_SYMBOLS: Record<TokenType, { symbol: string; logo: React.ReactNode }> = {
   [TokenType.USDC]: {
-    symbol: 'USD',
+    symbol: 'USDC',
     logo: <Image src='/usdc.svg' alt='USD' width={16} height={16} style={{ display: 'inline' }} />,
   },
   [TokenType.POINTS]: {
     symbol: 'FREEDOM',
     logo: (
-      <Image src='/points.svg' alt='POINTS' width={16} height={16} style={{ display: 'inline' }} />
+      <Image src='/points2.png' alt='POINTS' width={16} height={16} style={{ display: 'inline' }} />
     ),
   },
-};
-
-// Simple text logos for places where React nodes can't be used
-export const TOKEN_TEXT_LOGOS: Record<TokenType, string> = {
-  [TokenType.USDC]: '💲',
-  [TokenType.POINTS]: '🦅',
 };
 
 interface TokenContextType {
@@ -37,7 +31,6 @@ interface TokenContextType {
   getTokenAddress: () => Address | null;
   tokenSymbol: string;
   tokenLogo: React.ReactNode;
-  tokenTextLogo: string;
 }
 
 // Create context with default values
@@ -47,7 +40,6 @@ const TokenContext = createContext<TokenContextType>({
   getTokenAddress: () => null,
   tokenSymbol: TOKEN_SYMBOLS[TokenType.USDC].symbol,
   tokenLogo: TOKEN_SYMBOLS[TokenType.USDC].logo,
-  tokenTextLogo: TOKEN_TEXT_LOGOS[TokenType.USDC],
 });
 
 export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
@@ -56,7 +48,6 @@ export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
   // Get token information
   const tokenSymbol = TOKEN_SYMBOLS[tokenType].symbol;
   const tokenLogo = TOKEN_SYMBOLS[tokenType].logo;
-  const tokenTextLogo = TOKEN_TEXT_LOGOS[tokenType];
 
   // Function to get token address for current chain
   const getTokenAddress = (): Address | null => {
@@ -89,7 +80,6 @@ export const TokenProvider = ({ children }: { children: React.ReactNode }) => {
     getTokenAddress,
     tokenSymbol,
     tokenLogo,
-    tokenTextLogo,
   };
 
   return <TokenContext.Provider value={value}>{children}</TokenContext.Provider>;

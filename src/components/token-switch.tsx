@@ -9,7 +9,7 @@ import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { cn } from '@/lib/utils';
 
 export function TokenSwitch() {
-  const { tokenType, setTokenType, tokenTextLogo } = useTokenContext();
+  const { tokenType, setTokenType, tokenLogo } = useTokenContext();
 
   // For POINTS, always use the zero address
   const { formattedBalance, symbol } = useTokenBalance(
@@ -34,7 +34,7 @@ export function TokenSwitch() {
                   : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
               )}
             >
-              <span>{tokenTextLogo}</span>
+              <span>{tokenLogo}</span>
               <span className='ml-1 hidden sm:inline'>{tokenType}</span>
             </Badge>
           </Tooltip.Trigger>

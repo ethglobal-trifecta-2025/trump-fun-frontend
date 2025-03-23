@@ -28,6 +28,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
     staleTime: 60000, // Consider data stale after 1 minute
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 10000, //TODO I have no idea what this is
   });
 
   const totalPoints = pool.pointsBetTotals.reduce(
@@ -72,7 +73,10 @@ export function PoolCard({ pool }: { pool: Pool }) {
         <CardHeader>
           <div className='flex items-center gap-x-3'>
             <Avatar className='size-8'>
-              <AvatarImage src={postData ? postData?.post?.image_url : '/trump.jpeg'} alt='Donald Trump' />
+              <AvatarImage
+                src={postData ? postData?.post?.image_url : '/trump.jpeg'}
+                alt='Donald Trump'
+              />
               <AvatarFallback>
                 <Image src={'/trump.jpeg'} alt='User' width={32} height={32} />
               </AvatarFallback>

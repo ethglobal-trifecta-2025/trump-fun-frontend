@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
     // Setup provider and wallet
     const provider = new ethers.JsonRpcProvider(process.env.BASE_SEPOLIA_RPC_URL);
-    const privateKey = process.env.MAIN_PRIVATE_KEY;
+    const privateKey = process.env.MINTER_PRIVATE_KEY;
     if (!privateKey) {
       throw new Error('Relayer private key not configured');
     }

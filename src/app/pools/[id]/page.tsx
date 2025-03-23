@@ -101,7 +101,7 @@ export default function PoolDetailPage() {
   const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
 
   // Use our custom hook for token balance
-  const { balance, formattedBalance, symbol, tokenTextLogo } = useTokenBalance();
+  const { balance, formattedBalance, symbol, tokenLogo } = useTokenBalance();
 
   // Pool data fetching
   const {
@@ -743,7 +743,7 @@ export default function PoolDetailPage() {
               <p className='text-muted-foreground text-sm'>Total Vol</p>
               <p className='font-bold'>{totalVolume}</p>
             </div>
-            <div className='bg-muted flex flex-col gap-y-2 items-center justify-center rounded-lg p-4 text-center'>
+            <div className='bg-muted flex flex-col items-center justify-center gap-y-2 rounded-lg p-4 text-center'>
               <div className='flex items-center justify-center'>
                 <Clock className='mx-auto mb-2 text-green-500' size={24} />
                 <p className='text-muted-foreground text-sm'>Time Left</p>
@@ -875,7 +875,7 @@ export default function PoolDetailPage() {
                     }}
                   />
                   <div className='absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-400'>
-                    <span className='mr-1'>{tokenTextLogo}</span> {symbol}
+                    <span className='mr-1'>{tokenLogo}</span> {symbol}
                   </div>
                   {balance && (
                     <div className='absolute right-0 -bottom-5 text-xs text-gray-400'>
@@ -920,7 +920,7 @@ export default function PoolDetailPage() {
 
               {selectedOption !== null && (
                 <p className='mb-4 text-xs text-gray-400'>
-                  You are betting {betAmount || '0'} <span className='mx-1'>{tokenTextLogo}</span>{' '}
+                  You are betting {betAmount || '0'} <span className='mx-1'>{tokenLogo}</span>{' '}
                   {symbol} on &quot;{pool.options[selectedOption]}&quot;
                 </p>
               )}
