@@ -210,6 +210,49 @@ export const GET_PAYOUT_CLAIMED = gql`
   }
 `;
 
+export const GET_BET_WITHDRAWALS = gql`
+  query GetBetWithdrawals(
+    $first: Int = 100
+    $skip: Int = 0
+    $orderBy: BetWithdrawal_orderBy = blockTimestamp
+    $orderDirection: OrderDirection = desc
+    $where: BetWithdrawal_filter
+  ) {
+    betWithdrawals(
+      first: $first
+      skip: $skip
+      orderBy: $orderBy
+      orderDirection: $orderDirection
+      where: $where
+    ) {
+      id
+      betId
+      poolId
+      user
+      blockNumber
+      blockTimestamp
+      transactionHash
+      chainName
+      chainId
+      bet {
+        id
+        amount
+        option
+        tokenType
+        isWithdrawn
+        pool {
+          id
+          question
+          options
+          status
+          winningOption
+          isDraw
+        }
+      }
+    }
+  }
+`;
+
 export const GET_POOL = gql`
   query GetPool($poolId: ID!) {
     pool(id: $poolId) {

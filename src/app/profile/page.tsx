@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserBettingPost } from '@/components/user-betting-post';
+import { POINTS_DECIMALS, USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { useNetwork } from '@/hooks/useNetwork';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
@@ -16,6 +17,7 @@ import { useWalletAddress } from '@/hooks/useWalletAddress';
 import {
   Bet_Filter,
   Bet_OrderBy,
+  BetWithdrawal_OrderBy,
   OrderDirection,
   PayoutClaimed_OrderBy,
 } from '@/lib/__generated__/graphql';
@@ -25,7 +27,7 @@ import { useQuery } from '@apollo/client';
 import { ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { usePublicClient, useReadContract, useWriteContract } from 'wagmi';
-import { GET_BETS, GET_PAYOUT_CLAIMED } from '../queries';
+import { GET_BET_WITHDRAWALS, GET_BETS, GET_PAYOUT_CLAIMED } from '../queries';
 
 export default function ProfilePage() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
@@ -117,6 +119,18 @@ export default function ProfilePage() {
     skip: !address || activeFilter !== 'won',
   });
 
+  const { data: betWithdrawals } = useQuery<{ betWithdrawals: any[] }>(GET_BET_WITHDRAWALS, {
+    variables: {
+      where: { user: address?.toLowerCase() },
+      orderBy: BetWithdrawal_OrderBy.BlockTimestamp,
+      orderDirection: OrderDirection.Desc,
+      first: 100,
+    },
+    context: { name: 'betWithdrawals' },
+    notifyOnNetworkStatusChange: true,
+    skip: !address,
+  });
+
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
   };
@@ -194,6 +208,61 @@ export default function ProfilePage() {
     }
   };
 
+  // Calculate user statistics
+  const userStats = useMemo(() => {
+    const allBets = userBets?.bets || [];
+    const totalBets = allBets.length;
+    const wonBets = payoutClaimeds?.payoutClaimeds?.length || 0;
+    const lostBets = allBets.filter(
+      (bet) => bet.pool.status === 'GRADED' && !bet.isWithdrawn
+    ).length;
+    const pendingBets = allBets.filter((bet) => bet.pool.status === 'PENDING').length;
+
+    // Improved volume calculation that includes all bets regardless of status
+    let totalVolume = 0;
+    allBets.forEach((bet) => {
+      try {
+        const betAmount = parseFloat(bet.amount);
+        if (!isNaN(betAmount)) {
+          const decimals = bet.tokenType === 0 ? 1000000 : 1000000000000000000;
+          totalVolume += betAmount / decimals;
+        }
+      } catch (error) {
+        console.error('Error calculating bet volume:', error);
+      }
+    });
+
+    // Calculate active volume as well (bets that are still pending)
+    let activeVolume = 0;
+    allBets
+      .filter((bet) => bet.pool.status === 'PENDING')
+      .forEach((bet) => {
+        try {
+          const betAmount = parseFloat(bet.amount);
+          if (!isNaN(betAmount)) {
+            const decimals = bet.tokenType === 0 ? 1000000 : 1000000000000000000;
+            activeVolume += betAmount / decimals;
+          }
+        } catch (error) {
+          console.error('Error calculating active bet volume:', error);
+        }
+      });
+
+    const winRate = totalBets > 0 ? (wonBets / totalBets) * 100 : 0;
+    const avgBetSize = totalBets > 0 ? totalVolume / totalBets : 0;
+
+    return {
+      totalBets,
+      wonBets,
+      lostBets,
+      pendingBets,
+      totalVolume,
+      activeVolume,
+      winRate: winRate.toFixed(1),
+      avgBetSize: avgBetSize.toFixed(2),
+    };
+  }, [userBets?.bets, payoutClaimeds?.payoutClaimeds]);
+
   return (
     <div className='flex h-[calc(100vh-4rem)] flex-col'>
       <div className='flex flex-1 overflow-hidden'>
@@ -222,6 +291,44 @@ export default function ProfilePage() {
               <div className='text-center'>
                 <div className='text-sm text-gray-500 dark:text-gray-400'>Network</div>
                 <div className='font-semibold'>{networkInfo.name}</div>
+              </div>
+            </div>
+
+            {/* Add betting statistics */}
+            <div className='w-full space-y-2 rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
+              <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+                Betting Stats
+              </div>
+              <div className='grid grid-cols-2 gap-2 text-xs'>
+                <div>
+                  <div className='text-gray-500 dark:text-gray-400'>Total Bets</div>
+                  <div className='animate-pulse font-semibold'>{userStats.totalBets}</div>
+                </div>
+                <div>
+                  <div className='text-gray-500 dark:text-gray-400'>Win Rate</div>
+                  <div className='font-semibold text-green-500'>{userStats.winRate}%</div>
+                </div>
+                <div>
+                  <div className='text-gray-500 dark:text-gray-400'>Total Volume</div>
+                  <div className='font-semibold'>
+                    {tokenTextLogo}
+                    <span className='relative inline-block'>
+                      {userStats.totalVolume.toFixed(2)}
+                      {userStats.activeVolume > 0 && (
+                        <span className='absolute -top-2 -right-4 text-[10px] font-bold text-orange-500'>
+                          +{userStats.activeVolume.toFixed(2)}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
+                  <div className='font-semibold'>
+                    {tokenTextLogo}
+                    {userStats.avgBetSize}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -270,6 +377,51 @@ export default function ProfilePage() {
               Settings
             </Button>
           </nav>
+
+          {/* Recent Withdrawals Section */}
+          {betWithdrawals?.betWithdrawals && betWithdrawals.betWithdrawals.length > 0 && (
+            <>
+              <Separator className='my-4' />
+              <div className='space-y-3'>
+                <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+                  Recent Withdrawals
+                </div>
+                <div className='max-h-60 space-y-2 overflow-y-auto'>
+                  {betWithdrawals.betWithdrawals.slice(0, 5).map((withdrawal: any) => {
+                    const resolvedTokenType =
+                      withdrawal.bet?.tokenType === 0 ? TokenType.USDC : TokenType.POINTS;
+                    const symbol = resolvedTokenType === TokenType.USDC ? '💲' : '🦅';
+                    const decimals =
+                      resolvedTokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
+                    const formattedAmount = (
+                      parseFloat(withdrawal.bet?.amount) / Math.pow(10, decimals)
+                    ).toFixed(0);
+                    const date = new Date(withdrawal.blockTimestamp * 1000);
+
+                    return (
+                      <div
+                        key={withdrawal.id}
+                        className='rounded-md bg-gray-50 p-2 text-xs dark:bg-gray-800'
+                      >
+                        <div className='flex justify-between'>
+                          <span className='font-medium'>
+                            {symbol} {formattedAmount}
+                          </span>
+                          <span className='text-gray-500'>
+                            {date.toLocaleDateString()}{' '}
+                            {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className='mt-1 truncate text-gray-500'>
+                          {withdrawal.bet?.pool?.question?.substring(0, 40)}...
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Main Content */}
@@ -387,6 +539,35 @@ export default function ProfilePage() {
                   const pool = activeFilter === 'won' ? item.pool || item.bet.pool : bet.pool;
                   const amount = activeFilter === 'won' ? item.amount : bet.amount;
 
+                  // Calculate net winnings if this is a won bet
+                  const payout =
+                    activeFilter === 'won'
+                      ? item.amount // This is the total payout amount received
+                      : undefined;
+
+                  // Calculate net winnings (payout minus original bet amount)
+                  let netWinnings: string | undefined = undefined;
+                  try {
+                    if (activeFilter === 'won' && payout && bet.amount) {
+                      const payoutBigInt = BigInt(payout);
+                      const betAmountBigInt = BigInt(bet.amount);
+                      // Ensure we don't have negative profit (which shouldn't happen, but just in case)
+                      netWinnings =
+                        payoutBigInt > betAmountBigInt
+                          ? (payoutBigInt - betAmountBigInt).toString()
+                          : '0';
+                    }
+                  } catch (error) {
+                    console.error('Error calculating net winnings:', error);
+                    netWinnings = '0';
+                  }
+
+                  // For lost bets, add more information about what caused the loss
+                  const winningOption =
+                    activeFilter === 'lost' && pool.winningOption !== undefined
+                      ? pool.options[pool.winningOption]
+                      : undefined;
+
                   return (
                     <UserBettingPost
                       key={bet.id}
@@ -414,7 +595,9 @@ export default function ProfilePage() {
                                   ? 'won'
                                   : 'lost'
                                 : 'pending',
-                        payout: activeFilter === 'won' ? amount : undefined,
+                        payout: payout,
+                        netWinnings: netWinnings,
+                        winningOption: winningOption,
                       }}
                       tokenType={bet.tokenType}
                     />
