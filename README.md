@@ -1,12 +1,23 @@
-# Trump.fun
+# Trump.fun Frontend
+
+![Trump.fun Logo](https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.fun.logo.jpg)
 
 A prediction market platform for betting on Trump's social media posts and public actions.
 
+## Overview
+
+Trump.fun is an AI-powered prediction market platform centered around President Trump's actions and statements. Our system automatically creates betting pools based on Trump's Truth Social posts, allowing users to place bets using either cryptocurrency (USDC) or our platform's native FREEDOM tokens.
+
+The frontend provides a seamless user experience for connecting wallets, browsing betting pools, and placing bets on outcomes.
+
 ## Features
 
-- Bet on what Trump might say or do next
-- Simple user onboarding with embedded wallets (Privy)
-- Trump-style prediction markets
+- Browse AI-generated betting pools based on Trump's Truth Social posts
+- Connect wallet easily with Privy's embedded wallet solution
+- Place bets using USDC or native FREEDOM tokens
+- View and participate in ongoing prediction markets
+- Interact through comments and receive AI-generated Trump-style responses
+- View historical bets and outcomes
 - Responsive design with dark mode support
 
 ## Tech Stack
@@ -47,6 +58,32 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Project Structure
+
+```
+/src
+  /app            # Next.js App Router structure
+  /components     # Reusable UI components
+  /hooks          # Custom React hooks
+  /lib            # Utility functions and shared logic
+  /services       # API and blockchain interaction services
+  /styles         # Global styles
+  /types          # TypeScript type definitions
+```
+
+## Connecting to Other Services
+
+The frontend interacts with:
+- Blockchain contracts deployed on Base network
+- AI agent for Trump-style responses
+- Telegram bot integration
+
+## Social Media
+
+- Twitter: [@realTrumpFun](https://x.com/realTrumpFun)
+- Truth Social: [@realDonaldTrump](https://truthsocial.com/@realDonaldTrump)
+- Telegram: [trump_fun_bot](https://t.me/trump_fun_bot)
 
 ## Contributing
 
