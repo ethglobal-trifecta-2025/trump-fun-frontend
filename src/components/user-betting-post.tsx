@@ -5,6 +5,7 @@ import { PoolStatus } from '@/lib/__generated__/graphql';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import TruthSocial from './common/truth-social';
+import CountdownTimer from './Timer';
 import { Badge } from './ui/badge';
 
 interface UserBettingPostProps {
@@ -17,6 +18,7 @@ interface UserBettingPostProps {
   volume: string;
   status: PoolStatus;
   selectedOption: number;
+  closesAt: number;
   userBet: {
     amount: string;
     selectedOption: number;
@@ -36,6 +38,7 @@ export function UserBettingPost({
   options,
   volume,
   selectedOption,
+  closesAt,
   userBet,
   status,
   tokenType,
@@ -56,6 +59,8 @@ export function UserBettingPost({
   const formattedPayout = userBet.payout
     ? (parseFloat(userBet.payout) / Math.pow(10, decimals)).toFixed(0)
     : undefined;
+
+  const isClosed = new Date(closesAt * 1000) < new Date();
 
   return (
     <div className='bg-background overflow-hidden rounded-lg border border-gray-200 transition-colors hover:border-gray-100 dark:border-gray-800 dark:hover:border-gray-700'>
@@ -95,16 +100,21 @@ export function UserBettingPost({
         </Link>
         {/* User's Bet Information */}
         <div className='mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'>
-          <div className=''>
-            <span className='!text-sm !font-normal text-gray-600 dark:text-gray-400'>
-              Option Selected:
-            </span>
-            <span
-              className={`text-base font-medium ${options[selectedOption]?.toLowerCase() === 'yes' ? 'text-green-500' : options[selectedOption]?.toLowerCase() === 'no' ? 'text-red-500' : 'text-orange-500'}`}
-            >
-              {` `}
-              {options[selectedOption]}
-            </span>
+          <div className='flex items-center justify-between'>
+            <div className='space-y-1'>
+              <span className='!text-sm !font-normal text-gray-600 dark:text-gray-400'>
+                Option Selected:
+              </span>
+              <span
+                className={`text-base font-semibold ${options[selectedOption]?.toLowerCase() === 'yes' ? 'text-green-500' : options[selectedOption]?.toLowerCase() === 'no' ? 'text-red-500' : 'text-orange-500'}`}
+              >
+                {` `}
+                {options[selectedOption]}
+              </span>
+            </div>
+            <div className=''>
+              {isClosed ? 'Bets are closed' : <CountdownTimer closesAt={closesAt * 1000} />}
+            </div>
           </div>
           <div className='mt-2 flex flex-col gap-2 text-sm'>
             <div className='flex items-center justify-between'>
@@ -114,8 +124,9 @@ export function UserBettingPost({
                   {symbol} {formattedAmount}
                 </span>
               </div>
-              <div className='rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300'>
-                Total Vol: {resolvedTokenType === TokenType.USDC ? '💲' : '🦅'} {volume}
+
+              <div className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+                {volume} Vol.
               </div>
             </div>
             {userBet.payout && (

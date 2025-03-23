@@ -3,14 +3,14 @@
 import { AuthButton } from '@/components/auth-button';
 import { PoolList } from '@/components/pools/pool-list';
 import { Button } from '@/components/ui/button';
-import { usePrivy } from '@privy-io/react-auth';
+import { useBalance } from '@/components/usePointsBalance';
 import { TRUMP_FUN_TG_URL, TRUMP_FUN_TWITTER_URL } from '@/utils/config';
+import { topUpBalance } from '@/utils/topUp';
+import { usePrivy } from '@privy-io/react-auth';
 import { CheckCircle, Compass, DollarSign, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useCallback } from 'react';
-import { topUpBalance } from '@/utils/topUp';
-import { useBalance } from '@/components/usePointsBalance';
+import { useCallback, useEffect } from 'react';
 
 export default function Home() {
   const { ready, authenticated, user } = usePrivy();

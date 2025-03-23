@@ -113,6 +113,8 @@ export const GET_BETS = gql`
         usdcBetTotals
         pointsBetTotals
         originalTruthSocialPostId
+        betsCloseAt
+        status
       }
     }
   }

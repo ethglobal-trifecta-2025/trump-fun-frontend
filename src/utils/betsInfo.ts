@@ -4,15 +4,22 @@ import { GetPoolQuery, GetPoolsQuery } from '@/lib/__generated__/graphql';
 
 export const calculateVolume = (
   pool: GetPoolsQuery['pools'][number] | GetPoolQuery['pool'],
-  tokenType: TokenType
+  tokenType: TokenType | string
 ): string => {
   try {
     if (!pool) {
       console.error('Pool is undefined in calculateVolume');
-      return tokenType === TokenType.USDC ? '$0' : '0 pts';
+      return tokenType === TokenType.USDC || tokenType === 'USDC' ? '$0' : '0 pts';
     }
 
-    if (tokenType === TokenType.USDC) {
+    const resolvedTokenType = 
+      typeof tokenType === 'string'
+        ? tokenType === 'USDC' || tokenType === 'USD'
+          ? TokenType.USDC
+          : TokenType.POINTS
+        : tokenType;
+
+    if (resolvedTokenType === TokenType.USDC) {
       // Simple conversion for debugging
       const rawValue = Number(pool.usdcVolume || '0');
       // Divide by 10^USDC_DECIMALS (1)
@@ -24,7 +31,7 @@ export const calculateVolume = (
         return '$0';
       }
 
-      return `$${value.toLocaleString()}`;
+      return `💲${value.toLocaleString()}`;
     } else {
       // Simple conversion for debugging
       const rawValue = Number(pool.pointsVolume || '0');
@@ -37,34 +44,41 @@ export const calculateVolume = (
         return '0 pts';
       }
 
-      return `🦅 ${Math.floor(value).toLocaleString()}`;
+      return `🦅${Math.floor(value).toLocaleString()}`;
     }
   } catch (error) {
     console.error('Error calculating volume:', error, { pool, tokenType });
-    return tokenType === TokenType.USDC ? '$0' : '0 pts';
+    return tokenType === TokenType.USDC || tokenType === 'USDC' ? '$0' : '0 pts';
   }
 };
 
 export const getBetTotals = (
   pool: GetPoolsQuery['pools'][number] | GetPoolQuery['pool'],
-  tokenType: TokenType,
+  tokenType: TokenType | string,
   optionIndex: number
 ) => {
-  if (!pool) return tokenType === TokenType.USDC ? '$0' : '0';
+  if (!pool) return tokenType === TokenType.USDC || tokenType === 'USDC' ? '$0' : '0';
 
-  const betTotals = tokenType === TokenType.USDC ? pool.usdcBetTotals : pool.pointsBetTotals;
+  const resolvedTokenType = 
+    typeof tokenType === 'string'
+      ? tokenType === 'USDC' || tokenType === 'USD'
+        ? TokenType.USDC
+        : TokenType.POINTS
+      : tokenType;
+
+  const betTotals = resolvedTokenType === TokenType.USDC ? pool.usdcBetTotals : pool.pointsBetTotals;
 
   // Check if betTotals is undefined
   if (!betTotals) {
     console.error('Bet totals are undefined', { pool, tokenType });
-    return tokenType === TokenType.USDC ? '$0' : '0';
+    return resolvedTokenType === TokenType.USDC ? '$0' : '0';
   }
 
   const amount = betTotals[optionIndex] || '0';
-  const decimals = tokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
+  const decimals = resolvedTokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
   const value = Number(amount) / Math.pow(10, decimals);
 
-  return tokenType === TokenType.USDC
-    ? `$${value.toLocaleString()}`
+  return resolvedTokenType === TokenType.USDC
+    ? `${value.toLocaleString()}`
     : `${Math.floor(value).toLocaleString()}`;
 };

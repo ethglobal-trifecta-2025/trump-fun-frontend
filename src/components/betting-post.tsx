@@ -389,7 +389,7 @@ export function BettingPost({
           {/* Zero volume text */}
           <div className='mt-1 flex justify-end'>
             <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
-              {volume} vol.
+               {volume} vol.
             </div>
           </div>
         </div>

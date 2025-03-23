@@ -367,6 +367,7 @@ export default function ProfilePage() {
                     selectedOption={bet.option}
                     truthSocialId={bet.pool.originalTruthSocialPostId}
                     volume={calculateVolume(bet.pool, bet.tokenType)}
+                    closesAt={bet.pool.betsCloseAt}
                     userBet={{
                       amount: bet.amount,
                       selectedOption: bet.pool.options,
