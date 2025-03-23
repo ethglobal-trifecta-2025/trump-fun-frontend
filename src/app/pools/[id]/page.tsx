@@ -740,7 +740,7 @@ export default function PoolDetailPage() {
               </p>
               {pool.betsCloseAt && !isNaN(new Date(pool.betsCloseAt * 1000).getTime()) ? (
                 <div className='mt-1 text-xl font-bold'>
-                  <CountdownTimer closesAt={pool.betsCloseAt * 1000} displayText={false} />
+                  <CountdownTimer closesAt={pool.betsCloseAt * 1000} />
                 </div>
               ) : (
                 <p className='mt-1 text-xl font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>

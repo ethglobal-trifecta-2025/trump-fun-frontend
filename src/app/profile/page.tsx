@@ -15,16 +15,19 @@ import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
 import {
+  Bet,
   Bet_Filter,
   Bet_OrderBy,
+  BetWithdrawal,
   BetWithdrawal_OrderBy,
   OrderDirection,
+  PayoutClaimed,
   PayoutClaimed_OrderBy,
 } from '@/lib/__generated__/graphql';
 import { bettingContractAbi } from '@/lib/contract.types';
 import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
-import { ArrowUpFromLine, History, Search, Settings } from 'lucide-react';
+import { ArrowUpFromLine, History, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { usePublicClient, useReadContract, useWriteContract } from 'wagmi';
 import { GET_BET_WITHDRAWALS, GET_BETS, GET_PAYOUT_CLAIMED } from '../queries';
@@ -97,7 +100,7 @@ export default function ProfilePage() {
     [activeFilter, filterConfigs]
   );
 
-  const { data: userBets } = useQuery<{ bets: any[] }>(GET_BETS, {
+  const { data: userBets } = useQuery<{ bets: Bet[] }>(GET_BETS, {
     variables: {
       filter: filter as Bet_Filter,
       orderBy,
@@ -108,28 +111,34 @@ export default function ProfilePage() {
     skip: !address || activeFilter === 'won',
   });
 
-  const { data: payoutClaimeds } = useQuery<{ payoutClaimeds: any[] }>(GET_PAYOUT_CLAIMED, {
-    variables: {
-      where: filter,
-      orderBy,
-      orderDirection,
-    },
-    context: { name: 'payoutClaimeds' },
-    notifyOnNetworkStatusChange: true,
-    skip: !address || activeFilter !== 'won',
-  });
+  const { data: payoutClaimeds } = useQuery<{ payoutClaimeds: PayoutClaimed[] }>(
+    GET_PAYOUT_CLAIMED,
+    {
+      variables: {
+        where: filter,
+        orderBy,
+        orderDirection,
+      },
+      context: { name: 'payoutClaimeds' },
+      notifyOnNetworkStatusChange: true,
+      skip: !address || activeFilter !== 'won',
+    }
+  );
 
-  const { data: betWithdrawals } = useQuery<{ betWithdrawals: any[] }>(GET_BET_WITHDRAWALS, {
-    variables: {
-      where: { user: address?.toLowerCase() },
-      orderBy: BetWithdrawal_OrderBy.BlockTimestamp,
-      orderDirection: OrderDirection.Desc,
-      first: 100,
-    },
-    context: { name: 'betWithdrawals' },
-    notifyOnNetworkStatusChange: true,
-    skip: !address,
-  });
+  const { data: betWithdrawals } = useQuery<{ betWithdrawals: BetWithdrawal[] }>(
+    GET_BET_WITHDRAWALS,
+    {
+      variables: {
+        where: { user: address?.toLowerCase() },
+        orderBy: BetWithdrawal_OrderBy.BlockTimestamp,
+        orderDirection: OrderDirection.Desc,
+        first: 100,
+      },
+      context: { name: 'betWithdrawals' },
+      notifyOnNetworkStatusChange: true,
+      skip: !address,
+    }
+  );
 
   const handleFilterChange = (value: string) => {
     setActiveFilter(value);
@@ -224,7 +233,7 @@ export default function ProfilePage() {
       try {
         const betAmount = parseFloat(bet.amount);
         if (!isNaN(betAmount)) {
-          const decimals = bet.tokenType === 0 ? 1000000 : 1000000000000000000;
+          const decimals = Number(bet.tokenType) === 0 ? USDC_DECIMALS : POINTS_DECIMALS;
           totalVolume += betAmount / decimals;
         }
       } catch (error) {
@@ -240,7 +249,7 @@ export default function ProfilePage() {
         try {
           const betAmount = parseFloat(bet.amount);
           if (!isNaN(betAmount)) {
-            const decimals = bet.tokenType === 0 ? 1000000 : 1000000000000000000;
+            const decimals = Number(bet.tokenType) === 0 ? USDC_DECIMALS : POINTS_DECIMALS;
             activeVolume += betAmount / decimals;
           }
         } catch (error) {
@@ -372,10 +381,6 @@ export default function ProfilePage() {
             {renderFilterButton('lost', 'Lost Bets', <History className='h-4 w-4' />)}
             {renderFilterButton('all', 'All Bets', <History className='h-4 w-4' />)}
             <Separator className='my-2' />
-            <Button variant='ghost' className='w-full justify-start gap-2 font-medium'>
-              <Settings className='h-4 w-4' />
-              Settings
-            </Button>
           </nav>
 
           {/* Recent Withdrawals Section */}
@@ -388,6 +393,8 @@ export default function ProfilePage() {
                 </div>
                 <div className='max-h-60 space-y-2 overflow-y-auto'>
                   {betWithdrawals.betWithdrawals.slice(0, 5).map((withdrawal: any) => {
+                    console.log(withdrawal);
+
                     const resolvedTokenType =
                       withdrawal.bet?.tokenType === 0 ? TokenType.USDC : TokenType.POINTS;
                     const symbol = resolvedTokenType === TokenType.USDC ? '💲' : '🦅';
@@ -535,9 +542,13 @@ export default function ProfilePage() {
               {/* Betting Posts */}
               <div className='flex-1 space-y-4'>
                 {filteredPools.map((item) => {
-                  const bet = activeFilter === 'won' ? item.bet : item;
-                  const pool = activeFilter === 'won' ? item.pool || item.bet.pool : bet.pool;
-                  const amount = activeFilter === 'won' ? item.amount : bet.amount;
+                  const bet = activeFilter === 'won' ? (item as PayoutClaimed).bet : (item as Bet);
+                  const pool =
+                    activeFilter === 'won'
+                      ? (item as PayoutClaimed).pool || (item as PayoutClaimed).bet?.pool
+                      : (item as Bet).pool;
+                  const amount =
+                    activeFilter === 'won' ? (item as PayoutClaimed).amount : (item as Bet).amount;
 
                   // Calculate net winnings if this is a won bet
                   const payout =

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 const CountdownTimer = ({
   closesAt,
-  displayText = true,
 }: {
   closesAt: string | Date | number;
   displayText?: boolean;
@@ -95,11 +94,6 @@ const CountdownTimer = ({
 
   return (
     <div className='flex flex-col items-end'>
-      <div
-        className={` ${displayText ? '' : 'hidden'} text-xs font-medium text-gray-500 dark:text-gray-400`}
-      >
-        {isExpired ? 'Closed' : 'Closes in'}
-      </div>
       <div className='flex justify-center gap-1'>
         <TimeDigit value={timeRemaining.hours} />
         <div className='flex h-8 items-center font-bold text-orange-500'>:</div>
