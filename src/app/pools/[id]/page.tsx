@@ -10,7 +10,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 // Import ABIs and types
-import { Bet_Filter, Bet_OrderBy, Pool, PoolStatus } from '@/lib/__generated__/graphql';
+import { Bet, Bet_Filter, Bet_OrderBy, Pool, PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 // Import hooks
 import { useTokenBalance } from '@/hooks/useTokenBalance';
@@ -38,7 +38,7 @@ import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
-import { showBetSuccessToast, showErrorToast } from '@/utils/toast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import Image from 'next/image';
 
 export default function PoolDetailPage() {
@@ -89,7 +89,6 @@ export default function PoolDetailPage() {
   const [isFactsProcessing, setIsFactsProcessing] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<string>('0');
   // Track which transactions we've already shown toasts for
-  const [toastShownForHash, setToastShownForHash] = useState<string | null>(null);
   const { tokenType, getTokenAddress } = useTokenContext();
   const { signMessage } = useSignMessage();
 
@@ -113,7 +112,7 @@ export default function PoolDetailPage() {
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: placedBets } = useQueryA<{ bets: any[] }>(GET_BETS, {
+  const { data: placedBets } = useQueryA<{ bets: Bet[] }>(GET_BETS, {
     variables: {
       filter: {
         user: account.address,
@@ -293,6 +292,13 @@ export default function PoolDetailPage() {
     setApprovedAmount(approvedAmount);
   }, [approvedAmount]);
 
+  // show success toasts
+  useEffect(() => {
+    if (isConfirmed) {
+      showSuccessToast('Transaction confirmed!');
+    }
+  }, [isConfirmed]);
+
   // Handle percentage button clicks
   const handlePercentageClick = (percentage: number) => {
     if (!balance) return;
@@ -407,7 +413,6 @@ export default function PoolDetailPage() {
   };
 
   const handleBet = async () => {
-    // Validation checks
     if (!writeContract || !ready || !publicClient || !wallets?.length) {
       return console.error('Wallet or contract not ready');
     }
@@ -425,12 +430,11 @@ export default function PoolDetailPage() {
     }
 
     try {
-      // Convert amount to token units with proper decimals
       const amount = parseInt(betAmount, 10);
       const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
 
-      if (approvedAmount && parseFloat(approvedAmount) < amount) {
-        // First approve tokens to be spent
+      const needsApproval = !approvedAmount || parseFloat(approvedAmount) < amount;
+      if (needsApproval && !isConfirmed) {
         const { request: approveRequest } = await publicClient.simulateContract({
           abi: pointsTokenAbi,
           address: getTokenAddress() as `0x${string}`,
@@ -440,27 +444,30 @@ export default function PoolDetailPage() {
         });
 
         writeContract(approveRequest);
+        return showSuccessToast(`Approving ${betAmount} ${symbol}...`);
       }
 
-      // Wait for the transaction to be confirmed before proceeding
-      if (isConfirmed || parseFloat(approvedAmount) >= amount) {
-        // Now place the bet
-        const { request } = await publicClient.simulateContract({
-          abi: bettingContractAbi,
-          address: APP_ADDRESS,
-          functionName: 'placeBet',
-          account: account.address as `0x${string}`,
-          args: [
-            BigInt(data?.pool.id),
-            BigInt(selectedOption),
-            tokenAmount,
-            account.address,
-            tokenTypeC,
-          ],
-        });
+      const { request } = await publicClient.simulateContract({
+        abi: bettingContractAbi,
+        address: APP_ADDRESS,
+        functionName: 'placeBet',
+        account: account.address as `0x${string}`,
+        args: [
+          BigInt(data?.pool.id),
+          BigInt(selectedOption),
+          tokenAmount,
+          account.address,
+          tokenTypeC,
+        ],
+      });
 
-        writeContract(request);
-      }
+      writeContract(request);
+      showSuccessToast(
+        `Betting ${betAmount} ${symbol} on "${data.pool.options[selectedOption]}"...`
+      );
+      setBetAmount('');
+      setSelectedOption(null);
+      setSliderValue([0]);
     } catch (error) {
       console.error('Error placing bet:', error);
       showErrorToast('Failed to place bet. Please try again.');
@@ -542,32 +549,6 @@ export default function PoolDetailPage() {
 
     // Use existing formatters from the file
   };
-
-  // Add this effect to show success toast when transaction is confirmed
-  useEffect(() => {
-    if (isConfirmed && hash && selectedOption !== null && betAmount && data?.pool?.options) {
-      // Only show toast if we haven't already shown one for this hash
-      if (hash !== toastShownForHash) {
-        showBetSuccessToast(
-          `Bet placed successfully! You bet ${betAmount} ${symbol} on "${data.pool.options[selectedOption]}"! You make the GREATEST bets!`
-        );
-        // Mark this hash as having shown a toast
-        setToastShownForHash(hash);
-        // Reset form after successful transaction
-        setBetAmount('');
-        setSelectedOption(null);
-        setSliderValue([0]);
-      }
-    }
-  }, [
-    isConfirmed,
-    hash,
-    selectedOption,
-    betAmount,
-    symbol,
-    data?.pool?.options,
-    toastShownForHash,
-  ]);
 
   // Loading state
   if (isPoolLoading) {
@@ -738,27 +719,43 @@ export default function PoolDetailPage() {
 
           {/* Stats */}
           <div className='mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3'>
-            <div className='bg-muted rounded-lg p-4 text-center'>
-              <TrendingUp className='mx-auto mb-2 text-green-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Total Vol</p>
-              <p className='font-bold'>{totalVolume}</p>
-            </div>
-            <div className='bg-muted flex flex-col gap-y-2 items-center justify-center rounded-lg p-4 text-center'>
-              <div className='flex items-center justify-center'>
-                <Clock className='mx-auto mb-2 text-green-500' size={24} />
-                <p className='text-muted-foreground text-sm'>Time Left</p>
+            {/* Volume Card */}
+            <div className='bg-card flex flex-col items-center justify-center rounded-lg border border-gray-200 p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-800'>
+              <div className='mb-2 rounded-full bg-green-100 p-2 dark:bg-green-900/30'>
+                <TrendingUp className='text-green-500' size={20} />
               </div>
+              <p className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                Total Vol
+              </p>
+              <p className='mt-1 text-xl font-bold'>{totalVolume}</p>
+            </div>
 
+            {/* Time Left Card */}
+            <div className='bg-card flex flex-col items-center justify-center rounded-lg border border-gray-200 p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-800'>
+              <div className='mb-2 rounded-full bg-blue-100 p-2 dark:bg-blue-900/30'>
+                <Clock className='text-blue-500' size={20} />
+              </div>
+              <p className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                Time Left
+              </p>
               {pool.betsCloseAt && !isNaN(new Date(pool.betsCloseAt * 1000).getTime()) ? (
-                <CountdownTimer closesAt={pool.betsCloseAt * 1000} displayText={false} />
+                <div className='mt-1 text-xl font-bold'>
+                  <CountdownTimer closesAt={pool.betsCloseAt * 1000} displayText={false} />
+                </div>
               ) : (
-                <p className='font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
+                <p className='mt-1 text-xl font-bold'>{formatTimeLeft(pool.betsCloseAt)}</p>
               )}
             </div>
-            <div className='bg-muted rounded-lg p-4 text-center'>
-              <Users className='mx-auto mb-2 text-green-500' size={24} />
-              <p className='text-muted-foreground text-sm'>Bettors</p>
-              <p className='font-bold'>{calculateBettors(pool)}</p>
+
+            {/* Bettors Card */}
+            <div className='bg-card flex flex-col items-center justify-center rounded-lg border border-gray-200 p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-800'>
+              <div className='mb-2 rounded-full bg-orange-100 p-2 dark:bg-orange-900/30'>
+                <Users className='text-orange-500' size={20} />
+              </div>
+              <p className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                Bettors
+              </p>
+              <p className='mt-1 text-xl font-bold'>{calculateBettors(pool)}</p>
             </div>
           </div>
 
@@ -878,7 +875,7 @@ export default function PoolDetailPage() {
                     <span className='mr-1'>{tokenTextLogo}</span> {symbol}
                   </div>
                   {balance && (
-                    <div className='absolute right-0 -bottom-5 text-xs text-gray-400'>
+                    <div className='absolute -bottom-5 left-0 text-xs text-gray-400'>
                       Balance: {formattedBalance}
                     </div>
                   )}
@@ -888,8 +885,19 @@ export default function PoolDetailPage() {
                   onClick={handleBet}
                   disabled={!betAmount || selectedOption === null || !authenticated || isPending}
                   className='h-10 w-full bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black sm:w-auto dark:text-black'
+                  title={
+                    !betAmount || selectedOption === null
+                      ? 'Please enter a bet amount and select an option'
+                      : !authenticated
+                        ? 'Please connect your wallet'
+                        : ''
+                  }
                 >
-                  {isPending ? 'Processing...' : 'Confirm Bet'}
+                  {isPending
+                    ? 'Processing...'
+                    : approvedAmount && parseFloat(approvedAmount) >= parseFloat(betAmount || '0')
+                      ? 'Place Bet'
+                      : 'Approve Tokens'}
                 </Button>
 
                 <Button
@@ -929,15 +937,56 @@ export default function PoolDetailPage() {
 
           {placedBets?.bets && placedBets.bets.length > 0 && (
             <div className='mt-6 border-t border-gray-800 pt-4'>
-              <h4 className='mb-2 text-sm font-bold'>Your Bets</h4>
-              {placedBets.bets.map((bet: { id: string; option: number; amount: number }) => (
-                <div key={bet.id} className='mb-2 flex items-center justify-between'>
-                  <span className='text-sm'>{pool.options[bet.option]}</span>
-                  <span className='text-sm'>
-                    {bet.amount / Math.pow(10, USDC_DECIMALS)} {symbol}
-                  </span>
-                </div>
-              ))}
+              <h4 className='mb-3 flex items-center text-sm font-bold'>
+                <span>Your Bets</span>
+                <Badge variant='outline' className='ml-2 px-2 py-0 text-xs'>
+                  {placedBets.bets.length}
+                </Badge>
+              </h4>
+              <div className='space-y-3'>
+                {placedBets.bets.map((bet: Bet) => (
+                  <div
+                    key={bet.id}
+                    className='rounded-lg border border-gray-200 p-3 transition-all hover:shadow-sm dark:border-gray-800'
+                  >
+                    <div className='mb-1 flex items-center justify-between'>
+                      <div className='flex items-center'>
+                        <div
+                          className={`mr-2 h-2 w-2 rounded-full ${
+                            Number(bet.option) === 0 ? 'bg-green-500' : 'bg-red-500'
+                          }`}
+                        />
+                        <span
+                          className={`font-medium ${
+                            Number(bet.option) === 0
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {pool.options[Number(bet.option)]}
+                        </span>
+                      </div>
+                      <span className='flex items-center font-bold'>
+                        {bet.amount / Math.pow(10, USDC_DECIMALS)}
+                        <span className='ml-1'>{tokenTextLogo}</span>
+                        <span className='ml-1'>{symbol}</span>
+                      </span>
+                    </div>
+                    <div className='text-muted-foreground text-xs'>
+                      {bet.updatedAt ? (
+                        <>
+                          Updated{' '}
+                          {formatDistanceToNow(new Date(bet.updatedAt * 1000), {
+                            addSuffix: true,
+                          })}
+                        </>
+                      ) : (
+                        <>Bet placed</>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

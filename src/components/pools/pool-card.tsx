@@ -72,7 +72,10 @@ export function PoolCard({ pool }: { pool: Pool }) {
         <CardHeader>
           <div className='flex items-center gap-x-3'>
             <Avatar className='size-8'>
-              <AvatarImage src={postData ? postData?.post?.image_url : '/trump.jpeg'} alt='Donald Trump' />
+              <AvatarImage
+                src={postData ? postData?.post?.image_url : '/trump.jpeg'}
+                alt='Donald Trump'
+              />
               <AvatarFallback>
                 <Image src={'/trump.jpeg'} alt='User' width={32} height={32} />
               </AvatarFallback>
@@ -95,7 +98,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
           </div>
           <CardTitle className=''>
             <Link href={`/pools/${pool.id}`} className='block'>
-              <p className='font-mediumtransition-colors line-clamp-3 text-base hover:text-orange-500'>
+              <p className='line-clamp-3 text-base font-medium transition-colors hover:text-orange-500'>
                 {pool.question}
               </p>
             </Link>
@@ -139,9 +142,10 @@ export function PoolCard({ pool }: { pool: Pool }) {
             <div className='text-muted-foreground text-sm'>
               {isClosed ? 'Bets are closed' : <CountdownTimer closesAt={pool.betsCloseAt * 1000} />}
             </div>
-            <div className='text-muted-foreground text-sm font-medium'>
-              Vol: {calculateVolume(pool, tokenType)}
-            </div>
+            <p className='text-muted-foreground text-md font-medium'>
+              <span className='font-bold text-white'>Vol: </span>
+              {calculateVolume(pool, tokenType)}
+            </p>
           </div>
           <Link href={`/pools/${pool.id}`} className='mt-auto pt-4'>
             <Button className='w-full bg-orange-500 text-white hover:bg-orange-600'>

@@ -61,7 +61,7 @@ export default function Home() {
                 alt='Trump'
                 width={1000}
                 height={1000}
-                className='h-auto w-full rounded-lg'
+                className='h-auto w-full rounded-t-lg'
               />
               <div className='mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
                 <Button

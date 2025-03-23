@@ -5,7 +5,7 @@ import { POINTS_DECIMALS } from '@/consts';
 import { Bet, Bet_OrderBy, Pool } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { formatDistanceToNow } from 'date-fns';
-import { ArrowUpRight, ChevronRight, Clock, Loader2 } from 'lucide-react';
+import { ArrowUpRight, Clock, Loader2 } from 'lucide-react';
 import { type FC, useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { RandomAvatar } from 'react-random-avatars';
@@ -119,64 +119,62 @@ export const Activity: FC<ActivityProps> = ({ pool }) => {
           {allBets.map((bet) => (
             <div
               key={bet.id}
-              className='hover:bg-primary/5 rounded-lg border bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-white/10 dark:hover:bg-gray-700/50'
+              className='group hover:border-primary/30 rounded-xl border bg-white/50 p-5 backdrop-blur-sm transition-all duration-300 hover:bg-white/80 hover:shadow-lg dark:border-gray-800 dark:bg-white/10 dark:hover:bg-white/20 dark:hover:shadow-lg'
             >
-              <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='flex items-center gap-3'>
-                  <RandomAvatar size={40} name={bet.id} />
+              <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='flex items-center gap-4'>
+                  <div className='overflow-hidden rounded-full ring-2 ring-gray-100 dark:ring-gray-700'>
+                    <RandomAvatar size={48} name={bet.id} />
+                  </div>
 
                   <div>
                     <div className='flex items-center gap-2'>
-                      <p className='font-medium'>{truncateAddress(bet.user)}</p>
+                      <p className='font-semibold tracking-tight'>{truncateAddress(bet.user)}</p>
                     </div>
-                    <div className='mt-1 flex items-center gap-2'>
-                      <Clock className='h-3 w-3 text-gray-400' />
-                      <p className='text-sm text-gray-500 dark:text-gray-400'>
-                        {formatTimestamp(bet.createdAt)}
-                      </p>
+                    <div className='mt-1.5 flex items-center gap-2 text-gray-500 dark:text-gray-400'>
+                      <Clock className='h-3.5 w-3.5' />
+                      <p className='text-sm'>{formatTimestamp(bet.createdAt)}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className='flex items-center gap-3'>
+                <div className='flex flex-wrap items-center gap-4'>
                   <div className='flex flex-col items-end'>
-                    <span className='text-primary text-lg font-bold'>
+                    <span className='text-primary group-hover:text-primary/90 text-xl font-bold transition-colors'>
                       {parseFloat(bet.amount) / 10 ** POINTS_DECIMALS} {bet.tokenType}
                     </span>
-                    <span className='text-xs text-gray-500'>placed on</span>
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>placed on</span>
                   </div>
 
-                  <div className='rounded-full bg-gray-100 px-3 py-1 text-sm font-medium dark:bg-gray-700'>
+                  <div className='rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium shadow-sm dark:bg-gray-800 dark:text-gray-200'>
                     {getOptionLabel(bet.option)}
                   </div>
 
                   <div
-                    className={`rounded-full px-3 py-1 text-sm font-medium ${
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium shadow-sm ${
                       bet.isWithdrawn
-                        ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400'
-                        : 'bg-amber-100 text-amber-800 dark:bg-amber-800/30 dark:text-amber-400'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                     }`}
                   >
                     {bet.isWithdrawn ? 'Withdrawn' : 'Active'}
-                  </div>
-
-                  <div className='hover:text-primary cursor-pointer text-gray-400 transition-colors'>
-                    <ChevronRight className='h-5 w-5' />
                   </div>
                 </div>
               </div>
 
               {bet.transactionHash && (
-                <div className='mt-3 border-t pt-3 dark:border-gray-700'>
+                <div className='mt-4 border-t pt-4 dark:border-gray-800'>
                   <a
                     href={`https://sepolia.basescan.org/tx/${bet.transactionHash}`}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='hover:text-primary flex items-center gap-1 text-xs text-gray-500 transition-colors'
+                    className='hover:text-primary dark:hover:text-primary flex items-center gap-2 text-xs text-gray-500 transition-colors dark:text-gray-400'
                   >
-                    <span className='uppercase'>{bet.chainName}</span>
-                    <ArrowUpRight className='h-3 w-3' />
-                    <span className='max-w-[200px] truncate'>{bet.transactionHash}</span>
+                    <span className='rounded bg-gray-100 px-2 py-1 font-medium uppercase dark:bg-gray-800'>
+                      {bet.chainName}
+                    </span>
+                    <ArrowUpRight className='h-3.5 w-3.5' />
+                    <span className='max-w-[220px] truncate'>{bet.transactionHash}</span>
                   </a>
                 </div>
               )}

@@ -201,3 +201,9 @@ body {
   background-color: var(--toast-background) !important;
   color: var(--toast-foreground) !important;
 }
+
+.StyledLink-sc-1c6127e5-0,
+.gCJte,
+.gCJte.gCJte {
+  color: #000000 !important;
+}

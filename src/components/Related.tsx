@@ -4,6 +4,7 @@ import { Pool } from '@/lib/__generated__/graphql';
 import { useQuery } from '@tanstack/react-query';
 import { type FC } from 'react';
 import { PoolCard } from './pools/pool-card';
+import { Loader2 } from 'lucide-react';
 
 interface RelatedProps {
   question: string;
@@ -23,7 +24,11 @@ export const Related: FC<RelatedProps> = ({ question }) => {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Loader2 className='text-primary h-6 w-6 animate-spin' />
+      </div>
+    );
   }
 
   if (error) {
