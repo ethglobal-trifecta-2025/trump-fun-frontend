@@ -393,7 +393,6 @@ export default function ProfilePage() {
                 </div>
                 <div className='max-h-60 space-y-2 overflow-y-auto'>
                   {betWithdrawals.betWithdrawals.slice(0, 5).map((withdrawal: any) => {
-                    console.log(withdrawal);
 
                     const resolvedTokenType =
                       withdrawal.bet?.tokenType === 0 ? TokenType.USDC : TokenType.POINTS;
