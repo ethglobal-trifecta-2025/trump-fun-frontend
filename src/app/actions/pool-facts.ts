@@ -73,8 +73,6 @@ export async function togglePoolFacts(
       .is('comment_id', null) // Makes sure we're checking pool FACTS not comment FACTS
       .single();
 
-    console.log('Existing fact:', existingFact, 'Operation:', operation);
-
     if (operation === 'like' && !existingFact) {
       // Add a FACT record
       const { error: insertError } = await supabase.from('facts').insert({

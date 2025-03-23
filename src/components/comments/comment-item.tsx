@@ -45,23 +45,17 @@ const CommentItem = ({ comment }: CommentItemProps) => {
 
     if (isSubmitting) return;
 
-    console.log('Starting like process for comment:', comment.id);
-    console.log('Current state:', { isLiked, upvotes });
-
     setIsSubmitting(true);
 
     try {
       const wallet = wallets?.[0];
 
       if (!wallet || !wallet.address) {
-        console.log('No wallet connected');
-        setIsSubmitting(false);
-        return;
+        return setIsSubmitting(false);
       }
 
       // Determine action without updating state yet
       const newIsLiked = !isLiked;
-      console.log('New like state will be:', newIsLiked);
 
       // Calculate the correct upvote count based on the current state
       // and whether the user is liking or unliking
@@ -73,7 +67,6 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         // If user is unliking and was liked before
         newUpvotes = Math.max(0, upvotes - 1);
       }
-      console.log('Calculated new upvotes:', newUpvotes);
 
       const messageObj = {
         action: 'toggle_like',
@@ -84,9 +77,7 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       };
 
       const messageStr = JSON.stringify(messageObj);
-      console.log('Prepared message for signing:', messageObj);
 
-      console.log('Requesting signature...');
       const { signature } = await signMessage(
         { message: messageStr },
         {
@@ -98,30 +89,21 @@ const CommentItem = ({ comment }: CommentItemProps) => {
           address: wallet.address,
         }
       );
-      console.log('Signature received');
 
       // Call API first to ensure the data is saved
-      console.log('Calling toggleLike...');
       const result = await toggleLike(
         comment.id,
         newIsLiked ? 'like' : 'unlike',
         signature,
         messageStr
       );
-      console.log('Server response:', result);
 
       if (result.success) {
-        console.log('Update successful, updating UI');
         setIsLiked(newIsLiked);
         setUpvotes(result.upvotes ?? newUpvotes);
 
         // Update localStorage after successful server update
         saveCommentLike(comment.id, newIsLiked);
-
-        console.log('Final state:', {
-          isLiked: newIsLiked,
-          upvotes: result.upvotes ?? newUpvotes,
-        });
       } else {
         console.error('Error toggling comment like:', result.error);
       }
@@ -135,7 +117,6 @@ const CommentItem = ({ comment }: CommentItemProps) => {
       ) {
         console.error('Error handling comment FACTS:', error);
       } else {
-        console.log('User rejected the signature request');
       }
     } finally {
       setIsSubmitting(false);

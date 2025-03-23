@@ -52,17 +52,11 @@ export const useBalance = () => {
         // Remove all decimal places by parsing to float and then to integer
         setUsdcBalance(Math.floor(parseFloat(formattedBalance)).toString());
       } catch (contractError) {
-        // Handle the specific "could not decode result data" error
         if (
           contractError instanceof Error &&
           (contractError.message.includes('could not decode result data') ||
             contractError.message.includes('BAD_DATA'))
         ) {
-          // This is an expected error when a user has no balance
-          // No need to log as an error since it's a normal condition
-          if (process.env.NODE_ENV === 'development') {
-            console.log('No USDC balance found for address - setting to 0');
-          }
           setUsdcBalance('0');
         } else {
           // Only log unexpected contract errors

@@ -65,15 +65,13 @@ const setRateLimit = async (walletAddress: string): Promise<void> => {
   const supabase = getSupabaseClient();
   try {
     // Upsert the record with current timestamp
-    const { error, data } = await supabase.from('trump_users').upsert([
+    const { error } = await supabase.from('trump_users').upsert([
       {
         id: walletAddress.toLowerCase(),
         name: '', // Unused as mentioned
         last_login_bonus: new Date().toISOString(),
       },
     ]);
-
-    console.log('Rate limit set for wallet:', walletAddress, 'Data:', data);
 
     if (error) {
       console.error('Supabase error when setting rate limit:', error);

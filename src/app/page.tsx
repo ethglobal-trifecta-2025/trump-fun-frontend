@@ -18,20 +18,7 @@ export default function Home() {
 
   // Use useCallback to prevent the function from being recreated on every render
   const handleTopUp = useCallback(async () => {
-    console.log('handleTopUp called with:', {
-      ready,
-      authenticated,
-      hasUser: !!user,
-      walletAddress: user?.wallet?.address,
-    });
-
-    if (!ready || !authenticated || !user) {
-      console.log('Not ready or not authenticated yet, skipping top-up');
-      return;
-    }
-
-    if (!user.wallet?.address) {
-      console.log('No wallet address available, skipping top-up');
+    if (!ready || !authenticated || !user || !user.wallet?.address) {
       return;
     }
 
@@ -42,19 +29,14 @@ export default function Home() {
 
       if (!result.success) {
         if (result.error && result.rateLimitReset) {
-          console.log(
-            `Top-up rate limited: ${result.error}. Available again in ${result.rateLimitReset}`
-          );
         } else if (result.error) {
           console.error(`Top-up failed: ${result.error}`);
         }
       } else {
-        console.log('Top-up successful, result:', result);
       }
 
       // Sleep for 2 seconds to ensure the balance is updated
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log('Fetching updated balance...');
       fetchBalance();
     } catch (error) {
       console.error('Error in handleTopUp:', error);
@@ -62,29 +44,9 @@ export default function Home() {
   }, [ready, authenticated, user, fetchBalance]);
 
   useEffect(() => {
-    console.log('Home page mounted, initial state:', {
-      ready,
-      authenticated,
-      hasUser: !!user,
-      walletAddress: user?.wallet?.address,
-    });
-  }, [authenticated, ready, user]);
-
-  useEffect(() => {
-    console.log('Auth/wallet state changed:', {
-      ready,
-      authenticated,
-      hasUser: !!user,
-      walletAddress: user?.wallet?.address,
-    });
-
-    console.log(ready, authenticated, user);
-
     if (ready && authenticated && user) {
-      console.log('All conditions met, calling handleTopUp');
       handleTopUp();
     } else {
-      console.log('Conditions not met, skipping handleTopUp');
     }
   }, [ready, authenticated, user, handleTopUp]);
 

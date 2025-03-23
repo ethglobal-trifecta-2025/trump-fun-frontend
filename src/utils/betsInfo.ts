@@ -37,7 +37,7 @@ export const calculateVolume = (
         return '0 pts';
       }
 
-      return `${Math.floor(value).toLocaleString()}`;
+      return `🦅 ${Math.floor(value).toLocaleString()}`;
     }
   } catch (error) {
     console.error('Error calculating volume:', error, { pool, tokenType });

@@ -27,9 +27,9 @@ export default function Nav() {
   ];
   return (
     <>
-      <header className='container mx-auto fixed top-0 right-0 left-0 z-50 flex h-fit items-center justify-between bg-white px-4 py-2 md:h-16 md:py-0 dark:bg-[#0A0A0A]'>
+      <header className='fixed top-0 right-0 left-0 z-50 container mx-auto flex h-fit items-center justify-between bg-white px-4 py-2 md:h-16 md:py-0 dark:bg-[#0A0A0A]'>
         <div className='text-2xl font-bold text-orange-500'>
-          <Link href='/'>Trump.fun</Link>
+          <Link href='/explore'>Trump.fun</Link>
         </div>
         <div className='flex h-full items-center gap-4'>
           {/* Desktop navigation */}

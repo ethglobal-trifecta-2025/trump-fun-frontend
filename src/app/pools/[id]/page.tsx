@@ -49,6 +49,20 @@ export default function PoolDetailPage() {
   const { ready } = usePrivy();
   const { wallets } = useWallets();
   const [selectedTab, setSelectedTab] = useState<'comments' | 'activity' | 'related'>('comments');
+  const { data: postData } = useQuery({
+    queryKey: ['post', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/post?poolId=${id}`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      return res.json();
+    },
+    staleTime: 60000, // Consider data stale after 1 minute
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
 
   // Component state
   const [betAmount, setBetAmount] = useState<string>('');
@@ -295,22 +309,17 @@ export default function PoolDetailPage() {
       return;
     }
 
-    console.log('Starting FACTS process for pool:', id);
-    console.log('Current state:', { hasFactsed, poolFacts });
-
     setIsFactsProcessing(true);
 
     try {
       const wallet = wallets?.[0];
       if (!wallet || !wallet.address) {
-        console.log('No wallet connected');
         setIsFactsProcessing(false);
         return;
       }
 
       // Determine the action without updating state yet
       const newIsFactsed = !hasFactsed;
-      console.log('New FACTS state will be:', newIsFactsed);
 
       // Create message for signature
       const messageObj = {
@@ -322,10 +331,8 @@ export default function PoolDetailPage() {
       };
 
       const messageStr = JSON.stringify(messageObj);
-      console.log('Prepared message for signing:', messageObj);
 
       // Request signature from user
-      console.log('Requesting signature...');
       const { signature } = await signMessage(
         { message: messageStr },
         {
@@ -337,10 +344,8 @@ export default function PoolDetailPage() {
           address: wallet.address,
         }
       );
-      console.log('Signature received');
 
       // Call the server action to update the database
-      console.log('Calling togglePoolFacts...');
       const result = await togglePoolFacts(
         id as string,
         newIsFactsed ? 'like' : 'unlike',
@@ -348,11 +353,8 @@ export default function PoolDetailPage() {
         messageStr
       );
 
-      console.log('Server response:', result);
-
       // Only update UI after successful server response
       if (result.success) {
-        console.log('Update successful, updating UI');
         // Make sure we use the server's count
         const serverFactsCount =
           typeof result.facts === 'number'
@@ -369,8 +371,6 @@ export default function PoolDetailPage() {
           localStorage.setItem(`pool_facts_${id}`, serverFactsCount.toString());
           localStorage.setItem(`pool_facts_liked_${id}`, newIsFactsed.toString());
         }
-
-        console.log('Final state:', { hasFactsed: newIsFactsed, poolFacts: serverFactsCount });
       } else {
         console.error('Error from server:', result.error);
       }
@@ -381,7 +381,6 @@ export default function PoolDetailPage() {
           error.message.includes('cancel') ||
           error.message.includes('user rejected'))
       ) {
-        console.log('User rejected signature');
       } else {
         console.error('Error handling FACTS:', error);
       }
@@ -393,23 +392,19 @@ export default function PoolDetailPage() {
   const handleBet = async () => {
     // Validation checks
     if (!writeContract || !ready || !publicClient || !wallets?.length) {
-      console.error('Wallet or contract not ready');
-      return;
+      return console.error('Wallet or contract not ready');
     }
 
     if (!betAmount || betAmount === '0' || selectedOption === null) {
-      console.error('Invalid bet parameters');
-      return;
+      return console.error('Invalid bet parameters');
     }
 
     if (!account.address) {
-      console.error('Account address is not available');
-      return;
+      return console.error('Account address is not available');
     }
 
     if (!data?.pool.id) {
-      console.error('Pool ID is not available');
-      return;
+      return console.error('Pool ID is not available');
     }
 
     try {
@@ -650,6 +645,16 @@ export default function PoolDetailPage() {
         </CardHeader>
 
         <CardContent>
+          {postData && postData.post && (
+            <Image
+              src={postData.post.image_url}
+              alt='Post Image'
+              width={500}
+              height={300}
+              className='mb-4 w-full rounded-lg'
+            />
+          )}
+
           {/* Progress Bar */}
           <div className='mb-6'>
             <Progress
