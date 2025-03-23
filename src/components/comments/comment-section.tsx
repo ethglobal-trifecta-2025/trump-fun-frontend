@@ -126,6 +126,7 @@ export default function CommentSection({
           commentID: null,
 
           upvotes: null,
+          trump_responded: false,
         };
 
         if (!tempComment || !comments) {
