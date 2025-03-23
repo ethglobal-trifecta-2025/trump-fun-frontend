@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { Compass, Menu, User } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { NetworkIndicator } from '../network-indicator';
 import { ThemeToggle } from '../theme-toggle';
@@ -29,7 +30,17 @@ export default function Nav() {
     <>
       <header className='fixed top-0 right-0 left-0 z-50 container mx-auto flex h-fit items-center justify-between bg-white px-4 py-2 md:h-16 md:py-0 dark:bg-[#0A0A0A]'>
         <div className='text-2xl font-bold text-orange-500'>
-          <Link href='/explore'>Trump.fun</Link>
+          <Link href='/explore' className='flex items-center'>
+            <Image
+              src='https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.svg'
+              alt='Trump.fun'
+              width={120}
+              height={40}
+              priority
+              className='mr-2 h-10 w-auto'
+            />
+            <span className='text-2xl font-bold'>Trump.fun</span>
+          </Link>
         </div>
         <div className='flex h-full items-center gap-4'>
           {/* Desktop navigation */}
@@ -68,16 +79,28 @@ export default function Nav() {
               </Button>
             </SheetTrigger>
             <SheetContent side='right' className='flex h-full flex-col'>
-              <SheetTitle className='text-center text-xl font-bold text-orange-500'>
-                Trump.fun
+              <SheetTitle className='text-center font-bold text-orange-500'>
+                <div className='flex flex-col items-center'>
+                  <Image
+                    src='https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.svg'
+                    alt='Trump.fun'
+                    width={100}
+                    height={30}
+                    priority
+                    className='mx-auto h-8 w-auto'
+                  />
+                  <span className='mt-1 text-xl font-bold'>Trump.fun</span>
+                </div>
               </SheetTitle>
               <div className='mt-6 flex flex-1 flex-col items-center gap-6'>
-                <div className='mb-4 flex items-center gap-2'>
+                <div className='mb-2 flex items-center gap-2'>
                   <div className='text-sm text-gray-400'>Balance</div>
                   <div className='font-bold'>
                     {tokenLogo} {formattedBalance}
                   </div>
                 </div>
+                <TokenSwitch />
+
                 <div className='w-full space-y-4'>
                   {navItems.map((item) => (
                     <Button

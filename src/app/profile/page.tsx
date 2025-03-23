@@ -2,7 +2,7 @@
 
 import { EndingSoon } from '@/components/ending-soon';
 import { HighestVolume } from '@/components/highest-volume';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -29,6 +29,7 @@ import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { ArrowUpFromLine, History, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { RandomAvatar } from 'react-random-avatars';
 import { usePublicClient, useReadContract, useWriteContract } from 'wagmi';
 import { GET_BET_WITHDRAWALS, GET_BETS, GET_PAYOUT_CLAIMED } from '../queries';
 
@@ -271,7 +272,7 @@ export default function ProfilePage() {
       totalVolume,
       activeVolume,
       winRate: winRate.toFixed(1),
-      avgBetSize: avgBetSize.toFixed(2),
+      avgBetSize: avgBetSize.toFixed(0),
     };
   }, [userBets?.bets, payoutClaimeds?.payoutClaimeds]);
 
@@ -282,10 +283,7 @@ export default function ProfilePage() {
         <div className='hidden w-60 flex-col border-r border-gray-200 p-4 md:flex dark:border-gray-800'>
           <div className='mb-6 flex flex-col items-center gap-3'>
             <Avatar className='h-20 w-20 overflow-hidden rounded-full'>
-              <AvatarImage src='/trump.jpeg' alt='Profile' />
-              <AvatarFallback>
-                <span className='text-2xl font-bold text-orange-500'>U</span>
-              </AvatarFallback>
+              <RandomAvatar size={48} name={address} />
             </Avatar>
             <div className='text-center'>
               <div className='text-xl font-bold'>
@@ -295,7 +293,7 @@ export default function ProfilePage() {
             <div className='dark:bg-background bor flex w-full items-center justify-between rounded-lg bg-gray-100 p-3'>
               <div className='text-center'>
                 <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
-                <div className='font-bold'>
+                <div className='flex items-center gap-1 font-bold'>
                   {tokenLogo}
                   {formattedBalance}
                 </div>
@@ -322,23 +320,22 @@ export default function ProfilePage() {
                 </div>
                 <div className='flex flex-col gap-y-2.5'>
                   <div className='text-gray-500 dark:text-gray-400'>Total Volume</div>
-                  <div className='font-semibold'>
+                  <div className='flex items-center gap-1 font-semibold'>
                     {tokenLogo}
                     <span className='relative mr-5'>
-                      {userStats.totalVolume.toFixed(2)}
-                      {userStats.activeVolume > 0 && (
-                        <span className='absolute -top-3 -right-3 text-[10px] font-bold text-orange-500'>
-                          +{userStats.activeVolume.toFixed(2)}
-                        </span>
-                      )}
+                      {tokenType === TokenType.USDC
+                        ? `${(userStats.totalVolume / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
+                        : `${Math.floor(userStats.totalVolume / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
                     </span>
                   </div>
                 </div>
                 <div className='flex flex-col gap-y-2.5'>
                   <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
-                  <div className='font-semibold'>
+                  <div className='flex items-center gap-1 font-semibold'>
                     {tokenLogo}
-                    {userStats.avgBetSize}
+                    {tokenType === TokenType.USDC
+                      ? `${(Number(userStats.avgBetSize) / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
+                      : `${Math.floor(Number(userStats.avgBetSize) / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
                   </div>
                 </div>
               </div>
@@ -396,7 +393,6 @@ export default function ProfilePage() {
                 </div>
                 <div className='max-h-60 space-y-2 overflow-y-auto'>
                   {betWithdrawals.betWithdrawals.slice(0, 5).map((withdrawal: any) => {
-                    console.log(withdrawal);
 
                     const resolvedTokenType =
                       withdrawal.bet?.tokenType === 0 ? TokenType.USDC : TokenType.POINTS;
@@ -442,10 +438,7 @@ export default function ProfilePage() {
               {/* Mobile Profile Section */}
               <div className='mb-6 flex flex-col items-center gap-3 md:hidden'>
                 <Avatar className='h-20 w-20 overflow-hidden rounded-full'>
-                  <AvatarImage src='/trump.jpeg' alt='Profile' />
-                  <AvatarFallback>
-                    <span className='text-2xl font-bold text-orange-500'>U</span>
-                  </AvatarFallback>
+                  <RandomAvatar size={48} name={address} />
                 </Avatar>
                 <div className='text-center'>
                   <div className='text-xl font-bold'>
@@ -455,7 +448,7 @@ export default function ProfilePage() {
                 <div className='flex w-full max-w-xs items-center justify-between rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
                   <div className='text-center'>
                     <div className='text-sm text-gray-500 dark:text-gray-400'>Balance</div>
-                    <div className='font-bold'>
+                    <div className='flex items-center gap-1 font-bold'>
                       {formattedBalance} {tokenLogo}
                     </div>
                   </div>
@@ -465,26 +458,81 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
+                {/* Mobile Betting Stats */}
+                <div className='w-full space-y-2 rounded-lg bg-gray-100 p-3 dark:bg-gray-800'>
+                  <div className='text-center text-sm font-medium text-gray-500 dark:text-gray-400'>
+                    Betting Stats
+                  </div>
+                  <div className='grid grid-cols-2 gap-4 text-center text-xs'>
+                    <div className='flex flex-col items-center gap-y-1'>
+                      <div className='text-gray-500 dark:text-gray-400'>Total Bets</div>
+                      <div className='animate-pulse font-semibold'>{userStats.totalBets}</div>
+                    </div>
+                    <div className='flex flex-col items-center gap-y-1'>
+                      <div className='text-gray-500 dark:text-gray-400'>Win Rate</div>
+                      <div className='font-semibold text-green-500'>{userStats.winRate}%</div>
+                    </div>
+                    <div className='flex flex-col items-center gap-y-2.5'>
+                      <div className='text-gray-500 dark:text-gray-400'>Total Volume</div>
+                      <div className='flex items-center gap-1 font-semibold'>
+                        {tokenLogo}
+                        <span className='relative mr-5'>
+                          {tokenType === TokenType.USDC
+                            ? `${(userStats.totalVolume / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
+                            : `${Math.floor(userStats.totalVolume / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
+                          {/* {userStats.activeVolume > 0 && (
+                            <span className='absolute -top-3 -right-3 text-[10px] font-bold text-orange-500'>
+                              +{userStats.activeVolume.tofixed(0)}
+                            </span>
+                          )} */}
+                        </span>
+                      </div>
+                    </div>
+                    <div className='flex flex-col items-center gap-y-2.5'>
+                      <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
+                      <div className='flex items-center gap-1 font-semibold'>
+                        {tokenLogo}
+                        {tokenType === TokenType.USDC
+                          ? `${(Number(userStats.avgBetSize) / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
+                          : `${Math.floor(Number(userStats.avgBetSize) / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Mobile Token Actions */}
                 <div className='mt-2 w-full space-y-3'>
                   <div className='text-sm font-medium text-gray-500 dark:text-gray-400'>
                     Token Actions
                   </div>
-                  <div className='mb-2'>
-                    <Input
-                      type='number'
-                      placeholder='Enter amount'
-                      className='w-full border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
-                    />
-                  </div>
-                  <div className='flex'>
-                    <Button
-                      variant='outline'
-                      className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
-                    >
-                      <ArrowUpFromLine className='h-4 w-4' />
-                      <span>Withdraw</span>
-                    </Button>
+                  <p className='text-sm text-gray-500 dark:text-gray-400'>
+                    Withdrawable Balance:
+                    <span className='flex items-center gap-1 font-bold'>
+                      {tokenLogo}
+                      {formattedWithdrawableBalance}
+                    </span>
+                  </p>
+                  <div className='flex items-center gap-2'>
+                    <div className='flex-1 md:mb-2'>
+                      <Input
+                        type='number'
+                        placeholder='Enter amount'
+                        className='w-full border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-800'
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className='flex'>
+                      <Button
+                        variant='outline'
+                        className='flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 dark:bg-red-900/20 dark:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400'
+                        onClick={handleWithdraw}
+                        disabled={isPending}
+                      >
+                        <ArrowUpFromLine className='h-4 w-4' />
+                        <span>Withdraw</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

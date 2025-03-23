@@ -23,6 +23,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Trump.fun - Predict The Donald's Next Move",
   description: 'Bet on what Trump will say or do next on the Trump.fun prediction market platform',
+  icons: {
+    icon: 'https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.fun.logo.ico',
+    apple:
+      'https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.fun.logo.jpg',
+  },
 };
 
 export default function RootLayout({

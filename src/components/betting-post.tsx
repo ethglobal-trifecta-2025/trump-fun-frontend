@@ -11,18 +11,18 @@ import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { PoolStatus } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
-import { showBetSuccessToast, showErrorToast } from '@/utils/toast';
+import { showBetSuccessToast, showErrorToast, showSuccessToast } from '@/utils/toast';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { HandCoins, MessageCircle } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import TruthSocial from './common/truth-social';
 import CountdownTimer from './Timer';
 import { Badge } from './ui/badge';
-import Image from 'next/image';
 
 interface BettingPostProps {
   id: string;
@@ -77,9 +77,6 @@ export function BettingPost({
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
-
-  // Track which transactions we've already shown toasts for
-  const [toastShownForHash, setToastShownForHash] = useState<string | null>(null);
 
   // Action states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -336,33 +333,24 @@ export function BettingPost({
       return;
     }
 
-    // 2. Basic input validation
-    if (!betAmount || selectedOption === null) return;
-
-    // 3. System readiness check
     if (!writeContract || !publicClient || !wallets?.length) {
-      console.error('Wallet or contract not ready');
-      return;
+      return console.error('Wallet or contract not ready');
+    }
+
+    if (!betAmount || betAmount === '0' || selectedOption === null) {
+      return console.error('Invalid bet parameters');
     }
 
     if (!account.address) {
-      console.error('Account address is not available');
-      return;
+      return console.error('Account address is not available');
     }
 
-    setIsSubmitting(true);
-
     try {
-      // 4. Convert amount to token units
       const amount = parseInt(betAmount, 10);
       const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
 
-      // 5. Determine if approval is needed
-      const hasEnoughApproval = approvedAmount && parseFloat(approvedAmount) >= amount;
-
-      // 6. Handle approval flow
-      if (!hasEnoughApproval && !isConfirmed) {
-        // Need to request approval first
+      const needsApproval = !approvedAmount || parseFloat(approvedAmount) < amount;
+      if (needsApproval && !isConfirmed) {
         const { request: approveRequest } = await publicClient.simulateContract({
           abi: pointsTokenAbi,
           address: getTokenAddress() as `0x${string}`,
@@ -372,12 +360,9 @@ export function BettingPost({
         });
 
         writeContract(approveRequest);
-
-        // End function here - we'll wait for approval confirmation
-        return;
+        return showSuccessToast(`Approving ${betAmount} ${symbol}...`);
       }
 
-      // 7. Place bet (only reaches here if approved)
       const { request } = await publicClient.simulateContract({
         abi: bettingContractAbi,
         address: APP_ADDRESS,
@@ -388,20 +373,16 @@ export function BettingPost({
 
       writeContract(request);
 
-      // 8. Reset form if transaction is not pending
-      if (!isPending) {
-        setBetAmount('');
-        setSelectedOption(null);
-        setShowBetForm(false);
-        showBetSuccessToast(
-          `Bet placed successfully! You bet ${betAmount} ${symbol} on "${options[selectedOption]}"!`
-        );
-      }
+      setBetAmount('');
+      setSelectedOption(null);
+      setSliderValue([0]);
+      setShowBetForm(false);
+      showBetSuccessToast(
+        `Placing bet of ${betAmount} ${symbol} on "${options[selectedOption]}"...`
+      );
     } catch (error) {
       console.error('Error placing bet:', error);
-      showErrorToast('Error placing bet. Please check your wallet connection and try again.');
-    } finally {
-      setIsSubmitting(false);
+      showErrorToast('Failed to place bet. Please try again.');
     }
   };
 
@@ -472,23 +453,77 @@ export function BettingPost({
     );
   };
 
-  // Add effect to show toast when transaction is confirmed
+  // Update bet amount when slider changes
   useEffect(() => {
-    if (isConfirmed && hash && hash !== toastShownForHash) {
-      // Mark this hash as having shown a toast
-      setToastShownForHash(hash);
+    // Skip this effect completely during and after user typing
+    if (isUserTyping || !balance) return;
 
-      // Show a TRUMP-style success toast when the bet is confirmed
-      showBetSuccessToast(
-        `BET PLACED SUCCESSFULLY! You BET ${betAmount || '15'} FREEDOM on "${options[selectedOption || 0]}"! You make the GREATEST BETs!`
-      );
+    // Don't update the input if user directly typed a value
+    if (userEnteredValue) return;
 
-      // Reset form after successful transaction
+    const rawBalanceValue = Number(balance.value) / Math.pow(10, balance.decimals);
+
+    if (sliderValue[0] > 0) {
+      const percentage = sliderValue[0] / 100;
+
+      // Special case for 100%
+      if (sliderValue[0] === 100) {
+        const exactAmount = Math.ceil(rawBalanceValue).toString();
+        if (exactAmount !== betAmount) {
+          setBetAmount(exactAmount);
+        }
+        return;
+      }
+
+      // Compensate for the 1-off error by using Math.ceil instead of Math.floor
+      const amount = Math.max(Math.ceil(rawBalanceValue * percentage), 1);
+      const amountStr = amount.toString();
+
+      // Don't set the value if it's already the same (prevents cursor jumping)
+      if (amountStr !== betAmount) {
+        setBetAmount(amountStr);
+      }
+    } else if (sliderValue[0] === 0 && betAmount !== '') {
       setBetAmount('');
-      setSelectedOption(null);
-      setShowBetForm(false);
     }
-  }, [isConfirmed, hash, toastShownForHash, betAmount, selectedOption, options, showBetForm]);
+  }, [sliderValue, balance, betAmount, isUserTyping, userEnteredValue]);
+
+  // Fetch approved amount when component mounts or account changes
+  useEffect(() => {
+    const fetchApprovedAmount = async () => {
+      if (!account.address || !publicClient) return;
+
+      try {
+        const allowance = await publicClient.readContract({
+          abi: pointsTokenAbi,
+          address: getTokenAddress() as `0x${string}`,
+          functionName: 'allowance',
+          args: [account.address, APP_ADDRESS],
+        });
+
+        // Format the allowance (divide by 10^TOKEN_DECIMALS for USDC)
+        const formattedAllowance = Number(allowance) / 10 ** USDC_DECIMALS;
+        setApprovedAmount(formattedAllowance.toString());
+      } catch (error) {
+        setApprovedAmount('0');
+        console.error('Error fetching approved amount:', error);
+      }
+    };
+
+    fetchApprovedAmount();
+  }, [account.address, publicClient, hash, getTokenAddress]);
+
+  // Remove the log for approved amount that's causing noise
+  useEffect(() => {
+    setApprovedAmount(approvedAmount);
+  }, [approvedAmount]);
+
+  // show success toasts
+  useEffect(() => {
+    if (isConfirmed) {
+      showSuccessToast('Transaction confirmed!');
+    }
+  }, [isConfirmed]);
 
   return (
     <div className='bg-background overflow-hidden rounded-lg border border-gray-200 transition-colors hover:border-gray-100 dark:border-gray-800 dark:hover:border-gray-700'>
@@ -584,8 +619,8 @@ export function BettingPost({
           })}
         </div>
 
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <div className='flex items-center gap-2 w-full justify-between md:w-auto'>
             {closesAt && !isNaN(new Date(closesAt * 1000).getTime()) && (
               <CountdownTimer closesAt={closesAt * 1000} />
             )}
@@ -603,7 +638,7 @@ export function BettingPost({
             </Button>
           </div>
 
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-2  w-full justify-between  md:w-auto'>
             <Button
               variant='ghost'
               size='sm'
@@ -721,11 +756,28 @@ export function BettingPost({
                 />
               </div>
               <Button
-                className='bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black dark:text-black'
                 onClick={placeBet}
-                disabled={!betAmount || selectedOption === null || isSubmitting || isPending}
+                disabled={
+                  !betAmount ||
+                  selectedOption === null ||
+                  !authenticated ||
+                  isPending ||
+                  isSubmitting
+                }
+                className='h-10 w-full bg-orange-500 font-medium text-black hover:bg-orange-600 hover:text-black sm:w-auto dark:text-black'
+                title={
+                  !betAmount || selectedOption === null
+                    ? 'Please enter a bet amount and select an option'
+                    : !authenticated
+                      ? 'Please connect your wallet'
+                      : ''
+                }
               >
-                {isPending ? 'Processing...' : isSubmitting ? 'Waiting...' : 'Place Bet'}
+                {isPending
+                  ? 'Processing...'
+                  : approvedAmount && parseFloat(approvedAmount) >= parseFloat(betAmount || '0')
+                    ? 'Place Bet'
+                    : 'Approve Tokens'}
               </Button>
             </div>
             {selectedOption !== null && (
