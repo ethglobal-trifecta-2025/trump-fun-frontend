@@ -81,6 +81,28 @@ const setRateLimit = async (walletAddress: string): Promise<void> => {
   }
 };
 
+const isNewUser = async (walletAddress: string): Promise<boolean> => {
+  const supabase = getSupabaseClient();
+  try {
+    const { error } = await supabase
+      .from('trump_users')
+      .select('id')
+      .eq('id', walletAddress.toLowerCase())
+      .single();
+
+    if (error && error.code === 'PGRST116') {
+      // No rows returned - this is a new user
+      return true;
+    }
+
+    return false; // User exists
+  } catch (error) {
+    console.error('Error checking if user is new:', error);
+    return false; // Default to existing user on error
+  }
+};
+
+// Then modify the POST function where the mint amount is calculated
 export async function POST(request: Request) {
   try {
     const body: TopUpBalanceParams = await request.json();
@@ -109,7 +131,12 @@ export async function POST(request: Request) {
 
     const pointsContract = new ethers.Contract(POINTS_ADDRESS, POINTS_ABI, wallet);
     const balance = await pointsContract.balanceOf(body.walletAddress);
-    const targetAmount = BigInt(1000) * BigInt(10) ** BigInt(POINTS_DECIMALS);
+
+    // Check if this is a new user
+    const userIsNew = await isNewUser(body.walletAddress);
+    const targetAmount = userIsNew
+      ? BigInt(10000) * BigInt(10) ** BigInt(POINTS_DECIMALS)
+      : BigInt(1000) * BigInt(10) ** BigInt(POINTS_DECIMALS);
 
     // If balance is less than target, add the difference, otherwise add 0
     const amountToAdd = balance < targetAmount ? targetAmount - balance : BigInt(0);

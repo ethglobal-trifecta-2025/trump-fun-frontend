@@ -61,8 +61,8 @@ export default function Home() {
                 src='/hero.png'
                 alt='Trump'
                 width={1000}
-                height={800}
-                className='h-auto w-full rounded-lg'
+                height={1000}
+                className='h-auto w-full rounded-t-lg'
               />
               <div className='mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
                 <Button

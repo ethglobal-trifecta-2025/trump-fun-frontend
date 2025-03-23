@@ -330,14 +330,16 @@ export function BettingPost({
 
   // Place bet function
   const placeBet = async () => {
+    // 1. Authentication check
     if (!authenticated) {
       login();
       return;
     }
 
+    // 2. Basic input validation
     if (!betAmount || selectedOption === null) return;
 
-    // Validation checks
+    // 3. System readiness check
     if (!writeContract || !publicClient || !wallets?.length) {
       console.error('Wallet or contract not ready');
       return;
@@ -351,13 +353,16 @@ export function BettingPost({
     setIsSubmitting(true);
 
     try {
-      // Convert amount to token units
+      // 4. Convert amount to token units
       const amount = parseInt(betAmount, 10);
       const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
 
-      // Check if approval is needed
-      if (approvedAmount && parseFloat(approvedAmount) < amount) {
-        // Approve tokens first
+      // 5. Determine if approval is needed
+      const hasEnoughApproval = approvedAmount && parseFloat(approvedAmount) >= amount;
+
+      // 6. Handle approval flow
+      if (!hasEnoughApproval && !isConfirmed) {
+        // Need to request approval first
         const { request: approveRequest } = await publicClient.simulateContract({
           abi: pointsTokenAbi,
           address: getTokenAddress() as `0x${string}`,
@@ -367,29 +372,30 @@ export function BettingPost({
         });
 
         writeContract(approveRequest);
+
+        // End function here - we'll wait for approval confirmation
+        return;
       }
 
-      // Place bet after approval or if already approved
-      if (isConfirmed || parseFloat(approvedAmount) >= amount) {
-        const { request } = await publicClient.simulateContract({
-          abi: bettingContractAbi,
-          address: APP_ADDRESS,
-          functionName: 'placeBet',
-          account: account.address as `0x${string}`,
-          args: [BigInt(id), BigInt(selectedOption), tokenAmount, account.address, tokenTypeC],
-        });
+      // 7. Place bet (only reaches here if approved)
+      const { request } = await publicClient.simulateContract({
+        abi: bettingContractAbi,
+        address: APP_ADDRESS,
+        functionName: 'placeBet',
+        account: account.address as `0x${string}`,
+        args: [BigInt(id), BigInt(selectedOption), tokenAmount, account.address, tokenTypeC],
+      });
 
-        writeContract(request);
+      writeContract(request);
 
-        // We no longer show an immediate toast here to avoid duplicates
-        // The toast will only show when the transaction is confirmed in the useEffect
-
-        // Reset form after transaction sent
-        if (!isPending) {
-          setBetAmount('');
-          setSelectedOption(null);
-          setShowBetForm(false);
-        }
+      // 8. Reset form if transaction is not pending
+      if (!isPending) {
+        setBetAmount('');
+        setSelectedOption(null);
+        setShowBetForm(false);
+        showBetSuccessToast(
+          `Bet placed successfully! You bet ${betAmount} ${symbol} on "${options[selectedOption]}"!`
+        );
       }
     } catch (error) {
       console.error('Error placing bet:', error);

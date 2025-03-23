@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 
-const CountdownTimer = ({ closesAt, displayText = true }: { closesAt: string | Date | number, displayText?: boolean }) => {
+const CountdownTimer = ({
+  closesAt,
+}: {
+  closesAt: string | Date | number;
+  displayText?: boolean;
+}) => {
   const [timeRemaining, setTimeRemaining] = useState<{
     hours: string;
     minutes: string;
@@ -71,7 +76,7 @@ const CountdownTimer = ({ closesAt, displayText = true }: { closesAt: string | D
   }, [closesAt]);
 
   // Function to render a time digit with casino-style display
-  const TimeDigit = ({ value, label }: { value: string; label: string }) => (
+  const TimeDigit = ({ value }: { value: string }) => (
     <div className='flex flex-col items-center'>
       <div
         className={`mb-1 flex h-8 w-10 items-center justify-center rounded font-mono text-xs font-bold ${
@@ -84,21 +89,17 @@ const CountdownTimer = ({ closesAt, displayText = true }: { closesAt: string | D
       >
         {value}
       </div>
-      <span className='text-xs text-gray-500 dark:text-gray-400'>{label}</span>
     </div>
   );
 
   return (
     <div className='flex flex-col items-end'>
-      <div className={` ${displayText ? '' : 'hidden'} text-xs font-medium text-gray-500 dark:text-gray-400`}>
-        {isExpired ? 'Closed' : 'Closes in'}
-      </div>
       <div className='flex justify-center gap-1'>
-        <TimeDigit value={timeRemaining.hours} label='hr' />
+        <TimeDigit value={timeRemaining.hours} />
         <div className='flex h-8 items-center font-bold text-orange-500'>:</div>
-        <TimeDigit value={timeRemaining.minutes} label='min' />
+        <TimeDigit value={timeRemaining.minutes} />
         <div className='flex h-8 items-center font-bold text-orange-500'>:</div>
-        <TimeDigit value={timeRemaining.seconds} label='sec' />
+        <TimeDigit value={timeRemaining.seconds} />
       </div>
     </div>
   );
