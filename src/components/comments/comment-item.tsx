@@ -8,22 +8,86 @@ import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { useEffect, useState } from 'react';
 import { RandomAvatar } from 'react-random-avatars';
 import { Database } from '../../types/database.types';
+import Image from 'next/image';
 
 interface CommentItemProps {
   comment: Database['public']['Tables']['comments']['Row'];
 }
 
 const CommentItem = ({ comment }: CommentItemProps) => {
-  // Ensure we have a valid comment object
-
   const [upvotes, setUpvotes] = useState<number>(comment.upvotes || 0);
   const [isLiked, setIsLiked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [replies, setReplies] = useState<any[]>([]);
+  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [hasTrumpReplies, setHasTrumpReplies] = useState(false);
   const { login, authenticated } = usePrivy();
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
 
   const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
+
+  // Check for Trump replies when component mounts
+  useEffect(() => {
+    const checkForTrumpReplies = async () => {
+      if (!comment.id) return;
+
+      try {
+        const response = await fetch(`/api/comment?comment_id=${comment.id}`);
+        if (!response.ok) throw new Error('Failed to fetch replies');
+
+        const data = await response.json();
+
+        // Log the response to debug
+
+        // Check if there are any Trump replies
+        let trumpReplies = [];
+        if (data.comments && Array.isArray(data.comments)) {
+          trumpReplies = data.comments.filter(
+            (reply: any) =>
+              reply.user_address === '0xRealDonaldTrump2025' &&
+              (reply.commentID === comment.id || reply.parent_id === comment.id)
+          );
+        } else if (Array.isArray(data)) {
+          trumpReplies = data.filter(
+            (reply) =>
+              reply.user_address === '0xRealDonaldTrump2025' &&
+              (reply.commentID === comment.id || reply.parent_id === comment.id)
+          );
+        }
+
+        // Set whether there are Trump replies
+        setHasTrumpReplies(trumpReplies.length > 0);
+
+        // Save the replies in state in case the user wants to view them
+        setReplies(trumpReplies);
+      } catch (error) {
+        console.error('Error checking for Trump replies:', error);
+      }
+    };
+
+    checkForTrumpReplies();
+  }, [comment.id]);
+
+  // Fetch replies when the user clicks to view replies
+  useEffect(() => {
+    const fetchReplies = async () => {
+      if (!comment.id || !showReplies || replies.length > 0) return;
+
+      setIsLoadingReplies(true);
+      try {
+        // We already have the replies from the initial check, no need to fetch again
+        // unless we need to refresh the data
+        setIsLoadingReplies(false);
+      } catch (error) {
+        console.error('Error fetching replies:', error);
+        setIsLoadingReplies(false);
+      }
+    };
+
+    fetchReplies();
+  }, [comment.id, showReplies, replies.length]);
 
   // Check localStorage when component mounts to see if this comment was liked before
   useEffect(() => {
@@ -116,11 +180,14 @@ const CommentItem = ({ comment }: CommentItemProps) => {
         !error.message.includes('user rejected')
       ) {
         console.error('Error handling comment FACTS:', error);
-      } else {
       }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const toggleReplies = () => {
+    setShowReplies(!showReplies);
   };
 
   return (
@@ -157,7 +224,59 @@ const CommentItem = ({ comment }: CommentItemProps) => {
               {isLiked && <span className='ml-1.5'>🦅</span>}
               <span className='ml-1.5'>{upvotes}</span>
             </Button>
+
+            {/* Only show Trump reply button if there are replies */}
+            {hasTrumpReplies && (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-9 gap-2 px-3 text-blue-500 hover:text-blue-600'
+                onClick={toggleReplies}
+              >
+                <span>{showReplies ? 'Hide Trump Replies' : 'Show Trump Replies'}</span>
+                <span className='ml-1.5'>🇺🇸</span>
+              </Button>
+            )}
           </div>
+
+          {/* Replies section - only show when showReplies is true */}
+          {showReplies && hasTrumpReplies && (
+            <div className='mt-3 border-l-2 border-red-200 pl-4'>
+              {isLoadingReplies ? (
+                <div className='mt-3 pl-4 text-sm text-gray-500'>Loading Trump replies...</div>
+              ) : replies && replies.length > 0 ? (
+                <>
+                  <h4 className='mb-2 text-sm font-semibold text-gray-700'>
+                    Trump Responses ({replies.length})
+                  </h4>
+                  {replies.map((reply) => (
+                    <div key={reply.id} className='mb-3 border-t border-gray-100 pt-2'>
+                      <div className='mb-1 flex items-center gap-2'>
+                        <div className='flex items-center'>
+                          <div className='relative h-6 w-6 overflow-hidden rounded-full'>
+                            <Image
+                              src='/trump.jpeg'
+                              alt='Trump Avatar'
+                              fill
+                              className='object-cover'
+                              sizes='100%'
+                            />
+                          </div>
+                          <span className='ml-2 text-sm font-bold'>@realDonaldTrump</span>
+                        </div>
+                        <span className='text-xs text-gray-500'>
+                          {formatDate(reply.created_at)}
+                        </span>
+                      </div>
+                      <p className='ml-8 text-sm'>{reply.body}</p>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className='mt-3 pl-4 text-sm text-gray-500'>No Trump replies yet</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

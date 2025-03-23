@@ -4,15 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 
 const GET = async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
-  const poolId = searchParams.get('poolId') || null;
+  const comment_id = searchParams.get('comment_id') || null;
 
   try {
     const supabase = await createClient();
     const { data } = await supabase
       .from('comments')
       .select('*')
-      .eq('pool_id', poolId)
-      .is('commentID', null)
+      .eq('commentID', comment_id)
       .order('created_at', { ascending: false });
 
     return Response.json(

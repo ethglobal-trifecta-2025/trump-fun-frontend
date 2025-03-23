@@ -85,6 +85,7 @@ export type Database = {
           updated_at: string | null;
           upvotes: number | null;
           user_address: string;
+          trump_responded: boolean;
         };
         Insert: {
           body: string;
