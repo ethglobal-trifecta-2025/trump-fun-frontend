@@ -46,7 +46,6 @@ export default function RootLayout({
                   <Nav />
                   <div className='pt-16 md:pt-20'>{children}</div>
                   <Toaster />
-                  {children}
                   <MobileNav />
                 </ApolloClientProvider>
               </div>

@@ -92,7 +92,7 @@ export default function Home() {
     <div className='bg-background flex min-h-screen'>
       <main className='flex-1'>
         <section>
-          <div className='container px-4 md:px-6'>
+          <div className='container'>
             <div className='relative flex flex-col items-center gap-4 text-center'>
               <Image
                 src='/hero.png'
