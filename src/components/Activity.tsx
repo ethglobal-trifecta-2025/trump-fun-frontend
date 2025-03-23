@@ -1,7 +1,7 @@
 'use client';
 
 import { GET_BETS } from '@/app/queries';
-import { POINTS_DECIMALS } from '@/consts';
+import { POINTS_DECIMALS, POLLING_INTERVALS } from '@/consts';
 import { Bet, Bet_OrderBy, Pool } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -36,6 +36,7 @@ export const Activity: FC<ActivityProps> = ({ pool }) => {
     },
     context: { name: 'userBets' },
     notifyOnNetworkStatusChange: true,
+    pollInterval: POLLING_INTERVALS['user-bets'],
   });
 
   useEffect(() => {

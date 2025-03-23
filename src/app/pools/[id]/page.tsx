@@ -34,7 +34,7 @@ import { Activity } from '@/components/Activity';
 import TruthSocial from '@/components/common/truth-social';
 import { Related } from '@/components/Related';
 import CountdownTimer from '@/components/Timer';
-import { USDC_DECIMALS } from '@/consts';
+import { POLLING_INTERVALS, USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { cn } from '@/lib/utils';
 import { calculateVolume } from '@/utils/betsInfo';
@@ -110,6 +110,7 @@ export default function PoolDetailPage() {
   } = useQueryA<{ pool: Pool }>(GET_POOL, {
     variables: { poolId: id },
     notifyOnNetworkStatusChange: true,
+    pollInterval: POLLING_INTERVALS['pool-drilldown'],
   });
 
   const { data: placedBets } = useQueryA<{ bets: Bet[] }>(GET_BETS, {
@@ -123,6 +124,7 @@ export default function PoolDetailPage() {
     },
     context: { name: `placedbets${id}` },
     notifyOnNetworkStatusChange: true,
+    pollInterval: POLLING_INTERVALS['explore-pools'],
   });
 
   // Comments data fetching

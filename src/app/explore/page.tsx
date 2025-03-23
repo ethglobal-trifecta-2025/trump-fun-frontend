@@ -19,6 +19,7 @@ import { TRUMP_FUN_TWITTER_URL, TRUMP_FUN_TWITTER_USERNAME } from '@/utils/confi
 import { useQuery } from '@apollo/client';
 import Image from 'next/image';
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { POLLING_INTERVALS } from '@/consts';
 
 export default function BettingPlatform() {
   const [activeFilter, setActiveFilter] = useState<string>('newest');
@@ -85,6 +86,7 @@ export default function BettingPlatform() {
     },
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,
+    pollInterval: POLLING_INTERVALS['explore-pools'],
   });
 
   const filteredPools = useMemo(() => {

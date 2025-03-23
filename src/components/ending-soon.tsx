@@ -8,6 +8,7 @@ import { useQuery } from '@apollo/client';
 import { Clock } from 'lucide-react';
 import { useMemo } from 'react';
 import { EndingSoonBet } from './ending-soon-bet';
+import { POLLING_INTERVALS } from '@/consts';
 
 export function EndingSoon() {
   const { tokenType } = useTokenContext();
@@ -29,6 +30,7 @@ export function EndingSoon() {
     },
     context: { name: 'endingSoonSearch' },
     notifyOnNetworkStatusChange: true,
+    pollInterval: POLLING_INTERVALS['ending-soon'],
   });
 
   const filteredEndingSoonPools = useMemo(() => {

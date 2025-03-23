@@ -7,5 +7,7 @@ export const POLLING_INTERVALS: Record<string, number> = {
   'pool-lising': 5000,
   'pool-drilldown-main': 3000,
   'pool-drilldown-comments': 3000,
+  'explore-pools': 3000,
   'user-profile': 5000,
+  'user-bets': 5000,
 };

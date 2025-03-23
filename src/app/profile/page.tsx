@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserBettingPost } from '@/components/user-betting-post';
-import { POINTS_DECIMALS, USDC_DECIMALS } from '@/consts';
+import { POINTS_DECIMALS, POLLING_INTERVALS, USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { useNetwork } from '@/hooks/useNetwork';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
@@ -109,6 +109,7 @@ export default function ProfilePage() {
     context: { name: 'userBets' },
     notifyOnNetworkStatusChange: true,
     skip: !address || activeFilter === 'won',
+    pollInterval: POLLING_INTERVALS['user-profile'],
   });
 
   const { data: payoutClaimeds } = useQuery<{ payoutClaimeds: PayoutClaimed[] }>(
@@ -122,6 +123,7 @@ export default function ProfilePage() {
       context: { name: 'payoutClaimeds' },
       notifyOnNetworkStatusChange: true,
       skip: !address || activeFilter !== 'won',
+      pollInterval: POLLING_INTERVALS['user-profile'],
     }
   );
 
@@ -137,6 +139,7 @@ export default function ProfilePage() {
       context: { name: 'betWithdrawals' },
       notifyOnNetworkStatusChange: true,
       skip: !address,
+      pollInterval: POLLING_INTERVALS['user-profile'],
     }
   );
 
