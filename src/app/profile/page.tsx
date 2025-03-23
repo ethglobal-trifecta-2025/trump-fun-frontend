@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const { formattedBalance, tokenTextLogo } = useTokenBalance();
   const { networkInfo } = useNetwork();
   const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
-  const { data: hash, isPending, writeContract } = useWriteContract();
+  const { isPending, writeContract } = useWriteContract();
   const [withdrawAmount, setWithdrawAmount] = useState(0);
 
   const { data: balance } = useReadContract({

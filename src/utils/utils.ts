@@ -42,10 +42,7 @@ export function generateRandomColor(isLight: boolean) {
   return hslToHex(hue, saturation, lightness);
 }
 
-export function usdcAmountToDollars(
-  amount: number | string,
-  includePrefix: boolean = true
-): string {
+export function usdcAmountToDollars(amount: number | string): string {
   let amountValue;
   if (typeof amount === 'string') {
     amountValue = parseInt(amount);

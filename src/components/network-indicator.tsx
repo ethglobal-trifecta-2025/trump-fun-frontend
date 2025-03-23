@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNetwork } from '@/hooks/useNetwork';
 import { cn } from '@/lib/utils';
-import { TokenSwitch } from './token-switch';
 
 export function NetworkIndicator() {
   const { networkInfo, switchNetwork, isHovering, setIsHovering, supportedNetworks } = useNetwork();
@@ -66,7 +65,6 @@ export function NetworkIndicator() {
           </div>
         )}
       </div>
-
     </div>
   );
 }
