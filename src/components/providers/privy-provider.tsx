@@ -73,7 +73,7 @@ export function PrivyAuthProvider({ children }: { children: React.ReactNode }) {
         appearance: {
           theme: privyTheme, // Use our tracked theme state
           accentColor: '#ff6d00',
-          logo: process.env.NEXT_PUBLIC_LOGO_URL || undefined,
+          logo: 'https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.svg',
           walletList: ['metamask', 'coinbase_wallet', 'rainbow', 'wallet_connect'],
           walletChainType: 'ethereum-only',
           showWalletLoginFirst: true,
