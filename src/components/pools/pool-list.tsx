@@ -5,11 +5,13 @@ import { POLLING_INTERVALS } from '@/consts';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
 import { NetworkStatus, useQuery } from '@apollo/client';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { PoolCard } from './pool-card';
 
 export function PoolList() {
   const { tokenType } = useTokenContext();
+  // Store the last valid pools data to prevent flashing during refetches
+  const lastValidPoolsRef = useRef<Pool[] | null>(null);
 
   // Determine sort field based on token type
   const volumeOrderBy =
@@ -23,7 +25,8 @@ export function PoolList() {
   } = useQuery(GET_POOLS, {
     variables: {
       filter: {
-        status_in: [PoolStatus.Pending, PoolStatus.None],
+        status: PoolStatus.Pending,
+        betsCloseAt_gt: Math.floor(Date.now() / 1000),
       },
       orderBy: volumeOrderBy,
       orderDirection: OrderDirection.Desc,
@@ -32,21 +35,30 @@ export function PoolList() {
     pollInterval: POLLING_INTERVALS['landing-pools'],
     context: { name: 'mainSearch' },
     notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
 
-  // Filter out pools where bets are closed (betsCloseAt < current time)
-  const filteredPools = useMemo(() => {
-    if (!pools?.pools) return [];
+  // Only show loading state on initial load, not during polling or refetching
+  const isInitialLoading =
+    loading && networkStatus === NetworkStatus.loading && !lastValidPoolsRef.current;
 
-    const currentTime = Math.floor(Date.now() / 1000); // Current UTC time in seconds
-    return pools.pools.filter((pool: Pool) => {
-      // Only show pools where bets are still open
-      return Number(pool.betsCloseAt) > currentTime;
-    });
-  }, [pools]);
+  // Update the ref whenever we have valid data
+  if (pools?.pools?.length > 0) {
+    lastValidPoolsRef.current = pools.pools as Pool[];
+  }
 
-  // Only show loading state on initial load, not during polling
-  const isInitialLoading = loading && networkStatus === NetworkStatus.loading;
+  // Use either current data or the last valid data to prevent flashing
+  const currentPools = pools?.pools?.length > 0 ? pools.pools : lastValidPoolsRef.current;
+
+  // Memoize the pool cards to prevent unnecessary re-renders
+  const poolCards = useMemo(() => {
+    if (!currentPools) return null;
+
+    return currentPools.map((pool: Pool) => (
+      <PoolCard key={pool.id} pool={pool as unknown as Pool} />
+    ));
+  }, [currentPools]);
 
   if (isInitialLoading) {
     return (
@@ -58,21 +70,19 @@ export function PoolList() {
     );
   }
 
-  if (error || !pools) {
-    return <div>Error fetching pools: {error?.message}</div>;
+  // Only log on non-undefined values to reduce console spam
+  if (pools?.pools) {
+    console.log('pools length', pools.pools.length);
   }
 
-  if (filteredPools.length === 0) {
-    return <div className='py-8 text-center'>No active prediction pools available right now.</div>;
+  // Only show error if we have no previous valid data to display
+  if (error && !currentPools) {
+    return <div>Error fetching pools: {error?.message}</div>;
   }
 
   return (
     <div>
-      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-        {filteredPools.map((pool: Pool) => (
-          <PoolCard key={pool.id} pool={pool as unknown as Pool} />
-        ))}
-      </div>
+      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>{poolCards}</div>
     </div>
   );
 }

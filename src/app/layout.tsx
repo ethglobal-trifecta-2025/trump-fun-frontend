@@ -1,5 +1,3 @@
-import { Geist, Geist_Mono } from 'next/font/google';
-
 import { MobileNav } from '@/components/common/mobile-nav';
 import Nav from '@/components/common/nav';
 import { ApolloClientProvider } from '@/components/providers/apollo-provider';
@@ -7,7 +5,9 @@ import { PrivyAuthProvider } from '@/components/providers/privy-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TokenProvider } from '@/hooks/useTokenContext';
+import { Analytics } from '@vercel/analytics/react';
 import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
 const geistSans = Geist({
@@ -63,6 +63,7 @@ export default function RootLayout({
             </TokenProvider>
           </ThemeProvider>
         </PrivyAuthProvider>
+        <Analytics />
       </body>
     </html>
   );

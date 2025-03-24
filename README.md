@@ -1,3 +1,9 @@
+# THIS IS A BRANCH STAGING FIXES SHOULD WE BE SELECTED AS FINALISTS, PLEASE DO NOT MERGE THIS BRANCH INTO MAIN, PLEASE DO NOT INCLUDE IN JUDGING.
+
+## If you see the above in main and Trifecta is ongoing, roll back whatever you did
+
+## If you see the above in main and Trifecta is over, please delete it.
+
 # Trump.fun Frontend
 
 ![Trump.fun Logo](https://fxewzungnacaxpsnowcu.supabase.co/storage/v1/object/public/trump-fun/logo/trump.fun.logo.jpg)
@@ -88,6 +94,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ## Connecting to Other Services
 
 The frontend interacts with:
+
 - Blockchain contracts deployed on Base network
 - AI agent for Trump-style responses
 - Telegram bot integration
