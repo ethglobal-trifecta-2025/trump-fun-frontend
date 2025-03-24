@@ -3,7 +3,7 @@
 import { AuthButton } from '@/components/auth-button';
 import { PoolList } from '@/components/pools/pool-list';
 import { Button } from '@/components/ui/button';
-import { useBalance } from '@/components/usePointsBalance';
+import { useBalance } from '@/hooks/usePointsBalance';
 import { TRUMP_FUN_TG_URL, TRUMP_FUN_TWITTER_URL } from '@/utils/config';
 import { topUpBalance } from '@/utils/topUp';
 import { usePrivy } from '@privy-io/react-auth';
@@ -64,7 +64,7 @@ export default function Home() {
                 height={1000}
                 className='h-auto w-full rounded-t-lg'
               />
-              <div className=' mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
+              <div className='mt-4 flex w-full flex-col gap-2 md:absolute md:bottom-28 md:left-10 md:mt-0 md:transform md:flex-row'>
                 <Button
                   variant='default'
                   className='h-12 w-full bg-orange-500 text-lg font-semibold text-white hover:bg-orange-600 md:max-w-48'

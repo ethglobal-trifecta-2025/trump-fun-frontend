@@ -5,7 +5,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { POINTS_ADDRESS } from '@/consts/addresses';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { TokenType } from '@/lib/__generated__/graphql';
 import { cn } from '@/lib/utils';
 
 export function TokenSwitch() {
@@ -13,11 +14,11 @@ export function TokenSwitch() {
 
   // For POINTS, always use the zero address
   const { formattedBalance, symbol } = useTokenBalance(
-    tokenType === TokenType.POINTS ? POINTS_ADDRESS : undefined
+    tokenType === TokenType.Points ? POINTS_ADDRESS : undefined
   );
 
   const handleToggle = (checked: boolean) => {
-    setTokenType(checked ? TokenType.POINTS : TokenType.USDC);
+    setTokenType(checked ? TokenType.Points : TokenType.Usdc);
   };
 
   return (
@@ -29,7 +30,7 @@ export function TokenSwitch() {
               variant='outline'
               className={cn(
                 'flex items-center gap-1 px-2 py-1',
-                tokenType === TokenType.USDC
+                tokenType === TokenType.Usdc
                   ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
                   : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
               )}
@@ -39,7 +40,7 @@ export function TokenSwitch() {
             </Badge>
           </Tooltip.Trigger>
           <Tooltip.Content>
-            <p>{tokenType === TokenType.POINTS ? 'Trump Points' : 'USD'}</p>
+            <p>{tokenType === TokenType.Points ? 'Trump Points' : 'USD'}</p>
             <p className='mt-1 text-xs text-gray-400'>
               Balance: {formattedBalance} {symbol}
             </p>
@@ -48,7 +49,7 @@ export function TokenSwitch() {
       </Tooltip.Provider>
 
       <Switch
-        checked={tokenType === TokenType.POINTS}
+        checked={tokenType === TokenType.Points}
         onCheckedChange={handleToggle}
         className={cn('data-[state=checked]:bg-orange-500')}
       />

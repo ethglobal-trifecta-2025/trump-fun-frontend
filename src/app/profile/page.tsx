@@ -25,7 +25,7 @@ import {
   PayoutClaimed_OrderBy,
 } from '@/lib/__generated__/graphql';
 import { bettingContractAbi } from '@/lib/contract.types';
-import { calculateVolume } from '@/utils/betsInfo';
+import { getVolumeForTokenType } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { ArrowUpFromLine, History, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -393,7 +393,6 @@ export default function ProfilePage() {
                 </div>
                 <div className='max-h-60 space-y-2 overflow-y-auto'>
                   {betWithdrawals.betWithdrawals.slice(0, 5).map((withdrawal: any) => {
-
                     const resolvedTokenType =
                       withdrawal.bet?.tokenType === 0 ? TokenType.USDC : TokenType.POINTS;
                     const symbol = resolvedTokenType === TokenType.USDC ? '💲' : '🦅';
@@ -641,7 +640,7 @@ export default function ProfilePage() {
                       options={pool.options}
                       selectedOption={bet.option}
                       truthSocialId={pool.originalTruthSocialPostId}
-                      volume={calculateVolume(pool, bet.tokenType)}
+                      volume={getVolumeForTokenType(pool, bet.tokenType)}
                       closesAt={pool.betsCloseAt}
                       userBet={{
                         amount: amount,

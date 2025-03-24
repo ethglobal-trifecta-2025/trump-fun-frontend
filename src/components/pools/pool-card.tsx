@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { Pool } from '@/lib/__generated__/graphql';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { GetPoolsQuery, TokenType } from '@/lib/__generated__/graphql';
 import { calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
@@ -12,7 +12,8 @@ import Link from 'next/link';
 import TruthSocial from '../common/truth-social';
 import CountdownTimer from '../Timer';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-export function PoolCard({ pool }: { pool: Pool }) {
+
+export function PoolCard({ pool }: { pool: GetPoolsQuery['pools'][number] }) {
   const { tokenType } = useTokenContext();
 
   const { data: postData } = useQuery({
@@ -50,9 +51,9 @@ export function PoolCard({ pool }: { pool: Pool }) {
       : pool.options.map(() => 0);
 
   const percentages = pool.options.map((_, index) => {
-    if (tokenType === TokenType.POINTS && totalPoints > BigInt(0)) {
+    if (tokenType === TokenType.Points && totalPoints > BigInt(0)) {
       return pointsPercentages[index];
-    } else if (tokenType === TokenType.USDC && totalUsdc > BigInt(0)) {
+    } else if (tokenType === TokenType.Usdc && totalUsdc > BigInt(0)) {
       return usdcPercentages[index];
     } else if (totalPoints > BigInt(0) && totalUsdc > BigInt(0)) {
       return Math.round((pointsPercentages[index] + usdcPercentages[index]) / 2);

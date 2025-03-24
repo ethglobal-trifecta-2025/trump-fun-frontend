@@ -16,7 +16,7 @@ interface UserBettingPostProps {
   time: number;
   question: string;
   options: string[];
-  volume: string;
+  volume: number;
   status: PoolStatus;
   selectedOption: number;
   closesAt: number;

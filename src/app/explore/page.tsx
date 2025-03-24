@@ -10,13 +10,18 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
+import { FaTelegramPlane } from 'react-icons/fa';
 
 import { GET_POOLS } from '@/app/queries';
 import { POLLING_INTERVALS } from '@/consts';
 import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
 import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
-import { calculateVolume, getBetTotals } from '@/utils/betsInfo';
-import { TRUMP_FUN_TWITTER_URL, TRUMP_FUN_TWITTER_USERNAME } from '@/utils/config';
+import { getBetTotals, getVolumeForTokenType } from '@/utils/betsInfo';
+import {
+  TRUMP_FUN_TG_URL,
+  TRUMP_FUN_TWITTER_URL,
+  TRUMP_FUN_TWITTER_USERNAME,
+} from '@/utils/config';
 import { useQuery } from '@apollo/client';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
@@ -151,18 +156,18 @@ export default function BettingPlatform() {
       <div className='flex flex-1 overflow-hidden'>
         {/* Sidebar */}
         <div className='hidden w-60 flex-col border-r border-gray-200 p-4 md:flex dark:border-gray-800'>
-          <div className='mb-6 flex items-center gap-3'>
+          <div className='mb-4 flex items-center gap-3'>
             <Avatar className='size-14 overflow-hidden rounded-full'>
               <AvatarImage src='/trump.jpeg' alt='Trump.fun' />
               <AvatarFallback>
                 <span className='text-2xl font-bold text-orange-500'>T</span>
               </AvatarFallback>
             </Avatar>
-            <span className='text-xl font-bold'>@Trump.fun</span>
+            <span className='text-xl font-bold'>@realTrumpFun</span>
           </div>
 
           <Link href={TRUMP_FUN_TWITTER_URL} target='_blank'>
-            <Button variant='outline' className='mb-6 justify-start gap-2'>
+            <Button variant='outline' className='mb-2 w-full justify-start gap-2'>
               <svg
                 viewBox='0 0 24 24'
                 aria-hidden='true'
@@ -173,6 +178,13 @@ export default function BettingPlatform() {
                 </g>
               </svg>
               Follow @{TRUMP_FUN_TWITTER_USERNAME}
+            </Button>
+          </Link>
+
+          <Link href={TRUMP_FUN_TG_URL} target='_blank'>
+            <Button variant='outline' className='w-full justify-start gap-2'>
+              <FaTelegramPlane className='h-4 w-4 text-black dark:text-white' />
+              Telegram Bot
             </Button>
           </Link>
 
@@ -281,7 +293,7 @@ export default function BettingPlatform() {
                       options={pool.options}
                       commentCount={0}
                       truthSocialId={pool.originalTruthSocialPostId}
-                      volume={calculateVolume(pool, tokenType)}
+                      volume={getVolumeForTokenType(pool, tokenType)}
                       optionBets={pool.options.map((_, index) =>
                         getBetTotals(pool, tokenType, index)
                       )}

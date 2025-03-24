@@ -5,8 +5,8 @@ import { topUpBalance } from '@/utils/topUp';
 import { useLogin, usePrivy } from '@privy-io/react-auth';
 import { LogIn } from 'lucide-react';
 import { useEffect } from 'react';
+import { useBalance } from '../hooks/usePointsBalance';
 import { useEmbeddedWallet } from './EmbeddedWalletProvider';
-import { useBalance } from './usePointsBalance';
 
 export const PrivyLogoutButton = () => {
   const { logout } = usePrivy();

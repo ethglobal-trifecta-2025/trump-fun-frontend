@@ -1,10 +1,10 @@
+import POINTS_ABI from '@/abi/erc20.json';
+import { POINTS_DECIMALS } from '@/consts';
+import { POINTS_ADDRESS } from '@/consts/addresses';
 import { useWallets } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
-import { useEmbeddedWallet } from './EmbeddedWalletProvider';
-import POINTS_ABI from '@/abi/erc20.json';
-import { POINTS_ADDRESS } from '@/consts/addresses';
-import { POINTS_DECIMALS } from '@/consts';
+import { useEmbeddedWallet } from '../components/EmbeddedWalletProvider';
 
 export const useBalance = () => {
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);

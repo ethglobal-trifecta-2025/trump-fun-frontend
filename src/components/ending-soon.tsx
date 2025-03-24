@@ -4,7 +4,7 @@ import { GET_POOLS } from '@/app/queries';
 import { POLLING_INTERVALS } from '@/consts';
 import { useTokenContext } from '@/hooks/useTokenContext';
 import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
-import { calculateVolume } from '@/utils/betsInfo';
+import { getVolumeForTokenType } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { Clock } from 'lucide-react';
 import { useMemo } from 'react';
@@ -86,7 +86,7 @@ export function EndingSoon() {
                 key={pool.id}
                 avatar='/trump.jpeg'
                 question={pool.question}
-                volume={calculateVolume(pool, tokenType)}
+                volume={getVolumeForTokenType(pool, tokenType)}
                 timeLeft={pool.betsCloseAt}
                 poolId={pool.id}
               />
