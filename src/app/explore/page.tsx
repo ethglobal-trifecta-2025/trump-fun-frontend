@@ -3,7 +3,6 @@
 import { BettingPost } from '@/components/betting-post';
 import { EndingSoon } from '@/components/ending-soon';
 import { HighestVolume } from '@/components/highest-volume';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -14,8 +13,14 @@ import { FaTelegramPlane } from 'react-icons/fa';
 
 import { GET_POOLS } from '@/app/queries';
 import { POLLING_INTERVALS } from '@/consts';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import {
+  OrderDirection,
+  Pool,
+  Pool_OrderBy,
+  PoolStatus,
+  TokenType,
+} from '@/lib/__generated__/graphql';
 import { getBetTotals, getVolumeForTokenType } from '@/utils/betsInfo';
 import {
   TRUMP_FUN_TG_URL,
@@ -42,7 +47,7 @@ export default function BettingPlatform() {
         },
       },
       highest: {
-        orderBy: tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
+        orderBy: tokenType === TokenType.Usdc ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
         orderDirection: OrderDirection.Desc,
         filter: {
           status: PoolStatus.Pending,
@@ -156,47 +161,34 @@ export default function BettingPlatform() {
       <div className='flex flex-1 overflow-hidden'>
         {/* Sidebar */}
         <div className='hidden w-60 flex-col border-r border-gray-200 p-4 md:flex dark:border-gray-800'>
-          <div className='mb-4 flex items-center gap-3'>
-            <Avatar className='size-14 overflow-hidden rounded-full'>
-              <AvatarImage src='/trump.jpeg' alt='Trump.fun' />
-              <AvatarFallback>
-                <span className='text-2xl font-bold text-orange-500'>T</span>
-              </AvatarFallback>
-            </Avatar>
-            <span className='text-xl font-bold'>@realTrumpFun</span>
-          </div>
-
-          <Link href={TRUMP_FUN_TWITTER_URL} target='_blank'>
-            <Button variant='outline' className='mb-2 w-full justify-start gap-2'>
-              <svg
-                viewBox='0 0 24 24'
-                aria-hidden='true'
-                className='h-4 w-4 fill-current text-black dark:text-white'
-              >
-                <g>
-                  <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z'></path>
-                </g>
-              </svg>
-              Follow @{TRUMP_FUN_TWITTER_USERNAME}
-            </Button>
-          </Link>
-
-          <Link href={TRUMP_FUN_TG_URL} target='_blank'>
-            <Button variant='outline' className='w-full justify-start gap-2'>
-              <FaTelegramPlane className='h-4 w-4 text-black dark:text-white' />
-              Telegram Bot
-            </Button>
-          </Link>
-
-          <Separator className='my-4' />
-
-          <nav className='space-y-1'>
+          <div className='space-y-2'>
             {renderFilterButton('newest', 'Newest')}
             {renderFilterButton('highest', 'Highest Vol.')}
             {renderFilterButton('ending_soon', 'Ending Soon')}
             {renderFilterButton('recently_closed', 'Recently Closed')}
             <Separator className='my-2' />
-          </nav>
+            <Link href={TRUMP_FUN_TWITTER_URL} target='_blank'>
+              <Button variant='outline' className='mb-2 w-full justify-start gap-2'>
+                <svg
+                  viewBox='0 0 24 24'
+                  aria-hidden='true'
+                  className='h-4 w-4 fill-current text-black dark:text-white'
+                >
+                  <g>
+                    <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z'></path>
+                  </g>
+                </svg>
+                Follow @{TRUMP_FUN_TWITTER_USERNAME}
+              </Button>
+            </Link>
+
+            <Link href={TRUMP_FUN_TG_URL} target='_blank'>
+              <Button variant='outline' className='w-full justify-start gap-2'>
+                <FaTelegramPlane className='h-4 w-4 text-black dark:text-white' />
+                Telegram Bot
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Main Content */}

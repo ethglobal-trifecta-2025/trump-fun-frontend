@@ -8,8 +8,8 @@ import { Slider } from '@/components/ui/slider';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { PoolStatus } from '@/lib/__generated__/graphql';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { PoolStatus, TokenType } from '@/lib/__generated__/graphql';
 import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
 import { showBetSuccessToast, showErrorToast, showSuccessToast } from '@/utils/toast';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
@@ -102,7 +102,7 @@ export function BettingPost({
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
   const { tokenType, getTokenAddress } = useTokenContext();
-  const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
+  const tokenTypeC = tokenType === TokenType.Usdc ? 0 : 1;
 
   // Contract interaction hooks
   const publicClient = usePublicClient();

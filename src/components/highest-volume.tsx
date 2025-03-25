@@ -2,28 +2,17 @@
 
 import { GET_POOLS } from '@/app/queries';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { POLLING_INTERVALS } from '@/consts';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
-import { getVolumeForTokenType } from '@/utils/betsInfo';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { OrderDirection, Pool_OrderBy, PoolStatus, TokenType } from '@/lib/__generated__/graphql';
+import { calculateRelativeVolumePercentages } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { useQueries } from '@tanstack/react-query';
 import { TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo } from 'react';
-
-interface VolumeData {
-  pool: Pool;
-  rawVolume: number;
-  progress: number;
-  displayVolume: number;
-}
-
-interface PoolWithRawVolume {
-  pool: Pool;
-  rawVolume: number;
-}
 
 interface PoolPostData {
   post?: {
@@ -45,7 +34,7 @@ export function HighestVolume() {
         status: PoolStatus.Pending,
         betsCloseAt_gt: currentTimestamp.toString(),
       },
-      orderBy: tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
+      orderBy: tokenType === TokenType.Usdc ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
       orderDirection: OrderDirection.Desc,
       first: 3,
     },
@@ -71,33 +60,15 @@ export function HighestVolume() {
     }
 
     const pools = poolsToDisplay.pools.slice(0, 3);
-
-    // Calculate raw volume values for each pool
-    const volumeValues = pools.map((pool: Pool) => {
-      const rawVolume =
-        tokenType === TokenType.USDC
-          ? Number(pool.usdcVolume || '0')
-          : Number(pool.pointsVolume || '0');
-      return { pool, rawVolume };
-    });
-
-    // Find max volume to calculate relative percentages
-    const maxVolume = Math.max(...volumeValues.map((v: PoolWithRawVolume) => v.rawVolume), 1);
-
-    // Prepare display data
-    return volumeValues.map(({ pool, rawVolume }: PoolWithRawVolume) => ({
-      pool,
-      rawVolume,
-      progress: Math.max(Math.round((rawVolume / maxVolume) * 100), 5), // Minimum 5% for visibility
-      displayVolume: getVolumeForTokenType(pool, tokenType),
-    }));
+    return calculateRelativeVolumePercentages(pools, tokenType);
   }, [poolsToDisplay, tokenType]);
 
   // Use useQueries to fetch pool images in parallel
   const poolQueries = useQueries({
-    queries: volumeData.map(({ pool }: VolumeData) => ({
-      queryKey: ['highest-volume-pool', pool.id],
+    queries: volumeData.map(({ pool }) => ({
+      queryKey: ['highest-volume-pool', pool?.id || 'unknown'],
       queryFn: async () => {
+        if (!pool?.id) return { post: { image_url: '/trump.jpeg' } };
         const res = await fetch(`/api/post?poolId=${pool.id}`);
         if (!res.ok) {
           throw new Error('Network response was not ok');
@@ -138,13 +109,14 @@ export function HighestVolume() {
             ))}
           </div>
         ) : volumeData.length > 0 ? (
-          volumeData.map(({ pool, progress, displayVolume }: VolumeData, index: number) => {
+          volumeData.map(({ pool, percentage, displayVolume }, index) => {
+            if (!pool) return null;
             const poolData = poolQueries[index]?.data as PoolPostData | undefined;
 
             return (
               <Link
-                key={pool.id}
-                href={`/pools/${pool.id}`}
+                key={pool.id || index}
+                href={pool.id ? `/pools/${pool.id}` : '#'}
                 className='-m-2 block rounded-md p-2 transition-colors hover:bg-gray-900'
               >
                 <div className='flex gap-3'>
@@ -157,11 +129,13 @@ export function HighestVolume() {
                   <div className='flex-1'>
                     <p className='mb-1 line-clamp-2 text-sm'>{pool.question}</p>
                     <div className='mb-2 flex items-center gap-2'>
-                      <div className='h-1 flex-1 overflow-hidden rounded-full bg-red-500'>
-                        <div
-                          className='h-full bg-green-500'
-                          style={{ width: `${progress}%` }}
-                        ></div>
+                      <div className='flex-1'>
+                        <ProgressBar
+                          percentages={[percentage, 100 - percentage]}
+                          height='h-1'
+                          colors={['bg-green-500', 'bg-red-500']}
+                          backgroundColor='bg-red-500'
+                        />
                       </div>
                       <div className='flex items-center gap-1 text-xs text-gray-400'>
                         <TrendingUp size={12} />

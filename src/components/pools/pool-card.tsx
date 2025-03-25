@@ -2,9 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { GetPoolsQuery, TokenType } from '@/lib/__generated__/graphql';
-import { calculateVolume } from '@/utils/betsInfo';
+import { GetPoolsQuery } from '@/lib/__generated__/graphql';
+import { calculateOptionPercentages, calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import Image from 'next/image';
@@ -32,39 +33,7 @@ export function PoolCard({ pool }: { pool: GetPoolsQuery['pools'][number] }) {
     refetchInterval: 5000,
   });
 
-  const totalPoints = pool.pointsBetTotals.reduce(
-    (sum, points) => sum + BigInt(points || '0'),
-    BigInt(0)
-  );
-  const totalUsdc = pool.usdcBetTotals.reduce((sum, usdc) => sum + BigInt(usdc || '0'), BigInt(0));
-
-  const pointsPercentages =
-    totalPoints > BigInt(0)
-      ? pool.pointsBetTotals.map((points) =>
-          Number((BigInt(points || '0') * BigInt(100)) / totalPoints)
-        )
-      : pool.options.map(() => 0);
-
-  const usdcPercentages =
-    totalUsdc > BigInt(0)
-      ? pool.usdcBetTotals.map((usdc) => Number((BigInt(usdc || '0') * BigInt(100)) / totalUsdc))
-      : pool.options.map(() => 0);
-
-  const percentages = pool.options.map((_, index) => {
-    if (tokenType === TokenType.Points && totalPoints > BigInt(0)) {
-      return pointsPercentages[index];
-    } else if (tokenType === TokenType.Usdc && totalUsdc > BigInt(0)) {
-      return usdcPercentages[index];
-    } else if (totalPoints > BigInt(0) && totalUsdc > BigInt(0)) {
-      return Math.round((pointsPercentages[index] + usdcPercentages[index]) / 2);
-    } else if (totalPoints > BigInt(0)) {
-      return pointsPercentages[index];
-    } else if (totalUsdc > BigInt(0)) {
-      return usdcPercentages[index];
-    } else {
-      return 0;
-    }
-  });
+  const percentages = calculateOptionPercentages(pool, tokenType);
 
   const isClosed = new Date(Number(pool.betsCloseAt) * 1000) < new Date();
 
@@ -119,26 +88,7 @@ export function PoolCard({ pool }: { pool: GetPoolsQuery['pools'][number] }) {
                   );
                 })}
               </div>
-              <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
-                <div className='flex h-full'>
-                  {pool.options.map((_, index) => {
-                    // Ensure percentages add up to 100% for the progress bar
-                    const totalPercentage = percentages.reduce((sum, p) => sum + p, 0);
-                    const displayWidth =
-                      totalPercentage > 0
-                        ? Math.round((percentages[index] / totalPercentage) * 100)
-                        : 0; // Don't show any filled bar if no bets placed
-
-                    return (
-                      <div
-                        key={index}
-                        className={`h-full ${index === 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ width: `${displayWidth}%` }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
+              <ProgressBar percentages={percentages} />
             </div>
           ) : null}
           <div className='flex items-center justify-between'>

@@ -2,8 +2,14 @@
 
 import { GET_POOLS } from '@/app/queries';
 import { POLLING_INTERVALS } from '@/consts';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { OrderDirection, Pool, Pool_OrderBy, PoolStatus } from '@/lib/__generated__/graphql';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import {
+  OrderDirection,
+  Pool,
+  Pool_OrderBy,
+  PoolStatus,
+  TokenType,
+} from '@/lib/__generated__/graphql';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import { useMemo, useRef } from 'react';
 import { PoolCard } from './pool-card';
@@ -15,7 +21,7 @@ export function PoolList() {
 
   // Determine sort field based on token type
   const volumeOrderBy =
-    tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume;
+    tokenType === TokenType.Usdc ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume;
 
   const {
     data: pools,

@@ -1,8 +1,9 @@
 'use client';
 
+import { PoolData } from '@/app/pools/[id]/page';
 import { GET_BETS } from '@/app/queries';
 import { POINTS_DECIMALS, POLLING_INTERVALS } from '@/consts';
-import { Bet, Bet_OrderBy, GetPoolQuery, GetPoolsQuery } from '@/lib/__generated__/graphql';
+import { Bet, Bet_OrderBy } from '@/lib/__generated__/graphql';
 import { useQuery } from '@apollo/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ArrowUpRight, Clock, Loader2 } from 'lucide-react';
@@ -11,7 +12,7 @@ import { useInView } from 'react-intersection-observer';
 import { RandomAvatar } from 'react-random-avatars';
 
 interface ActivityProps {
-  pool: GetPoolsQuery['pools'][number] | GetPoolQuery['pool'];
+  pool: PoolData; //TODO Get rid of this type
 }
 
 export const Activity: FC<ActivityProps> = ({ pool }) => {

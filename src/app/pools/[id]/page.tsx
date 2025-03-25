@@ -1,6 +1,5 @@
 'use client';
 
-import { Progress } from '@/components/Progress';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
@@ -27,18 +26,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Slider } from '@/components/ui/slider';
 import { POLLING_INTERVALS, USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { TokenType } from '@/lib/__generated__/graphql';
 import { cn } from '@/lib/utils';
-import { getVolumeForTokenType } from '@/utils/betsInfo';
+import { calculateOptionPercentages, getVolumeForTokenType } from '@/utils/betsInfo';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
 
 // Types for our components
-interface PoolData {
+//TODO This type is not needed, we can use query types, but that'll break things in here
+export interface PoolData {
   id: string;
   question: string;
   options: string[];
@@ -105,7 +106,7 @@ const PoolHeader = ({ pool, postData }: PoolHeaderProps) => (
         <span className='text-muted-foreground text-xs'>
           {formatDistanceToNow(new Date(pool.createdAt * 1000), { addSuffix: true })}
         </span>
-        <TruthSocial postId={pool.originalTruthSocialPostId} />
+        <TruthSocial postId={pool.originalTruthSocialPostId || ''} />
       </div>
     </div>
 
@@ -564,36 +565,32 @@ interface BettingProgressProps {
 }
 
 // Component for Betting Progress
-const BettingProgress = ({ percentages, pool, totalVolume }: BettingProgressProps) => (
-  <div className='mb-6'>
-    <Progress
-      value={percentages[0]}
-      className='mb-2 h-4'
-      foregroundColor={
-        totalVolume === '$0' || totalVolume === '0 pts' || percentages[0] === 0
-          ? 'bg-gray-300 dark:bg-gray-600'
-          : 'bg-green-500'
-      }
-      backgroundColor={
-        totalVolume === '$0' || totalVolume === '0 pts' || percentages[0] === 0
-          ? 'bg-gray-200 dark:bg-gray-700'
-          : 'bg-red-500'
-      }
-    />
-    <div className='mb-2 flex justify-between text-sm font-medium'>
-      {pool.options.map((option: string, index: number) => (
-        <span
-          key={index}
-          className={
-            index === 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-          }
-        >
-          {option} {percentages[index]}%
-        </span>
-      ))}
+const BettingProgress = ({ percentages, pool, totalVolume }: BettingProgressProps) => {
+  const isZeroState = totalVolume === '$0' || totalVolume === '0 pts' || percentages[0] === 0;
+
+  return (
+    <div className='mb-6'>
+      <ProgressBar
+        percentages={percentages}
+        height='h-4'
+        className='mb-2'
+        isZeroState={isZeroState}
+      />
+      <div className='mb-2 flex justify-between text-sm font-medium'>
+        {pool.options.map((option: string, index: number) => (
+          <span
+            key={index}
+            className={
+              index === 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            }
+          >
+            {option} {percentages[index]}%
+          </span>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function PoolDetailPage() {
   // Router and authentication
@@ -892,7 +889,7 @@ export default function PoolDetailPage() {
 
       // Call the server action
       const result = await togglePoolFacts(
-        id,
+        id as string,
         newIsFactsed ? 'like' : 'unlike',
         signature,
         messageStr
@@ -1039,42 +1036,8 @@ export default function PoolDetailPage() {
   const totalVolume = getVolumeForTokenType(pool, tokenType);
 
   // Calculate percentages
-  const totalPoints = pool.pointsBetTotals.reduce(
-    (sum: bigint, points: string) => sum + BigInt(points),
-    BigInt(0)
-  );
-  const totalUsdc = pool.usdcBetTotals.reduce(
-    (sum: bigint, usdc: string) => sum + BigInt(usdc),
-    BigInt(0)
-  );
+  const percentages = calculateOptionPercentages(pool);
 
-  const pointsPercentages =
-    totalPoints > BigInt(0)
-      ? pool.pointsBetTotals.map((points: string) =>
-          Number((BigInt(points) * BigInt(100)) / totalPoints)
-        )
-      : pool.options.map(() => 0);
-
-  const usdcPercentages =
-    totalUsdc > BigInt(0)
-      ? pool.usdcBetTotals.map((usdc: string) => Number((BigInt(usdc) * BigInt(100)) / totalUsdc))
-      : pool.options.map(() => 0);
-
-  const percentages = pool.options.map((_: string, index: number) => {
-    let result;
-
-    if (totalPoints > BigInt(0) && totalUsdc > BigInt(0)) {
-      result = (pointsPercentages[index] + usdcPercentages[index]) / 2;
-    } else if (totalPoints > BigInt(0)) {
-      result = pointsPercentages[index];
-    } else if (totalUsdc > BigInt(0)) {
-      result = usdcPercentages[index];
-    } else {
-      return 0;
-    }
-
-    return result;
-  });
   if (!pool) return <div>Pool not found...</div>;
 
   return (

@@ -12,7 +12,6 @@ const GET = async (request: NextRequest) => {
       .from('truth_social_posts')
       .select('*')
       .eq('pool_id', poolId)
-      .not('image_url', 'contains', 'bfl.ai') //TODO remove this, have better error handling instead
       .single();
 
     return Response.json(
