@@ -1,7 +1,7 @@
-import POINTS_ABI from '@/abi/erc20.json';
 import { POINTS_DECIMALS } from '@/consts';
 import { POINTS_ADDRESS } from '@/consts/addresses';
-import { createClient } from '@supabase/supabase-js';
+import { pointsTokenAbi } from '@/lib/contract.types';
+import { createClient } from '@/lib/supabase/server';
 import { ethers } from 'ethers';
 import { NextResponse } from 'next/server';
 
@@ -18,17 +18,15 @@ export type TopUpBalanceResponse = {
   message?: string;
 };
 
-const getSupabaseClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || '';
-
-  return createClient(supabaseUrl, supabaseKey);
-};
+const RATE_LIMIT_HOURS = 6;
+const RATE_LIMIT_MS = RATE_LIMIT_HOURS * 60 * 60 * 1000;
+const NEW_USER_POINTS = BigInt(10000) * BigInt(10) ** BigInt(POINTS_DECIMALS);
+const RETURNING_USER_POINTS = BigInt(1000) * BigInt(10) ** BigInt(POINTS_DECIMALS);
 
 const checkRateLimit = async (walletAddress: string): Promise<boolean> => {
-  const supabase = getSupabaseClient();
+  const supabase = await createClient();
+
   try {
-    // Query for the user record
     const { data, error } = await supabase
       .from('trump_users')
       .select('id, last_login_bonus')
@@ -36,39 +34,31 @@ const checkRateLimit = async (walletAddress: string): Promise<boolean> => {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      // PGRST116 is "no rows returned" error
       console.error('Supabase error:', error);
-      return true; // Allow the request if Supabase query fails
-    }
-
-    if (!data) {
-      // No record found, user has never received a bonus
       return true;
     }
 
-    // Check if the last bonus was given within the last 6 hours
-    const lastBonus = data.last_login_bonus ? new Date(data.last_login_bonus) : null;
-    if (!lastBonus) {
-      return true; // No timestamp found, allow the request
+    if (!data || !data.last_login_bonus) {
+      return true;
     }
 
-    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-    return lastBonus < sixHoursAgo; // Allow if last bonus was more than 6 hours ago
+    const lastBonus = new Date(data.last_login_bonus);
+    const timeSinceLastBonus = Date.now() - lastBonus.getTime();
+    return timeSinceLastBonus > RATE_LIMIT_MS;
   } catch (error) {
     console.error('Error checking rate limit:', error);
-    return true; // Allow the request if the check fails
+    return true;
   }
 };
 
-// Set rate limit timestamp
 const setRateLimit = async (walletAddress: string): Promise<void> => {
-  const supabase = getSupabaseClient();
+  const supabase = await createClient();
+
   try {
-    // Upsert the record with current timestamp
     const { error } = await supabase.from('trump_users').upsert([
       {
         id: walletAddress.toLowerCase(),
-        name: '', // Unused as mentioned
+        name: '',
         last_login_bonus: new Date().toISOString(),
       },
     ]);
@@ -82,7 +72,8 @@ const setRateLimit = async (walletAddress: string): Promise<void> => {
 };
 
 const isNewUser = async (walletAddress: string): Promise<boolean> => {
-  const supabase = getSupabaseClient();
+  const supabase = await createClient();
+
   try {
     const { error } = await supabase
       .from('trump_users')
@@ -90,69 +81,56 @@ const isNewUser = async (walletAddress: string): Promise<boolean> => {
       .eq('id', walletAddress.toLowerCase())
       .single();
 
-    if (error && error.code === 'PGRST116') {
-      // No rows returned - this is a new user
-      return true;
-    }
-
-    return false; // User exists
+    return error?.code === 'PGRST116';
   } catch (error) {
     console.error('Error checking if user is new:', error);
-    return false; // Default to existing user on error
+    return false;
   }
 };
 
-// Then modify the POST function where the mint amount is calculated
 export async function POST(request: Request) {
   try {
     const body: TopUpBalanceParams = await request.json();
+    const walletAddress = body.walletAddress;
 
-    // Check rate limit
-    const isAllowed = await checkRateLimit(body.walletAddress);
+    const isAllowed = await checkRateLimit(walletAddress);
     if (!isAllowed) {
+      const resetTime = Math.floor(Date.now() / 1000) + RATE_LIMIT_HOURS * 60 * 60;
       return NextResponse.json<TopUpBalanceResponse>(
         {
           success: false,
           amountMinted: '0',
-          rateLimitReset: (Math.floor(Date.now() / 1000) + 6 * 60 * 60).toLocaleString(),
-          error: 'You can only request POINTS once every 6 hours',
+          rateLimitReset: resetTime.toLocaleString(),
+          error: `You can only request POINTS once every ${RATE_LIMIT_HOURS} hours`,
         },
         { status: 429 }
       );
     }
 
-    // Setup provider and wallet
     const provider = new ethers.JsonRpcProvider(process.env.BASE_SEPOLIA_RPC_URL);
     const privateKey = process.env.MINTER_PRIVATE_KEY;
     if (!privateKey) {
       throw new Error('Relayer private key not configured');
     }
+
     const wallet = new ethers.Wallet(privateKey, provider);
+    const pointsContract = new ethers.Contract(POINTS_ADDRESS, pointsTokenAbi, wallet);
+    const balance = await pointsContract.balanceOf(walletAddress);
 
-    const pointsContract = new ethers.Contract(POINTS_ADDRESS, POINTS_ABI, wallet);
-    const balance = await pointsContract.balanceOf(body.walletAddress);
-
-    // Check if this is a new user
-    const userIsNew = await isNewUser(body.walletAddress);
-    const targetAmount = userIsNew
-      ? BigInt(10000) * BigInt(10) ** BigInt(POINTS_DECIMALS)
-      : BigInt(1000) * BigInt(10) ** BigInt(POINTS_DECIMALS);
-
-    // If balance is less than target, add the difference, otherwise add 0
+    const userIsNew = await isNewUser(walletAddress);
+    const targetAmount = userIsNew ? NEW_USER_POINTS : RETURNING_USER_POINTS;
     const amountToAdd = balance < targetAmount ? targetAmount - balance : BigInt(0);
 
     if (amountToAdd > 0) {
-      const tx = await pointsContract.mint(body.walletAddress, amountToAdd);
+      const tx = await pointsContract.mint(walletAddress, amountToAdd);
+      await setRateLimit(walletAddress);
 
-      // Set rate limit after successful mint
-      await setRateLimit(body.walletAddress);
-
-      // Don't wait for confirmations, just get the response
+      const resetTime = Math.floor(Date.now() / 1000) + RATE_LIMIT_HOURS * 60 * 60;
       return NextResponse.json<TopUpBalanceResponse>({
         success: true,
         transactionHash: tx.hash,
         amountMinted: amountToAdd.toString(),
-        rateLimitReset: (Math.floor(Date.now() / 1000) + 6 * 60 * 60).toLocaleString(),
+        rateLimitReset: resetTime.toLocaleString(),
       });
     } else {
       return NextResponse.json<TopUpBalanceResponse>({
@@ -165,8 +143,7 @@ export async function POST(request: Request) {
     console.error('Error in minting points:', error);
 
     if (
-      typeof error === 'object' &&
-      error !== null &&
+      error instanceof Object &&
       'message' in error &&
       typeof error.message === 'string' &&
       error.message.includes('already known')
@@ -174,7 +151,7 @@ export async function POST(request: Request) {
       return NextResponse.json<TopUpBalanceResponse>({
         success: true,
         message: 'Transaction already submitted to the network',
-        amountMinted: '0', // Cannot access amountToAdd here
+        amountMinted: '0',
       });
     }
 
@@ -182,9 +159,7 @@ export async function POST(request: Request) {
       {
         success: false,
         amountMinted: '0',
-        error: `Failed to mint testnet points: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: `Failed to mint testnet points: ${error instanceof Error ? error.message : String(error)}`,
       },
       { status: 500 }
     );

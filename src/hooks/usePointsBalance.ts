@@ -1,10 +1,10 @@
-import POINTS_ABI from '@/abi/erc20.json';
 import { POINTS_DECIMALS } from '@/consts';
 import { POINTS_ADDRESS } from '@/consts/addresses';
 import { useWallets } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
 import { useEmbeddedWallet } from '../components/EmbeddedWalletProvider';
+import { pointsTokenAbi } from '@/lib/contract.types';
 
 export const useBalance = () => {
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export const useBalance = () => {
       const ethersProvider = new ethers.BrowserProvider(provider);
 
       // Create contract instance
-      const usdcContract = new ethers.Contract(POINTS_ADDRESS, POINTS_ABI, ethersProvider);
+      const usdcContract = new ethers.Contract(POINTS_ADDRESS, pointsTokenAbi, ethersProvider);
 
       try {
         // Get balance
