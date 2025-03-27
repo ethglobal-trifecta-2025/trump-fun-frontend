@@ -145,9 +145,11 @@ export const TabSwitcher = ({
                       </span>
                     </div>
                     <span className='text-muted-foreground text-xs'>
-                      {formatDistanceToNow(new Date(Number(bet.updatedAt) * 1000), {
-                        addSuffix: true,
-                      })}
+                      {bet.updatedAt && !isNaN(Number(bet.updatedAt))
+                        ? formatDistanceToNow(new Date(Number(bet.updatedAt) * 1000), {
+                            addSuffix: true,
+                          })
+                        : 'Unknown time'}
                     </span>
                   </div>
                 </div>
