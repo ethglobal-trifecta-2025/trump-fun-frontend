@@ -2,9 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import { Pool } from '@/lib/__generated__/graphql';
-import { calculateVolume } from '@/utils/betsInfo';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { GetPoolsQuery } from '@/lib/__generated__/graphql';
+import { calculateOptionPercentages, calculateVolume } from '@/utils/betsInfo';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import Image from 'next/image';
@@ -12,7 +13,8 @@ import Link from 'next/link';
 import TruthSocial from '../common/truth-social';
 import CountdownTimer from '../Timer';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-export function PoolCard({ pool }: { pool: Pool }) {
+
+export function PoolCard({ pool }: { pool: GetPoolsQuery['pools'][number] }) {
   const { tokenType } = useTokenContext();
 
   const { data: postData } = useQuery({
@@ -28,45 +30,14 @@ export function PoolCard({ pool }: { pool: Pool }) {
     staleTime: 60000, // Consider data stale after 1 minute
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, //TODO I have no idea what this is
+    refetchInterval: 5000,
   });
 
-  const totalPoints = pool.pointsBetTotals.reduce(
-    (sum, points) => sum + BigInt(points || '0'),
-    BigInt(0)
-  );
-  const totalUsdc = pool.usdcBetTotals.reduce((sum, usdc) => sum + BigInt(usdc || '0'), BigInt(0));
-
-  const pointsPercentages =
-    totalPoints > BigInt(0)
-      ? pool.pointsBetTotals.map((points) =>
-          Number((BigInt(points || '0') * BigInt(100)) / totalPoints)
-        )
-      : pool.options.map(() => 0);
-
-  const usdcPercentages =
-    totalUsdc > BigInt(0)
-      ? pool.usdcBetTotals.map((usdc) => Number((BigInt(usdc || '0') * BigInt(100)) / totalUsdc))
-      : pool.options.map(() => 0);
-
-  const percentages = pool.options.map((_, index) => {
-    if (tokenType === TokenType.POINTS && totalPoints > BigInt(0)) {
-      return pointsPercentages[index];
-    } else if (tokenType === TokenType.USDC && totalUsdc > BigInt(0)) {
-      return usdcPercentages[index];
-    } else if (totalPoints > BigInt(0) && totalUsdc > BigInt(0)) {
-      return Math.round((pointsPercentages[index] + usdcPercentages[index]) / 2);
-    } else if (totalPoints > BigInt(0)) {
-      return pointsPercentages[index];
-    } else if (totalUsdc > BigInt(0)) {
-      return usdcPercentages[index];
-    } else {
-      return 0;
-    }
-  });
+  const percentages = calculateOptionPercentages(pool, tokenType);
 
   const isClosed = new Date(Number(pool.betsCloseAt) * 1000) < new Date();
 
+  const imageUrl = postData?.post?.image_url;
   return (
     <div>
       <Card className='h-full transition-shadow hover:shadow-md'>
@@ -74,7 +45,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
           <div className='flex items-center gap-x-3'>
             <Avatar className='size-8'>
               <AvatarImage
-                src={postData ? postData?.post?.image_url : '/trump.jpeg'}
+                src={imageUrl && !imageUrl.includes('bfl.ai') ? imageUrl : '/trump.jpeg'}
                 alt='Donald Trump'
               />
               <AvatarFallback>
@@ -117,26 +88,7 @@ export function PoolCard({ pool }: { pool: Pool }) {
                   );
                 })}
               </div>
-              <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700'>
-                <div className='flex h-full'>
-                  {pool.options.map((_, index) => {
-                    // Ensure percentages add up to 100% for the progress bar
-                    const totalPercentage = percentages.reduce((sum, p) => sum + p, 0);
-                    const displayWidth =
-                      totalPercentage > 0
-                        ? Math.round((percentages[index] / totalPercentage) * 100)
-                        : 0; // Don't show any filled bar if no bets placed
-
-                    return (
-                      <div
-                        key={index}
-                        className={`h-full ${index === 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ width: `${displayWidth}%` }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
+              <ProgressBar percentages={percentages} />
             </div>
           ) : null}
           <div className='flex items-center justify-between'>

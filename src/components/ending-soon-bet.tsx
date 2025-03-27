@@ -1,9 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import CountdownTimer from './Timer';
 
 interface EndingSoonBetProps {
   avatar: string;
@@ -14,7 +14,6 @@ interface EndingSoonBetProps {
 }
 
 export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: EndingSoonBetProps) {
-  const [remainingTime, setRemainingTime] = useState('');
   const { data: poolData } = useQuery({
     queryKey: ['ending-soon-bet', poolId],
     queryFn: async () => {
@@ -29,44 +28,6 @@ export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: En
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
-
-  useEffect(() => {
-    const calculateRemainingTime = () => {
-      const closeTime = parseInt(timeLeft) * 1000; // convert to milliseconds
-      const now = Date.now();
-      const difference = closeTime - now;
-
-      if (difference <= 0) {
-        setRemainingTime('Ended');
-        return;
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-      if (days > 0) {
-        setRemainingTime(`${days}d ${hours}h`);
-      } else if (hours > 0) {
-        setRemainingTime(`${hours}h ${minutes}m`);
-      } else {
-        setRemainingTime(`${minutes}m ${seconds}s`);
-      }
-    };
-
-    calculateRemainingTime();
-
-    // Only set up the interval if the poll hasn't ended yet
-    let timer: NodeJS.Timeout | null = null;
-    if (parseInt(timeLeft) * 1000 > Date.now()) {
-      timer = setInterval(calculateRemainingTime, 1000);
-    }
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [timeLeft]);
 
   return (
     <Link
@@ -84,12 +45,20 @@ export function EndingSoonBet({ avatar, question, volume, timeLeft, poolId }: En
           <p className='mb-1 line-clamp-2 text-sm'>{question}</p>
           <div className='flex items-center justify-between gap-4 text-xs text-gray-400'>
             <div className='flex items-center gap-1'>
-              <TrendingUp size={12} />
-              <span>{volume}</span>
+              <CountdownTimer
+                closesAt={parseInt(timeLeft) * 1000}
+                containerClassName='flex'
+                wrapperClassName='flex'
+                digitClassName='text-xs'
+                colonClassName='text-xs px-[1px]'
+                showClockIcon={true}
+                clockIconClassName='mr-1 text-gray-400'
+                clockIconSize={12}
+              />
             </div>
             <div className='flex items-center gap-1'>
-              <Clock size={12} className='text-gray-400' />
-              <span>{remainingTime}</span>
+              <TrendingUp size={12} />
+              <span>{volume}</span>
             </div>
           </div>
         </div>

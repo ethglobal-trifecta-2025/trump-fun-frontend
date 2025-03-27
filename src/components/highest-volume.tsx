@@ -1,41 +1,85 @@
 'use client';
 
 import { GET_POOLS } from '@/app/queries';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
-import {
-  GetPoolsQuery,
-  OrderDirection,
-  Pool,
-  Pool_OrderBy,
-  PoolStatus,
-} from '@/lib/__generated__/graphql';
-import { calculateVolume } from '@/utils/betsInfo';
-import { useQuery } from '@apollo/client';
-import { TrendingUp } from 'lucide-react';
-import { TrendingBet } from './trending-bet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { POLLING_INTERVALS } from '@/consts';
+import { useTokenContext } from '@/hooks/useTokenContext';
+import { OrderDirection, Pool_OrderBy, PoolStatus, TokenType } from '@/lib/__generated__/graphql';
+import { calculateRelativeVolumePercentages } from '@/utils/betsInfo';
+import { useQuery } from '@apollo/client';
+import { useQueries } from '@tanstack/react-query';
+import { TrendingUp } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useMemo } from 'react';
+
+interface PoolPostData {
+  post?: {
+    image_url?: string;
+  };
+}
 
 export function HighestVolume() {
   const { tokenType } = useTokenContext();
+  const currentTimestamp = Math.floor(Date.now() / 1000);
 
-  const { data: volumePools } = useQuery(GET_POOLS, {
+  const {
+    data: volumePools,
+    loading,
+    previousData,
+  } = useQuery(GET_POOLS, {
     variables: {
       filter: {
         status: PoolStatus.Pending,
+        betsCloseAt_gt: currentTimestamp.toString(),
       },
-      orderBy: tokenType === TokenType.USDC ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
+      orderBy: tokenType === TokenType.Usdc ? Pool_OrderBy.UsdcVolume : Pool_OrderBy.PointsVolume,
       orderDirection: OrderDirection.Desc,
-      first: 5,
+      first: 3,
     },
     context: { name: 'volumeSearch' },
     notifyOnNetworkStatusChange: true,
     pollInterval: POLLING_INTERVALS['highest-volume'],
   });
 
-  // Simplified volume formatting
-  const formatPoolVolume = (pool: GetPoolsQuery['pools'][number]) => {
-    return calculateVolume(pool, tokenType);
-  };
+  // Use memoized data to prevent disappearing on refresh
+  const poolsToDisplay = useMemo(() => {
+    // On initial load, show loading state
+    if (loading && !previousData) {
+      return { pools: [] };
+    }
+    // For subsequent loads, use previous data until new data is ready
+    return volumePools || previousData || { pools: [] };
+  }, [volumePools, loading, previousData]);
+
+  // Calculate volume data for pools
+  const volumeData = useMemo(() => {
+    if (!poolsToDisplay?.pools || poolsToDisplay.pools.length === 0) {
+      return [];
+    }
+
+    const pools = poolsToDisplay.pools.slice(0, 3);
+    return calculateRelativeVolumePercentages(pools, tokenType);
+  }, [poolsToDisplay, tokenType]);
+
+  // Use useQueries to fetch pool images in parallel
+  const poolQueries = useQueries({
+    queries: volumeData.map(({ pool }) => ({
+      queryKey: ['highest-volume-pool', pool?.id || 'unknown'],
+      queryFn: async () => {
+        if (!pool?.id) return { post: { image_url: '/trump.jpeg' } };
+        const res = await fetch(`/api/post?poolId=${pool.id}`);
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return res.json() as Promise<PoolPostData>;
+      },
+      staleTime: 60000,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    })),
+  });
 
   return (
     <div className='bg-background mb-4 rounded-lg border border-gray-800 p-4 shadow-lg'>
@@ -45,72 +89,70 @@ export function HighestVolume() {
       </div>
 
       <div className='space-y-4'>
-        {volumePools?.pools && volumePools.pools.length > 0
-          ? (() => {
-              // Calculate relative progress based on actual volumes
-              const pools = volumePools.pools.slice(0, 3);
-              const volumeValues = pools.map((pool: Pool) => {
-                const raw =
-                  tokenType === TokenType.USDC
-                    ? Number(pool.usdcVolume || '0')
-                    : Number(pool.pointsVolume || '0');
-                return { pool, raw };
-              });
-
-              // Find max volume to calculate percentages
-              const maxVolume = Math.max(
-                ...volumeValues.map((v: { pool: Pool; raw: number }) => v.raw),
-                1
-              ); // Prevent division by zero
-
-              return pools.map((pool: Pool) => {
-                const rawVolume =
-                  tokenType === TokenType.USDC
-                    ? Number(pool.usdcVolume || '0')
-                    : Number(pool.pointsVolume || '0');
-
-                // Calculate progress percentage relative to the highest volume
-                const progress = Math.round((rawVolume / maxVolume) * 100) || 5; // Minimum 5% for visibility
-
-                return (
-                  <TrendingBet
-                    key={pool.id}
-                    question={pool.question}
-                    volume={formatPoolVolume(pool)}
-                    progress={progress}
-                    poolId={pool.id}
-                  />
-                );
-              });
-            })()
-          : // Fallback content when no pools are available
-            [
-              {
-                id: '1',
-                question: 'Will I PARDON MYSELF? The RADICAL LEFT is TERRIFIED of this!',
-                volume: '$1,000,000',
-              },
-              {
-                id: '2',
-                question:
-                  'Will I FIRE THE FBI DIRECTOR on day one? The FBI has been WEAPONIZED against us!',
-                volume: '$800,000',
-              },
-              {
-                id: '3',
-                question:
-                  'Will the AMERICAN PEOPLE see my TAX RETURNS before the 2024 election despite the CORRUPT system trying to hide the TRUTH?',
-                volume: '$500,000',
-              },
-            ].map((pool, index) => (
-              <TrendingBet
-                key={pool.id}
-                question={pool.question}
-                volume={pool.volume}
-                progress={index === 0 ? 100 : index === 1 ? 70 : 40}
-                poolId={pool.id}
-              />
+        {loading && !previousData ? (
+          // Initial loading state
+          <div className='space-y-4'>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className='animate-pulse'>
+                <div className='flex gap-3'>
+                  <div className='h-8 w-8 rounded-full bg-gray-700'></div>
+                  <div className='flex-1'>
+                    <div className='mb-2 h-4 w-3/4 rounded bg-gray-700'></div>
+                    <div className='h-3 w-full rounded bg-gray-700'></div>
+                    <div className='mt-2 flex justify-between'>
+                      <div className='h-3 w-16 rounded bg-gray-700'></div>
+                      <div className='h-3 w-16 rounded bg-gray-700'></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
+          </div>
+        ) : volumeData.length > 0 ? (
+          volumeData.map(({ pool, percentage, displayVolume }, index) => {
+            if (!pool) return null;
+            const poolData = poolQueries[index]?.data as PoolPostData | undefined;
+
+            return (
+              <Link
+                key={pool.id || index}
+                href={pool.id ? `/pools/${pool.id}` : '#'}
+                className='-m-2 block rounded-md p-2 transition-colors hover:bg-gray-900'
+              >
+                <div className='flex gap-3'>
+                  <Avatar className='h-8 w-8 overflow-hidden rounded-full'>
+                    <AvatarImage src={poolData?.post?.image_url || '/trump.jpeg'} alt='Trump' />
+                    <AvatarFallback>
+                      <Image src={'/trump.jpeg'} alt='Trump' width={32} height={32} />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className='flex-1'>
+                    <p className='mb-1 line-clamp-2 text-sm'>{pool.question}</p>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <div className='flex-1'>
+                        <ProgressBar
+                          percentages={[percentage, 100 - percentage]}
+                          height='h-1'
+                          colors={['bg-green-500', 'bg-red-500']}
+                          backgroundColor='bg-red-500'
+                        />
+                      </div>
+                      <div className='flex items-center gap-1 text-xs text-gray-400'>
+                        <TrendingUp size={12} />
+                        <span>{displayVolume.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })
+        ) : (
+          // Empty state when no pools are available
+          <div className='py-4 text-center text-gray-400'>
+            <p>No high volume predictions available</p>
+          </div>
+        )}
       </div>
     </div>
   );

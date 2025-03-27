@@ -148,15 +148,6 @@ export default function CommentSection({
     }
   };
 
-  // const handleFactsClick = () => {
-  //   if (!isWalletConnected) {
-  //     handleLoginClick();
-  //     return;
-  //   }
-
-  //   handleCommentSubmit('FACTS 🦅');
-  // };
-
   return (
     <div className='space-y-4'>
       <h2 className='text-xl font-semibold'>Comments</h2>

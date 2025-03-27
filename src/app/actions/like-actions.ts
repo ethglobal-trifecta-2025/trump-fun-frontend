@@ -1,26 +1,12 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getBytes, hashMessage, recoverAddress } from 'ethers';
+import { verifySignature } from '@/utils/verifySignature';
 
-type SignedLikeMessage = {
-  action: string;
-  commentId: number;
-  operation: 'like' | 'unlike';
-  timestamp: string;
-  account: string;
-};
-
-const verifySignature = (messageStr: string, signature: string): string | null => {
-  try {
-    // Validate the message format
-    JSON.parse(messageStr);
-    const hash = hashMessage(messageStr);
-    const digest = getBytes(hash);
-    return recoverAddress(digest, signature);
-  } catch {
-    return null;
-  }
+type ToggleLikeResult = {
+  success: boolean;
+  upvotes?: number;
+  error?: string;
 };
 
 export async function toggleLike(
@@ -28,18 +14,16 @@ export async function toggleLike(
   operation: 'like' | 'unlike',
   signature: string,
   messageStr?: string
-) {
+): Promise<ToggleLikeResult> {
   try {
     const supabase = await createClient();
-
     let walletAddress = null;
 
     if (signature && messageStr) {
       walletAddress = verifySignature(messageStr, signature);
 
       if (walletAddress) {
-        const message = JSON.parse(messageStr) as SignedLikeMessage;
-
+        const message = JSON.parse(messageStr);
         if (walletAddress.toLowerCase() !== message.account) {
           walletAddress = null;
         }
@@ -47,13 +31,9 @@ export async function toggleLike(
     }
 
     if (!walletAddress) {
-      return {
-        success: false,
-        error: 'Invalid signature',
-      };
+      return { success: false, error: 'Invalid signature' };
     }
 
-    // Get current upvotes
     const { data: comment, error: fetchError } = await supabase
       .from('comments')
       .select('upvotes')
@@ -61,17 +41,12 @@ export async function toggleLike(
       .single();
 
     if (fetchError) {
-      return {
-        success: false,
-        error: `Failed to fetch comment: ${fetchError.message}`,
-      };
+      return { success: false, error: `Failed to fetch comment: ${fetchError.message}` };
     }
 
-    // Calculate new upvotes count
     const currentUpvotes = comment?.upvotes || 0;
     const newUpvotes = operation === 'like' ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1);
 
-    // Update the upvotes count
     const { error: updateError } = await supabase
       .from('comments')
       .update({ upvotes: newUpvotes })
@@ -84,7 +59,6 @@ export async function toggleLike(
     return { success: true, upvotes: newUpvotes };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
     return { success: false, error: `Failed to toggle like: ${errorMessage}` };
   }
 }

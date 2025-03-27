@@ -12,7 +12,7 @@ import { POINTS_DECIMALS, POLLING_INTERVALS, USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
 import { useNetwork } from '@/hooks/useNetwork';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { useTokenContext } from '@/hooks/useTokenContext';
 import { useWalletAddress } from '@/hooks/useWalletAddress';
 import {
   Bet,
@@ -23,9 +23,10 @@ import {
   OrderDirection,
   PayoutClaimed,
   PayoutClaimed_OrderBy,
+  TokenType,
 } from '@/lib/__generated__/graphql';
 import { bettingContractAbi } from '@/lib/contract.types';
-import { calculateVolume } from '@/utils/betsInfo';
+import { getVolumeForTokenType } from '@/utils/betsInfo';
 import { useQuery } from '@apollo/client';
 import { ArrowUpFromLine, History, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -40,7 +41,7 @@ export default function ProfilePage() {
   const { address } = useWalletAddress();
   const { formattedBalance, tokenLogo } = useTokenBalance();
   const { networkInfo } = useNetwork();
-  const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
+  const tokenTypeC = tokenType === TokenType.Usdc ? 0 : 1;
   const { isPending, writeContract } = useWriteContract();
   const [withdrawAmount, setWithdrawAmount] = useState(0);
 
@@ -187,7 +188,7 @@ export default function ProfilePage() {
 
   const formattedWithdrawableBalance = useMemo((): number => {
     if (!balance) return 0;
-    return tokenType === TokenType.USDC
+    return tokenType === TokenType.Usdc
       ? Number(balance) / 1000000
       : Number(balance) / 1000000000000000000;
   }, [balance, tokenType]);
@@ -200,7 +201,7 @@ export default function ProfilePage() {
         // Convert the withdrawal amount to the correct format based on token type
         const tokenAmount = BigInt(
           Math.floor(
-            withdrawAmount * (tokenType === TokenType.USDC ? 1000000 : 1000000000000000000)
+            withdrawAmount * (tokenType === TokenType.Usdc ? 1000000 : 1000000000000000000)
           )
         );
 
@@ -323,7 +324,7 @@ export default function ProfilePage() {
                   <div className='flex items-center gap-1 font-semibold'>
                     {tokenLogo}
                     <span className='relative mr-5'>
-                      {tokenType === TokenType.USDC
+                      {tokenType === TokenType.Usdc
                         ? `${(userStats.totalVolume / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
                         : `${Math.floor(userStats.totalVolume / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
                     </span>
@@ -333,7 +334,7 @@ export default function ProfilePage() {
                   <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
                   <div className='flex items-center gap-1 font-semibold'>
                     {tokenLogo}
-                    {tokenType === TokenType.USDC
+                    {tokenType === TokenType.Usdc
                       ? `${(Number(userStats.avgBetSize) / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
                       : `${Math.floor(Number(userStats.avgBetSize) / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
                   </div>
@@ -393,12 +394,11 @@ export default function ProfilePage() {
                 </div>
                 <div className='max-h-60 space-y-2 overflow-y-auto'>
                   {betWithdrawals.betWithdrawals.slice(0, 5).map((withdrawal: any) => {
-
                     const resolvedTokenType =
-                      withdrawal.bet?.tokenType === 0 ? TokenType.USDC : TokenType.POINTS;
-                    const symbol = resolvedTokenType === TokenType.USDC ? '💲' : '🦅';
+                      withdrawal.bet?.tokenType === 0 ? TokenType.Usdc : TokenType.Points;
+                    const symbol = resolvedTokenType === TokenType.Usdc ? '💲' : '🦅';
                     const decimals =
-                      resolvedTokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
+                      resolvedTokenType === TokenType.Usdc ? USDC_DECIMALS : POINTS_DECIMALS;
                     const formattedAmount = (
                       parseFloat(withdrawal.bet?.amount) / Math.pow(10, decimals)
                     ).toFixed(0);
@@ -477,7 +477,7 @@ export default function ProfilePage() {
                       <div className='flex items-center gap-1 font-semibold'>
                         {tokenLogo}
                         <span className='relative mr-5'>
-                          {tokenType === TokenType.USDC
+                          {tokenType === TokenType.Usdc
                             ? `${(userStats.totalVolume / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
                             : `${Math.floor(userStats.totalVolume / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
                           {/* {userStats.activeVolume > 0 && (
@@ -492,7 +492,7 @@ export default function ProfilePage() {
                       <div className='text-gray-500 dark:text-gray-400'>Avg Bet Size</div>
                       <div className='flex items-center gap-1 font-semibold'>
                         {tokenLogo}
-                        {tokenType === TokenType.USDC
+                        {tokenType === TokenType.Usdc
                           ? `${(Number(userStats.avgBetSize) / Math.pow(10, USDC_DECIMALS)).toLocaleString()}`
                           : `${Math.floor(Number(userStats.avgBetSize) / Math.pow(10, POINTS_DECIMALS)).toLocaleString()}`}
                       </div>
@@ -641,7 +641,7 @@ export default function ProfilePage() {
                       options={pool.options}
                       selectedOption={bet.option}
                       truthSocialId={pool.originalTruthSocialPostId}
-                      volume={calculateVolume(pool, bet.tokenType)}
+                      volume={getVolumeForTokenType(pool, bet.tokenType)}
                       closesAt={pool.betsCloseAt}
                       userBet={{
                         amount: amount,

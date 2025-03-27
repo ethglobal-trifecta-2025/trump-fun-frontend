@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
+import { usePlaceBet } from '@/hooks/usePlaceBet';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
-import { TokenType, useTokenContext } from '@/hooks/useTokenContext';
+import { useTokenContext } from '@/hooks/useTokenContext';
 import { PoolStatus } from '@/lib/__generated__/graphql';
-import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
-import { showBetSuccessToast, showErrorToast, showSuccessToast } from '@/utils/toast';
+import { pointsTokenAbi } from '@/lib/contract.types';
+import { showSuccessToast } from '@/utils/toast';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -19,6 +20,7 @@ import { HandCoins, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { FaFlagUsa } from 'react-icons/fa';
 import { useAccount, usePublicClient, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import TruthSocial from './common/truth-social';
 import CountdownTimer from './Timer';
@@ -34,7 +36,7 @@ interface BettingPostProps {
   truthSocialId: string;
   status: PoolStatus;
   commentCount?: number;
-  volume?: string;
+  volume?: number;
   optionBets?: string[];
   closesAt?: number;
   gradedBlockTimestamp?: number;
@@ -50,7 +52,7 @@ export function BettingPost({
   truthSocialId,
   status,
   commentCount = 0,
-  volume = '0',
+  volume = 0,
   optionBets = [],
   gradedBlockTimestamp,
   closesAt,
@@ -101,7 +103,8 @@ export function BettingPost({
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
   const { tokenType, getTokenAddress } = useTokenContext();
-  const tokenTypeC = tokenType === TokenType.USDC ? 0 : 1;
+  // Token balance
+  const { balance, formattedBalance, symbol } = useTokenBalance();
 
   // Contract interaction hooks
   const publicClient = usePublicClient();
@@ -109,11 +112,55 @@ export function BettingPost({
   const { data: hash, isPending, writeContract } = useWriteContract();
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
+  // Use the placeBet hook
+  const placeBetWithHook = usePlaceBet({
+    writeContract,
+    ready: !!wallets?.length,
+    publicClient,
+    accountAddress: account.address,
+    getTokenAddress,
+    tokenType,
+    approvedAmount,
+    isConfirmed,
+    resetBettingForm: () => {
+      setBetAmount('');
+      setSelectedOption(null);
+      setSliderValue([0]);
+      setShowBetForm(false);
+    },
+    symbol,
+  });
+
+  // Replace the existing placeBet function
+  const placeBet = async () => {
+    // Authentication check
+    if (!authenticated) {
+      login();
+      return;
+    }
+
+    if (!writeContract || !publicClient || !wallets?.length) {
+      return console.error('Wallet or contract not ready');
+    }
+
+    if (!betAmount || betAmount === '0' || selectedOption === null) {
+      return console.error('Invalid bet parameters');
+    }
+
+    if (!account.address) {
+      return console.error('Account address is not available');
+    }
+
+    await placeBetWithHook({
+      poolId: id,
+      betAmount,
+      selectedOption,
+      options,
+    });
+  };
+
   // Pool status
   const isActive = status === PoolStatus.Pending || status === PoolStatus.None;
-
-  // Token balance
-  const { balance, formattedBalance, symbol } = useTokenBalance();
 
   // Wallet connection status
   const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
@@ -325,70 +372,9 @@ export function BettingPost({
     setUserEnteredValue(''); // Clear user entered value
   };
 
-  // Place bet function
-  const placeBet = async () => {
-    // 1. Authentication check
-    if (!authenticated) {
-      login();
-      return;
-    }
-
-    if (!writeContract || !publicClient || !wallets?.length) {
-      return console.error('Wallet or contract not ready');
-    }
-
-    if (!betAmount || betAmount === '0' || selectedOption === null) {
-      return console.error('Invalid bet parameters');
-    }
-
-    if (!account.address) {
-      return console.error('Account address is not available');
-    }
-
-    try {
-      const amount = parseInt(betAmount, 10);
-      const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
-
-      const needsApproval = !approvedAmount || parseFloat(approvedAmount) < amount;
-      if (needsApproval && !isConfirmed) {
-        const { request: approveRequest } = await publicClient.simulateContract({
-          abi: pointsTokenAbi,
-          address: getTokenAddress() as `0x${string}`,
-          functionName: 'approve',
-          account: account.address as `0x${string}`,
-          args: [APP_ADDRESS, tokenAmount],
-        });
-
-        writeContract(approveRequest);
-        return showSuccessToast(`Approving ${betAmount} ${symbol}...`);
-      }
-
-      const { request } = await publicClient.simulateContract({
-        abi: bettingContractAbi,
-        address: APP_ADDRESS,
-        functionName: 'placeBet',
-        account: account.address as `0x${string}`,
-        args: [BigInt(id), BigInt(selectedOption), tokenAmount, account.address, tokenTypeC],
-      });
-
-      writeContract(request);
-
-      setBetAmount('');
-      setSelectedOption(null);
-      setSliderValue([0]);
-      setShowBetForm(false);
-      showBetSuccessToast(
-        `Placing bet of ${betAmount} ${symbol} on "${options[selectedOption]}"...`
-      );
-    } catch (error) {
-      console.error('Error placing bet:', error);
-      showErrorToast('Failed to place bet. Please try again.');
-    }
-  };
-
   // Render volume progress bar
   const renderVolumeBar = () => {
-    if (volume === '0') {
+    if (volume === 0) {
       return (
         <div className='relative'>
           {/* Empty progress bar */}
@@ -620,11 +606,24 @@ export function BettingPost({
         </div>
 
         <div className='flex flex-wrap items-center justify-between gap-2'>
-          <div className='flex items-center gap-2 w-full justify-between md:w-auto'>
+          <div className='flex w-full items-center gap-2 md:w-auto'>
             {closesAt && !isNaN(new Date(closesAt * 1000).getTime()) && (
-              <CountdownTimer closesAt={closesAt * 1000} />
+              <div className='flex items-center gap-1'>
+                <CountdownTimer
+                  closesAt={closesAt * 1000}
+                  containerClassName='flex'
+                  wrapperClassName='flex'
+                  digitClassName='text-xs text-gray-500 dark:text-gray-400'
+                  colonClassName='text-xs text-gray-500 dark:text-gray-400'
+                  showClockIcon={true}
+                  clockIconClassName='mr-3 text-gray-500 dark:text-gray-400'
+                  clockIconSize={16}
+                />
+              </div>
             )}
+          </div>
 
+          <div className='flex w-full items-center justify-between gap-2 md:w-auto md:justify-end'>
             <Button
               variant='ghost'
               size='sm'
@@ -636,9 +635,7 @@ export function BettingPost({
                 {commentCount > 0 ? commentCount : 'Comment'}
               </Link>
             </Button>
-          </div>
 
-          <div className='flex items-center gap-2  w-full justify-between  md:w-auto'>
             <Button
               variant='ghost'
               size='sm'
@@ -650,22 +647,27 @@ export function BettingPost({
             </Button>
 
             <Button
-              variant={hasFactsed ? 'default' : 'outline'}
+              variant='ghost'
               size='sm'
-              className={`gap-1 font-medium ${
-                hasFactsed
-                  ? 'bg-orange-500 text-black hover:bg-orange-600 hover:text-black dark:text-black'
-                  : 'border-orange-500 text-orange-500 hover:text-orange-500 dark:border-orange-500 dark:text-orange-500'
-              }`}
+              className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               onClick={handleFacts}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <span className='inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent'></span>
               ) : (
-                <>FACTS{hasFactsed ? <span className='ml-1.5'>🦅</span> : ''}</>
+                <>
+                  <FaFlagUsa
+                    size={18}
+                    className={`mr-1 ${hasFactsed ? 'text-rose-400' : ''}`}
+                    style={hasFactsed ? { filter: 'drop-shadow(0 0 1px #f472b6)' } : {}}
+                  />
+                  <span className={`${hasFactsed ? 'font-medium text-rose-400' : ''}`}>FACTS</span>
+                </>
               )}
-              <span className='ml-1.5'>{factsCount}</span>
+              <span className={`ml-1 ${hasFactsed ? 'font-medium text-red-400' : ''}`}>
+                {factsCount}
+              </span>
             </Button>
           </div>
         </div>

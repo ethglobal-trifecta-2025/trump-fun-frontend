@@ -1,22 +1,22 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { POINTS_DECIMALS, USDC_DECIMALS } from '@/consts';
-import { TokenType } from '@/hooks/useTokenContext';
-import { PoolStatus } from '@/lib/__generated__/graphql';
+import { PoolStatus, TokenType } from '@/lib/__generated__/graphql';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import TruthSocial from './common/truth-social';
 import CountdownTimer from './Timer';
 import { Badge } from './ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import Image from 'next/image';
+
 interface UserBettingPostProps {
   id: string;
   username: string;
   time: number;
   question: string;
   options: string[];
-  volume: string;
+  volume: number;
   status: PoolStatus;
   selectedOption: number;
   closesAt: number;
@@ -72,12 +72,12 @@ export function UserBettingPost({
   const resolvedTokenType =
     typeof tokenType === 'string'
       ? tokenType === 'USD' || tokenType === 'USDC'
-        ? TokenType.USDC
-        : TokenType.POINTS
+        ? TokenType.Usdc
+        : TokenType.Points
       : tokenType;
 
-  const symbol = resolvedTokenType === TokenType.USDC ? '💲' : '🦅';
-  const decimals = resolvedTokenType === TokenType.USDC ? USDC_DECIMALS : POINTS_DECIMALS;
+  const symbol = resolvedTokenType === TokenType.Usdc ? '💲' : '🦅';
+  const decimals = resolvedTokenType === TokenType.Usdc ? USDC_DECIMALS : POINTS_DECIMALS;
   const isActive = status === PoolStatus.Pending || status === PoolStatus.None;
 
   const formattedAmount = (parseFloat(userBet.amount) / Math.pow(10, decimals)).toFixed(0);
