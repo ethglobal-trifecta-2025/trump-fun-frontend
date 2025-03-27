@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { USDC_DECIMALS } from '@/consts';
 import { APP_ADDRESS } from '@/consts/addresses';
+import { usePlaceBet } from '@/hooks/usePlaceBet';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useTokenContext } from '@/hooks/useTokenContext';
-import { PoolStatus, TokenType } from '@/lib/__generated__/graphql';
-import { bettingContractAbi, pointsTokenAbi } from '@/lib/contract.types';
-import { showBetSuccessToast, showErrorToast, showSuccessToast } from '@/utils/toast';
+import { PoolStatus } from '@/lib/__generated__/graphql';
+import { pointsTokenAbi } from '@/lib/contract.types';
+import { showSuccessToast } from '@/utils/toast';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -102,7 +103,8 @@ export function BettingPost({
   const { wallets } = useWallets();
   const { signMessage } = useSignMessage();
   const { tokenType, getTokenAddress } = useTokenContext();
-  const tokenTypeC = tokenType === TokenType.Usdc ? 0 : 1;
+  // Token balance
+  const { balance, formattedBalance, symbol } = useTokenBalance();
 
   // Contract interaction hooks
   const publicClient = usePublicClient();
@@ -110,11 +112,55 @@ export function BettingPost({
   const { data: hash, isPending, writeContract } = useWriteContract();
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
+  // Use the placeBet hook
+  const placeBetWithHook = usePlaceBet({
+    writeContract,
+    ready: !!wallets?.length,
+    publicClient,
+    accountAddress: account.address,
+    getTokenAddress,
+    tokenType,
+    approvedAmount,
+    isConfirmed,
+    resetBettingForm: () => {
+      setBetAmount('');
+      setSelectedOption(null);
+      setSliderValue([0]);
+      setShowBetForm(false);
+    },
+    symbol,
+  });
+
+  // Replace the existing placeBet function
+  const placeBet = async () => {
+    // Authentication check
+    if (!authenticated) {
+      login();
+      return;
+    }
+
+    if (!writeContract || !publicClient || !wallets?.length) {
+      return console.error('Wallet or contract not ready');
+    }
+
+    if (!betAmount || betAmount === '0' || selectedOption === null) {
+      return console.error('Invalid bet parameters');
+    }
+
+    if (!account.address) {
+      return console.error('Account address is not available');
+    }
+
+    await placeBetWithHook({
+      poolId: id,
+      betAmount,
+      selectedOption,
+      options,
+    });
+  };
+
   // Pool status
   const isActive = status === PoolStatus.Pending || status === PoolStatus.None;
-
-  // Token balance
-  const { balance, formattedBalance, symbol } = useTokenBalance();
 
   // Wallet connection status
   const isWalletConnected = authenticated && wallets && wallets.length > 0 && wallets[0]?.address;
@@ -324,67 +370,6 @@ export function BettingPost({
     setBetAmount(amount.toString());
     setSliderValue([percentage]);
     setUserEnteredValue(''); // Clear user entered value
-  };
-
-  // Place bet function
-  const placeBet = async () => {
-    // 1. Authentication check
-    if (!authenticated) {
-      login();
-      return;
-    }
-
-    if (!writeContract || !publicClient || !wallets?.length) {
-      return console.error('Wallet or contract not ready');
-    }
-
-    if (!betAmount || betAmount === '0' || selectedOption === null) {
-      return console.error('Invalid bet parameters');
-    }
-
-    if (!account.address) {
-      return console.error('Account address is not available');
-    }
-
-    try {
-      const amount = parseInt(betAmount, 10);
-      const tokenAmount = BigInt(Math.floor(amount * 10 ** USDC_DECIMALS));
-
-      const needsApproval = !approvedAmount || parseFloat(approvedAmount) < amount;
-      if (needsApproval && !isConfirmed) {
-        const { request: approveRequest } = await publicClient.simulateContract({
-          abi: pointsTokenAbi,
-          address: getTokenAddress() as `0x${string}`,
-          functionName: 'approve',
-          account: account.address as `0x${string}`,
-          args: [APP_ADDRESS, tokenAmount],
-        });
-
-        writeContract(approveRequest);
-        return showSuccessToast(`Approving ${betAmount} ${symbol}...`);
-      }
-
-      const { request } = await publicClient.simulateContract({
-        abi: bettingContractAbi,
-        address: APP_ADDRESS,
-        functionName: 'placeBet',
-        account: account.address as `0x${string}`,
-        args: [BigInt(id), BigInt(selectedOption), tokenAmount, account.address, tokenTypeC],
-      });
-
-      writeContract(request);
-
-      setBetAmount('');
-      setSelectedOption(null);
-      setSliderValue([0]);
-      setShowBetForm(false);
-      showBetSuccessToast(
-        `Placing bet of ${betAmount} ${symbol} on "${options[selectedOption]}"...`
-      );
-    } catch (error) {
-      console.error('Error placing bet:', error);
-      showErrorToast('Failed to place bet. Please try again.');
-    }
   };
 
   // Render volume progress bar

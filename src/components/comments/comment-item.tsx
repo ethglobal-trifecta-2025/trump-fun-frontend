@@ -3,15 +3,15 @@
 import { toggleLike } from '@/app/actions/like-actions';
 import { isCommentLiked, saveCommentLike } from '@/app/pool-actions';
 import { Button } from '@/components/ui/button';
+import { Comment } from '@/types';
 import { formatDate } from '@/utils/formatDate';
 import { usePrivy, useSignMessage, useWallets } from '@privy-io/react-auth';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { RandomAvatar } from 'react-random-avatars';
-import { Database } from '../../types/database.types';
-import Image from 'next/image';
 
 interface CommentItemProps {
-  comment: Database['public']['Tables']['comments']['Row'];
+  comment: Comment;
 }
 
 const CommentItem = ({ comment }: CommentItemProps) => {
